@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+# Optional npm cache directory
+.npm
+
+# Build artifacts
+dist/
+build/
+.next/ # For Next.js projects
+coverage/ # Test coverage reports
+*.tgz # Output of 'npm pack'
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Environment variables and secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Editors and OS files
+.idea/ # JetBrains IDEs
+.vscode/ # VS Code
+.DS_Store # macOS system files
+Thumbs.db # Windows system files

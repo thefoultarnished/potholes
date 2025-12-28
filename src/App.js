@@ -8,7 +8,7 @@ import {
   X, 
   Siren,
   Megaphone,
-  ArrowBigUp,
+  Flame,
   Upload,
   Loader2,
   LocateFixed,
@@ -18,7 +18,8 @@ import {
   Calendar,
   AlertTriangle,
   Sun,
-  Moon
+  Moon,
+  ChevronUp
 } from 'lucide-react';
 
 // --- SUPABASE CONFIG ---
@@ -35,6 +36,106 @@ const SIZES = [
 
 const getSizeFromSeverity = (severity) => {
   return SIZES.find(s => s.dbLabel === severity) || SIZES[2];
+};
+
+// Helper to display location or fallback
+const getDisplayLocation = (location) => {
+  if (!location || location.trim() === '' || location === 'null' || location === 'undefined') {
+    return 'Somewhere on Earth 🌍';
+  }
+  // Also check for "unknown location" variations
+  const lowerLocation = location.toLowerCase().trim();
+  if (lowerLocation === 'unknown location' || lowerLocation === 'unknown' || lowerLocation === 'n/a') {
+    return 'Somewhere on Earth 🌍';
+  }
+  return location;
+};
+
+// Custom upvote icon (boxicons)
+const UpvoteIcon = ({ size = 24, className = "" }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+    fill="currentColor"
+  >
+    <path d="M4 14h4v7a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-7h4a1.001 1.001 0 0 0 .781-1.625l-8-10c-.381-.475-1.181-.475-1.562 0l-8 10A1.001 1.001 0 0 0 4 14z"/>
+  </svg>
+);
+
+// Animated Upvote Button with count
+const UpvoteButton = ({ onVote, votes = 0, size = "md" }) => {
+  const [isAnimating, setIsAnimating] = useState(false);
+  
+  const sizes = {
+    sm: { padding: "px-3 py-1.5", icon: 14, text: "text-sm" },
+    md: { padding: "px-4 py-2", icon: 16, text: "text-base" },
+  };
+  
+  const s = sizes[size] || sizes.md;
+  
+  const handleClick = (e) => {
+    e.stopPropagation();
+    setIsAnimating(true);
+    onVote();
+    setTimeout(() => setIsAnimating(false), 600);
+  };
+
+  return (
+    <motion.button
+      whileTap={{ scale: 0.9 }}
+      whileHover={{ scale: 1.05 }}
+      onClick={handleClick}
+      className={`${s.padding} rounded-full bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold ${s.text} shadow-md shadow-rose-500/25 hover:shadow-rose-500/40 transition-all duration-300 flex items-center gap-1.5 relative overflow-visible flex-shrink-0`}
+    >
+      {/* Burst particles */}
+      <AnimatePresence>
+        {isAnimating && (
+          <>
+            {[...Array(6)].map((_, i) => (
+              <motion.div
+                key={i}
+                initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
+                animate={{ 
+                  scale: [0, 1, 0],
+                  x: Math.cos((i * 60) * Math.PI / 180) * 30,
+                  y: Math.sin((i * 60) * Math.PI / 180) * 30,
+                  opacity: [1, 1, 0]
+                }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+                className="absolute w-1.5 h-1.5 rounded-full bg-yellow-300"
+                style={{ pointerEvents: 'none' }}
+              />
+            ))}
+          </>
+        )}
+      </AnimatePresence>
+      
+      {/* Vote count */}
+      <motion.span 
+        key={votes}
+        initial={{ scale: 1.3 }}
+        animate={{ scale: 1 }}
+        className="font-black"
+      >
+        {votes}
+      </motion.span>
+      
+      {/* Icon with animation */}
+      <motion.div
+        animate={isAnimating ? { 
+          y: [0, -4, 0],
+          scale: [1, 1.2, 1]
+        } : {}}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+      >
+        <UpvoteIcon size={s.icon} />
+      </motion.div>
+    </motion.button>
+  );
 };
 
 const App = () => {
@@ -115,7 +216,7 @@ const App = () => {
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            className="w-16 h-16 border-4 border-black border-t-yellow-400 rounded-full mx-auto mb-4"
+            className="w-16 h-16 border-4 border-black border-t-teal-400 rounded-full mx-auto mb-4"
           />
           <p className="font-black uppercase text-zinc-600">Loading disasters...</p>
         </motion.div>
@@ -124,13 +225,13 @@ const App = () => {
   }
 
   return (
-    <div className={`relative min-h-screen font-sans selection:bg-yellow-400 overflow-x-hidden transition-colors duration-500 ${darkMode ? 'bg-slate-950 text-white' : 'bg-gradient-to-br from-rose-50 via-pink-50 to-amber-50 text-zinc-900'}`}>
+    <div className={`relative min-h-screen font-sans selection:bg-teal-400 overflow-x-hidden transition-colors duration-500 ${darkMode ? 'bg-slate-950 text-white' : 'bg-gradient-to-br from-slate-50 via-zinc-50 to-stone-100 text-zinc-900'}`}>
       
       {/* Animated Dark Mode Background */}
       {darkMode && (
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
           {/* Mesh gradient base */}
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-950/80 via-slate-950 to-indigo-950/80" />
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-zinc-900 to-slate-950" />
           
           {/* Animated orbs */}
           <motion.div 
@@ -140,7 +241,7 @@ const App = () => {
               scale: [1, 1.2, 0.9, 1]
             }}
             transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl"
+            className="absolute top-1/4 left-1/4 w-96 h-96 bg-teal-600/20 rounded-full blur-3xl"
           />
           <motion.div 
             animate={{ 
@@ -149,7 +250,7 @@ const App = () => {
               scale: [1.2, 1, 1.2]
             }}
             transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-pink-600/15 rounded-full blur-3xl"
+            className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-rose-500/15 rounded-full blur-3xl"
           />
           <motion.div 
             animate={{ 
@@ -157,7 +258,7 @@ const App = () => {
               y: [0, -40, 40, 0]
             }}
             transition={{ duration: 30, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-1/2 right-1/3 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl"
+            className="absolute top-1/2 right-1/3 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl"
           />
           <motion.div 
             animate={{ 
@@ -165,7 +266,7 @@ const App = () => {
               y: [0, 80, 0]
             }}
             transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute bottom-1/3 left-1/3 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl"
+            className="absolute bottom-1/3 left-1/3 w-72 h-72 bg-cyan-500/10 rounded-full blur-3xl"
           />
           
           {/* Subtle grid pattern */}
@@ -178,24 +279,24 @@ const App = () => {
           />
           
           {/* Top and bottom glow */}
-          <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-purple-900/30 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-indigo-900/20 to-transparent" />
+          <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-teal-900/20 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-slate-900/20 to-transparent" />
         </div>
       )}
       
       {/* --- COMPACT HEADER --- */}
-      <header className="relative z-10 bg-gradient-to-r from-zinc-950 via-purple-950 to-zinc-900 text-white py-6 px-4 overflow-hidden">
+      <header className="relative z-10 bg-gradient-to-r from-zinc-900 via-slate-800 to-zinc-900 text-white py-6 px-4 overflow-hidden">
         {/* Animated Gradient Orbs - Smaller */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <motion.div 
             animate={{ x: [0, 50, 0], y: [0, -30, 0] }}
             transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -top-20 left-1/4 w-64 h-64 bg-purple-500/30 rounded-full blur-3xl"
+            className="absolute -top-20 left-1/4 w-64 h-64 bg-teal-500/30 rounded-full blur-3xl"
           />
           <motion.div 
             animate={{ x: [0, -40, 0], y: [0, 30, 0] }}
             transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -bottom-20 right-1/4 w-48 h-48 bg-pink-500/20 rounded-full blur-3xl"
+            className="absolute -bottom-20 right-1/4 w-48 h-48 bg-rose-500/20 rounded-full blur-3xl"
           />
         </div>
 
@@ -208,18 +309,18 @@ const App = () => {
                 initial={{ scale: 0, rotate: -180 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: "spring", stiffness: 200 }}
-                className="hidden md:flex p-3 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-2xl shadow-lg shadow-yellow-500/30"
+                className="hidden md:flex p-3 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-xl shadow-lg shadow-teal-500/30"
               >
-                <Siren size={28} className="text-black" />
+                <Siren size={24} className="text-white" />
               </motion.div>
               <div>
                 <motion.h1 
                   initial={{ x: -20, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
-                  className="text-3xl md:text-4xl font-black uppercase tracking-tight leading-none"
+                  className="text-2xl md:text-3xl font-black uppercase tracking-tight leading-none"
                 >
                   <span className="text-white">MARKMY</span>
-                  <span className="text-yellow-400">POTHOLE</span>
+                  <span className="text-teal-400">POTHOLE</span>
                 </motion.h1>
                 <motion.p 
                   initial={{ opacity: 0 }}
@@ -241,7 +342,7 @@ const App = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowUpload(true)}
-                className="flex items-center gap-2 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-black font-bold py-3 px-5 rounded-xl shadow-lg shadow-yellow-500/30 transition-all"
+                className="flex items-center gap-2 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-400 hover:to-pink-400 text-white font-bold py-3 px-5 rounded-xl shadow-lg shadow-rose-500/30 transition-all"
               >
                 <Camera size={20} strokeWidth={2.5} />
                 <span className="hidden sm:inline">REPORT</span>
@@ -258,7 +359,7 @@ const App = () => {
                 title={darkMode ? 'Light Mode' : 'Dark Mode'}
               >
                 {darkMode ? (
-                  <Sun size={20} className="text-yellow-400" />
+                  <Sun size={20} className="text-amber-400" />
                 ) : (
                   <Moon size={20} className="text-zinc-300" />
                 )}
@@ -268,46 +369,155 @@ const App = () => {
         </div>
       </header>
 
-      <main className="relative z-10 max-w-6xl mx-auto px-4 py-8 pb-16">
+      {/* Animated Light Mode Background */}
+      {!darkMode && (
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          <motion.div 
+            animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
+            transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-20 left-10 w-72 h-72 bg-gradient-to-br from-rose-200/40 to-pink-200/30 rounded-full blur-3xl"
+          />
+          <motion.div 
+            animate={{ x: [0, -40, 0], y: [0, 30, 0] }}
+            transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute bottom-40 right-10 w-80 h-80 bg-gradient-to-br from-teal-200/30 to-cyan-200/20 rounded-full blur-3xl"
+          />
+          <motion.div 
+            animate={{ x: [0, 20, -20, 0], y: [0, -30, 0] }}
+            transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-1/2 left-1/3 w-64 h-64 bg-gradient-to-br from-amber-100/30 to-orange-100/20 rounded-full blur-3xl"
+          />
+        </div>
+      )}
+
+      {/* 🔥 HERO STATS BAR */}
+      <div className={`relative z-10 ${darkMode ? 'bg-gradient-to-r from-zinc-900/80 via-slate-800/80 to-zinc-900/80 border-b border-zinc-700/50' : 'bg-gradient-to-r from-white/70 via-zinc-50/80 to-white/70 border-b border-zinc-200/50'} backdrop-blur-lg`}>
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <div className="flex flex-wrap justify-center gap-6 md:gap-12">
+            {/* Total Reports */}
+            <motion.div 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="text-center"
+            >
+              <motion.span 
+                key={reports.length}
+                initial={{ scale: 1.5, color: '#f43f5e' }}
+                animate={{ scale: 1, color: darkMode ? '#fff' : '#18181b' }}
+                className="block text-3xl md:text-4xl font-black"
+              >
+                {reports.length}
+              </motion.span>
+              <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                🕳️ Disasters Exposed
+              </span>
+            </motion.div>
+            
+            {/* Total Upvotes */}
+            <motion.div 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="text-center"
+            >
+              <motion.span 
+                key={reports.reduce((sum, r) => sum + r.votes, 0)}
+                initial={{ scale: 1.5, color: '#14b8a6' }}
+                animate={{ scale: 1, color: darkMode ? '#fff' : '#18181b' }}
+                className="block text-3xl md:text-4xl font-black"
+              >
+                {reports.reduce((sum, r) => sum + r.votes, 0)}
+              </motion.span>
+              <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                🔥 Angry Upvotes
+              </span>
+            </motion.div>
+            
+            {/* Fixed (humorous) */}
+            <motion.div 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="text-center"
+            >
+              <span className={`block text-3xl md:text-4xl font-black ${darkMode ? 'text-rose-400' : 'text-rose-500'}`}>
+                0
+              </span>
+              <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                🛠️ Fixed (lol)
+              </span>
+            </motion.div>
+          </div>
+        </div>
+      </div>
+
+      {/* 🎢 SCROLLING MARQUEE TICKER */}
+      <div className={`relative z-10 overflow-hidden py-3 ${darkMode ? 'bg-zinc-900/90 border-y border-zinc-800' : 'bg-zinc-100/90 border-y border-zinc-200'}`}>
+        <div className="animate-marquee whitespace-nowrap">
+          {[...Array(2)].map((_, i) => (
+            <span key={i} className={`inline-block mx-8 text-sm font-bold uppercase tracking-wider ${darkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>
+              🚨 POTHOLE CRISIS • 🕳️ ROADS ARE BROKEN • 💰 WHERE ARE OUR TAX DOLLARS? • 🚗 RIP SUSPENSION • ⚠️ DANGER ZONE • 
+              🔥 MOST WANTED POTHOLES • 😤 WE'RE MAD • 🛣️ FIX THE ROADS • 📢 CITIZENS UNITE • 🏆 HALL OF SHAME • 
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <main className="relative z-10 max-w-6xl mx-auto px-4 py-8 pb-16 noise-overlay">
         
         {/* --- HALL OF SHAME (TOP 3) --- */}
         {top3.length > 0 && (
-          <div className="mb-16">
+          <div className="mb-12 flex gap-4">
+            {/* Vertical Title - Left Side */}
             <motion.div 
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              className="flex items-center gap-4 mb-8"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="hidden md:flex flex-col items-center justify-center"
             >
-              <motion.div
-                animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.1, 1] }}
-                transition={{ duration: 3, repeat: Infinity }}
-                className="p-3 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-2xl shadow-lg shadow-yellow-500/30"
+              <div 
+                className="flex items-center gap-3"
+                style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
               >
-                <Trophy className="text-black" size={28} />
-              </motion.div>
-              <div>
-                <h2 className={`text-3xl md:text-4xl font-black uppercase tracking-tight ${darkMode ? 'text-white' : 'text-zinc-800'}`}>
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="p-2 bg-gradient-to-br from-rose-500 to-pink-600 rounded-xl shadow-lg shadow-rose-500/30"
+                >
+                  <Trophy className="text-white" size={20} />
+                </motion.div>
+                <h2 className={`text-xl font-black uppercase tracking-widest ${darkMode ? 'text-white' : 'text-zinc-800'}`}
+                  style={{ transform: 'rotate(180deg)' }}
+                >
                   Hall of Shame
                 </h2>
-                <p className={`text-sm font-medium ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Top voted potholes this week</p>
               </div>
             </motion.div>
 
-            {/* Podium Container - Arc/Curved arrangement */}
-            <div className={`relative pt-12 pb-12 px-4 md:px-8 rounded-[60px] ${darkMode ? 'bg-gradient-to-b from-purple-900/40 to-indigo-900/30 border border-purple-700/30' : 'bg-gradient-to-b from-amber-100/80 to-orange-50/50 border border-amber-200/50'}`}>
-              {/* Top edge highlight */}
-              <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-1 rounded-full ${darkMode ? 'bg-gradient-to-r from-transparent via-purple-400 to-transparent' : 'bg-gradient-to-r from-transparent via-amber-400 to-transparent'}`} />
+            {/* Mobile Title */}
+            <div className="md:hidden w-full text-center mb-4">
+              <h2 className={`text-xl font-black uppercase ${darkMode ? 'text-white' : 'text-zinc-800'}`}>
+                🏆 Hall of Shame
+              </h2>
+            </div>
+
+            {/* Content Area */}
+            <div className="flex-1">
+              {/* Podium Container */}
+              <div className={`relative py-6 px-3 md:px-6 rounded-3xl ${darkMode ? 'bg-gradient-to-b from-slate-800/60 to-zinc-800/40 border border-zinc-700/30' : 'bg-gradient-to-b from-zinc-100/80 to-slate-50/50 border border-zinc-200/50'}`}>
+                {/* Top edge highlight */}
+                <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-0.5 rounded-full ${darkMode ? 'bg-gradient-to-r from-transparent via-rose-400 to-transparent' : 'bg-gradient-to-r from-transparent via-rose-400 to-transparent'}`} />
               
-              {/* Arc Layout with 3 cards */}
-              <div className="flex justify-center items-end gap-2 md:gap-4 max-w-4xl mx-auto">
-                {/* 2nd Place - Left, rotated inward */}
+              {/* Mobile: Vertical stack, Desktop: Arc Layout */}
+              <div className="flex flex-col md:flex-row justify-center items-center md:items-end gap-4 md:gap-4 max-w-4xl mx-auto">
+                {/* 2nd Place - Left on desktop, second on mobile */}
                 {top3[1] && (
                   <motion.div 
-                    initial={{ opacity: 0, x: -50, rotate: -15 }}
-                    animate={{ opacity: 1, x: 0, rotate: -6 }}
+                    initial={{ opacity: 0, x: -50 }}
+                    animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2, type: "spring" }}
-                    className="flex-1 max-w-[280px] origin-bottom transform translate-y-4"
-                    style={{ transform: 'rotate(-6deg) translateY(16px)' }}
+                    className="w-full md:flex-1 max-w-[280px] order-2 md:order-1"
+                    style={{ transform: 'md:rotate(-6deg) md:translateY(16px)' }}
                   >
                     <HallOfShameCard 
                       data={top3[1]} 
@@ -319,14 +529,13 @@ const App = () => {
                   </motion.div>
                 )}
                 
-                {/* 1st Place - Center, elevated and straight */}
+                {/* 1st Place - Center on desktop, first on mobile */}
                 {top3[0] && (
                   <motion.div 
                     initial={{ opacity: 0, y: 50, scale: 0.8 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
-                    className="flex-1 max-w-[320px] z-10"
-                    style={{ transform: 'translateY(-24px)' }}
+                    className="w-full md:flex-1 max-w-[320px] z-10 order-1 md:order-2"
                   >
                     <HallOfShameCard 
                       data={top3[0]} 
@@ -338,14 +547,13 @@ const App = () => {
                   </motion.div>
                 )}
                 
-                {/* 3rd Place - Right, rotated inward */}
+                {/* 3rd Place - Right on desktop, third on mobile */}
                 {top3[2] && (
                   <motion.div 
-                    initial={{ opacity: 0, x: 50, rotate: 15 }}
-                    animate={{ opacity: 1, x: 0, rotate: 6 }}
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.3, type: "spring" }}
-                    className="flex-1 max-w-[280px] origin-bottom"
-                    style={{ transform: 'rotate(6deg) translateY(16px)' }}
+                    className="w-full md:flex-1 max-w-[280px] order-3"
                   >
                     <HallOfShameCard 
                       data={top3[2]} 
@@ -357,36 +565,37 @@ const App = () => {
                   </motion.div>
                 )}
               </div>
+              </div>
             </div>
           </div>
         )}
 
         {/* --- RECENT REPORTS (Grid of larger cards) --- */}
         {theRest.length > 0 && (
-          <div>
+          <div className="mt-8">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-4 mb-8"
+              className="flex flex-col items-center text-center mb-4"
             >
-              <motion.div
-                animate={{ rotate: [0, -5, 5, 0] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="p-3 bg-gradient-to-br from-pink-500 to-rose-600 rounded-2xl shadow-lg shadow-pink-500/30"
-              >
-                <Megaphone className="text-white" size={24} />
-              </motion.div>
-              <div>
-                <h2 className={`text-2xl md:text-3xl font-black uppercase tracking-tight ${darkMode ? 'text-white' : 'text-zinc-800'}`}>
+              <div className="flex items-center gap-2 mb-1">
+                <motion.div
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="p-2 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg shadow-md shadow-teal-500/30"
+                >
+                  <Megaphone className="text-white" size={18} />
+                </motion.div>
+                <h2 className={`text-xl md:text-2xl font-black uppercase tracking-tight ${darkMode ? 'text-white' : 'text-zinc-800'}`}>
                   Recent Reports
                 </h2>
-                <p className={`text-sm font-medium ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                  {theRest.length} more potholes awaiting justice
-                </p>
               </div>
+              <p className={`text-xs font-medium ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                📢 {theRest.length} more awaiting justice
+              </p>
             </motion.div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <AnimatePresence>
                 {theRest.map((hole, index) => (
                   <ReportCard 
@@ -433,17 +642,36 @@ const App = () => {
         )}
       </AnimatePresence>
 
+      {/* 📱 FLOATING ACTION BUTTON (Mobile) */}
+      <motion.button
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 1, type: "spring", stiffness: 200 }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={() => setShowUpload(true)}
+        className="fixed bottom-6 right-6 z-40 md:hidden w-16 h-16 rounded-full bg-gradient-to-br from-rose-500 via-pink-500 to-rose-600 text-white shadow-2xl shadow-rose-500/50 flex items-center justify-center"
+      >
+        {/* Pulsing ring */}
+        <motion.div
+          animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="absolute inset-0 rounded-full bg-rose-500"
+        />
+        <Camera size={28} className="relative z-10" />
+      </motion.button>
+
       {/* Footer */}
-      <footer className="relative z-10 bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 py-12 text-center border-t border-zinc-800">
+      <footer className={`relative z-10 py-12 text-center border-t ${darkMode ? 'bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 border-zinc-800' : 'bg-gradient-to-r from-zinc-100 via-white to-zinc-100 border-zinc-200'}`}>
         <motion.p 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="text-zinc-500 text-sm font-medium tracking-wide mb-2"
+          className={`text-sm font-medium tracking-wide mb-2 ${darkMode ? 'text-zinc-500' : 'text-zinc-600'}`}
         >
           Built because my suspension broke 🚗💔
         </motion.p>
-        <p className="text-zinc-700 text-xs">Made with frustration and React</p>
+        <p className={`text-xs ${darkMode ? 'text-zinc-700' : 'text-zinc-500'}`}>Made with frustration and React</p>
       </footer>
     </div>
   );
@@ -456,9 +684,9 @@ const HallOfShameCard = ({ data, rank, onVote, onSelect, darkMode }) => {
   
   // Badge colors and emojis based on rank
   const rankStyles = {
-    1: { gradient: 'from-yellow-400 via-amber-500 to-orange-500', shadow: 'shadow-yellow-500/40', emoji: '👑' },
+    1: { gradient: 'from-rose-500 via-pink-500 to-rose-600', shadow: 'shadow-rose-500/40', emoji: '👑' },
     2: { gradient: 'from-zinc-300 via-slate-400 to-zinc-500', shadow: 'shadow-zinc-400/30', emoji: '🥈' },
-    3: { gradient: 'from-amber-600 via-orange-700 to-amber-800', shadow: 'shadow-amber-600/30', emoji: '🥉' },
+    3: { gradient: 'from-orange-500 via-amber-600 to-orange-600', shadow: 'shadow-orange-500/30', emoji: '🥉' },
   };
   
   const style = rankStyles[rank] || rankStyles[3];
@@ -476,15 +704,18 @@ const HallOfShameCard = ({ data, rank, onVote, onSelect, darkMode }) => {
         hover: { duration: 0.3 }
       }}
       className={`
-        relative p-4 rounded-3xl flex flex-col h-full transition-all duration-300 cursor-pointer
+        relative p-4 rounded-3xl flex flex-col h-full transition-all duration-500 cursor-pointer group/card
         ${darkMode 
-          ? 'bg-gradient-to-br from-zinc-900 to-zinc-800 border border-zinc-700/50' 
-          : 'bg-white border border-zinc-200/50'}
+          ? 'bg-zinc-900/70 backdrop-blur-xl border border-zinc-700/50 hover:border-teal-500/50' 
+          : 'bg-white/70 backdrop-blur-xl border border-zinc-200/50 hover:border-rose-300'}
         ${rank === 1 
-          ? 'shadow-2xl shadow-yellow-500/20 ring-2 ring-yellow-400/30' 
-          : 'shadow-xl shadow-black/10'}
+          ? 'shadow-2xl shadow-rose-500/20 ring-2 ring-rose-400/30 hover:shadow-rose-500/40' 
+          : 'shadow-xl shadow-black/10 hover:shadow-2xl'}
       `}
     >
+      {/* Hover glow effect */}
+      <div className={`absolute inset-0 rounded-3xl opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 ${rank === 1 ? 'bg-gradient-to-br from-rose-500/5 to-transparent' : 'bg-gradient-to-br from-teal-500/5 to-transparent'}`} />
+      
       {/* Public Enemy Badge - All Ranks */}
       <motion.div 
         initial={{ scale: 0, rotate: -10 }}
@@ -501,13 +732,19 @@ const HallOfShameCard = ({ data, rank, onVote, onSelect, darkMode }) => {
         Public Enemy #{rank}
       </motion.div>
 
-      {/* Image */}
+      {/* Image with parallax-style hover */}
       <div 
         onClick={() => onSelect(data)}
         className={`relative aspect-square rounded-2xl overflow-hidden mb-4 group cursor-pointer ring-1 ${darkMode ? 'bg-zinc-800 ring-zinc-700' : 'bg-zinc-100 ring-zinc-200'}`}
       >
-        <img src={data.image_url} alt={data.location} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-        <div className={`absolute top-3 left-3 ${sizeInfo.color} text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full shadow-lg`}>
+        <motion.img 
+          src={data.image_url} 
+          alt={data.location} 
+          className="w-full h-full object-cover"
+          whileHover={{ scale: 1.15 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        />
+        <div className={`absolute top-3 left-3 ${sizeInfo.color} text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full shadow-lg backdrop-blur-sm`}>
           {sizeInfo.emoji} {sizeInfo.label}
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4">
@@ -517,24 +754,16 @@ const HallOfShameCard = ({ data, rank, onVote, onSelect, darkMode }) => {
         </div>
       </div>
 
-      <h3 className="text-lg font-bold leading-tight mb-1 truncate">{sizeInfo.title}</h3>
-      <div className={`flex items-center gap-1.5 text-xs mb-4 ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
-        <MapPin size={12} /> {data.location}
-      </div>
-
-      <div className={`mt-auto flex items-center justify-between rounded-2xl p-3 ${darkMode ? 'bg-zinc-800/50' : 'bg-zinc-50'}`}>
-        <div>
-          <span className="block text-2xl font-bold leading-none">{data.votes}</span>
-          <span className={`text-[10px] font-medium ${darkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>Votes</span>
+      {/* Compact info row: Title + Location + Vote */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm font-bold leading-tight truncate">{sizeInfo.title}</h3>
+          <div className={`flex items-center gap-1 text-xs truncate ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+            <MapPin size={10} className="flex-shrink-0" /> 
+            <span className="truncate">{getDisplayLocation(data.location)}</span>
+          </div>
         </div>
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          whileHover={{ scale: 1.1, rotate: 5 }}
-          onClick={(e) => { e.stopPropagation(); onVote(); }}
-          className="p-3 rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 text-black shadow-lg shadow-yellow-500/30 hover:shadow-yellow-500/50 transition-shadow"
-        >
-          <ArrowBigUp size={22} />
-        </motion.button>
+        <UpvoteButton onVote={onVote} votes={data.votes} size="sm" />
       </div>
     </motion.div>
   );
@@ -579,19 +808,11 @@ const FeedCard = ({ data, onVote, onSelect, darkMode }) => {
         </div>
         <h3 className="text-sm font-bold leading-tight mb-1 truncate">{data.severity}</h3>
         <p className={`text-xs flex items-center gap-1 ${darkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>
-          <MapPin size={10} /> {data.location}
+          <MapPin size={10} /> {getDisplayLocation(data.location)}
         </p>
       </div>
 
-      <motion.button 
-        whileTap={{ scale: 0.9 }}
-        whileHover={{ scale: 1.1 }}
-        onClick={(e) => { e.stopPropagation(); onVote(); }}
-        className="flex flex-col items-center gap-1 p-3 rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 text-black shadow-md shadow-yellow-500/20 hover:shadow-yellow-500/40 transition-shadow"
-      >
-        <ThumbsUp size={18} />
-        <span className="font-bold text-xs">{data.votes}</span>
-      </motion.button>
+      <UpvoteButton onVote={onVote} votes={data.votes} size="sm" />
     </motion.div>
   );
 };
@@ -604,56 +825,57 @@ const ReportCard = ({ data, index, onVote, onSelect, darkMode }) => {
     <motion.div 
       layout
       layoutId={`report-${data.id}`}
-      initial={{ opacity: 0, y: 30, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
+      initial={{ opacity: 0, y: 30, scale: 0.9, filter: 'blur(10px)' }}
+      animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
       exit={{ opacity: 0, scale: 0.9 }}
-      whileHover={{ y: -6, scale: 1.02 }}
+      whileHover={{ y: -8, scale: 1.02 }}
       transition={{ 
         layout: { type: "spring", stiffness: 400, damping: 35 },
-        delay: index * 0.05
+        delay: index * 0.08
       }}
       className={`
-        relative p-4 rounded-3xl flex flex-col transition-all duration-300 cursor-pointer
+        relative p-4 rounded-3xl flex flex-col transition-all duration-500 cursor-pointer group/card
         ${darkMode 
-          ? 'bg-gradient-to-br from-zinc-900 to-zinc-800 border border-zinc-700/50 hover:border-zinc-600' 
-          : 'bg-white border border-zinc-200/50 hover:border-zinc-300'}
-        shadow-lg hover:shadow-xl
+          ? 'bg-zinc-900/70 backdrop-blur-xl border border-zinc-700/50 hover:border-teal-500/50' 
+          : 'bg-white/70 backdrop-blur-xl border border-zinc-200/50 hover:border-rose-300'}
+        shadow-lg hover:shadow-2xl
       `}
     >
-      {/* Image */}
+      {/* Hover glow */}
+      <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-teal-500/5 via-transparent to-rose-500/5 opacity-0 group-hover/card:opacity-100 transition-opacity duration-500" />
+      
+      {/* Image with zoom effect */}
       <div 
         onClick={() => onSelect(data)}
         className={`relative aspect-square rounded-2xl overflow-hidden mb-4 group cursor-pointer ring-1 ${darkMode ? 'bg-zinc-800 ring-zinc-700' : 'bg-zinc-100 ring-zinc-200'}`}
       >
-        <img src={data.image_url} alt={data.location} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-        <div className={`absolute top-3 left-3 ${sizeInfo.color} text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full shadow-lg`}>
+        <motion.img 
+          src={data.image_url} 
+          alt={data.location} 
+          className="w-full h-full object-cover"
+          whileHover={{ scale: 1.15 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        />
+        <div className={`absolute top-3 left-3 ${sizeInfo.color} text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full shadow-lg backdrop-blur-sm`}>
           {sizeInfo.emoji} {sizeInfo.label}
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4">
-          <span className="text-white text-sm font-medium flex items-center gap-2">
+          <span className="text-white text-sm font-medium flex items-center gap-2 backdrop-blur-sm bg-black/20 px-3 py-1.5 rounded-full">
             <ZoomIn className="w-4 h-4" /> View Details
           </span>
         </div>
       </div>
 
-      <h3 className="text-base font-bold leading-tight mb-1 truncate">{sizeInfo.title}</h3>
-      <div className={`flex items-center gap-1.5 text-xs mb-4 ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
-        <MapPin size={12} /> {data.location}
-      </div>
-
-      <div className={`mt-auto flex items-center justify-between rounded-2xl p-3 ${darkMode ? 'bg-zinc-800/50' : 'bg-zinc-50'}`}>
-        <div>
-          <span className="block text-xl font-bold leading-none">{data.votes}</span>
-          <span className={`text-[10px] font-medium ${darkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>Votes</span>
+      {/* Compact info row: Title + Location + Vote */}
+      <div className="flex items-center justify-between gap-3 relative z-10">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm font-bold leading-tight truncate">{sizeInfo.title}</h3>
+          <div className={`flex items-center gap-1 text-xs truncate ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+            <MapPin size={10} className="flex-shrink-0" /> 
+            <span className="truncate">{getDisplayLocation(data.location)}</span>
+          </div>
         </div>
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          whileHover={{ scale: 1.1, rotate: 5 }}
-          onClick={(e) => { e.stopPropagation(); onVote(); }}
-          className="p-3 rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 text-black shadow-lg shadow-yellow-500/30 hover:shadow-yellow-500/50 transition-shadow"
-        >
-          <ArrowBigUp size={20} />
-        </motion.button>
+        <UpvoteButton onVote={onVote} votes={data.votes} size="sm" />
       </div>
     </motion.div>
   );
@@ -685,7 +907,7 @@ const PotholeDetailModal = ({ data, onClose, onVote }) => {
         exit={{ scale: 0.5, opacity: 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 25 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-white w-full max-w-4xl rounded-2xl md:rounded-3xl border-4 border-black shadow-[8px_8px_0px_0px_#FFFF00] md:shadow-[12px_12px_0px_0px_#FFFF00] overflow-hidden max-h-[95vh] flex flex-col md:flex-row"
+        className="bg-white w-full max-w-4xl rounded-2xl md:rounded-3xl border-4 border-zinc-800 shadow-[8px_8px_0px_0px_#14b8a6] md:shadow-[12px_12px_0px_0px_#14b8a6] overflow-hidden max-h-[95vh] flex flex-col md:flex-row"
       >
         {/* Image Section - Takes most space */}
         <div className="relative bg-zinc-900 overflow-hidden flex-1 min-h-[250px] md:min-h-[450px]">
@@ -768,7 +990,7 @@ const PotholeDetailModal = ({ data, onClose, onVote }) => {
           {/* Title */}
           <h2 className="text-xl md:text-2xl font-black uppercase leading-tight mb-1">{sizeInfo.title}</h2>
           <div className="flex items-center gap-1 text-zinc-500 font-bold text-xs mb-4">
-            <MapPin size={12} /> {data.location}
+            <MapPin size={12} /> {getDisplayLocation(data.location)}
           </div>
 
           {/* Stats */}
@@ -790,22 +1012,14 @@ const PotholeDetailModal = ({ data, onClose, onVote }) => {
           </div>
 
           {/* Vote Section */}
-          <div className="bg-yellow-100 rounded-xl p-3 border-2 border-yellow-300">
-            <div className="flex items-center justify-between mb-3">
+          <div className="bg-gradient-to-br from-rose-50 to-pink-50 rounded-2xl p-4 border border-rose-200/50">
+            <div className="flex items-center justify-between">
               <div>
-                <span className="block text-3xl font-black leading-none text-yellow-800">{data.votes}</span>
-                <span className="text-[10px] font-bold uppercase text-yellow-600">Angry Voters</span>
+                <span className="text-sm font-bold uppercase text-rose-400">Angry Voters</span>
+                <span className="block text-3xl font-black text-rose-600">🔥 {data.votes}</span>
               </div>
+              <UpvoteButton onVote={onVote} votes={data.votes} size="md" />
             </div>
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              whileHover={{ scale: 1.02 }}
-              onClick={onVote}
-              className="w-full bg-black text-white font-black uppercase py-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-[4px_4px_0px_0px_#ca8a04] border-2 border-black"
-            >
-              <ArrowBigUp size={20} />
-              UPVOTE THIS HOLE
-            </motion.button>
           </div>
         </div>
       </motion.div>
@@ -823,7 +1037,26 @@ const UploadModal = ({ onClose, onSubmit }) => {
   const [uploading, setUploading] = useState(false);
   const [fetchingLocation, setFetchingLocation] = useState(false);
   const [error, setError] = useState('');
+  const [validating, setValidating] = useState(false);
+  const [model, setModel] = useState(null);
   const fileInputRef = useRef(null);
+  const imageRef = useRef(null);
+
+  // Load the Teachable Machine model on mount
+  useEffect(() => {
+    const loadModel = async () => {
+      try {
+        const modelURL = '/pothole_model/model.json';
+        const metadataURL = '/pothole_model/metadata.json';
+        const loadedModel = await window.tmImage.load(modelURL, metadataURL);
+        setModel(loadedModel);
+        console.log('Pothole detection model loaded!');
+      } catch (err) {
+        console.error('Failed to load model:', err);
+      }
+    };
+    loadModel();
+  }, []);
 
   const getLocation = async () => {
     if (!navigator.geolocation) {
@@ -902,13 +1135,76 @@ const UploadModal = ({ onClose, onSubmit }) => {
     }
   };
 
-  const handleFile = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImgFile(file);
-      setImgPreview(URL.createObjectURL(file));
-      setStep(2);
+  // Validate image using Teachable Machine model
+  const validateImage = async (imageElement) => {
+    if (!model) {
+      console.warn('Model not loaded, skipping validation');
+      return true; // Allow if model failed to load
     }
+
+    try {
+      const predictions = await model.predict(imageElement);
+      console.log('Predictions:', predictions);
+
+      // Find the pothole prediction
+      const potholePrediction = predictions.find(p => p.className === 'Pothole');
+      const nonPotholePrediction = predictions.find(p => p.className === 'Non Pothole');
+
+      console.log('Pothole confidence:', potholePrediction?.probability);
+      console.log('Non-Pothole confidence:', nonPotholePrediction?.probability);
+
+      // Require at least 60% confidence that it's a pothole
+      if (potholePrediction && potholePrediction.probability >= 0.6) {
+        return true;
+      }
+
+      return false;
+    } catch (err) {
+      console.error('Validation error:', err);
+      return true; // Allow on error
+    }
+  };
+
+  const handleFile = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setError('');
+    setValidating(true);
+    
+    // Create preview URL
+    const previewUrl = URL.createObjectURL(file);
+    setImgPreview(previewUrl);
+
+    // Create an image element for validation
+    const img = new Image();
+    img.src = previewUrl;
+
+    img.onload = async () => {
+      const isPothole = await validateImage(img);
+
+      if (isPothole) {
+        setImgFile(file);
+        setStep(2);
+        setValidating(false);
+      } else {
+        // Not a pothole - reject!
+        setError('🚫 This doesn\'t look like a pothole! Please upload an image of an actual pothole.');
+        setImgPreview(null);
+        setImgFile(null);
+        setValidating(false);
+        // Reset file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      }
+    };
+
+    img.onerror = () => {
+      setError('Failed to load image. Please try another.');
+      setImgPreview(null);
+      setValidating(false);
+    };
   };
 
   const handleSubmit = async () => {
@@ -983,7 +1279,7 @@ const UploadModal = ({ onClose, onSubmit }) => {
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.9, opacity: 0, y: 20 }}
-        className="bg-white w-full max-w-sm rounded-2xl border-4 border-black shadow-[10px_10px_0px_0px_#FFFF00] overflow-hidden"
+        className="bg-white w-full max-w-sm rounded-2xl border-4 border-zinc-800 shadow-[10px_10px_0px_0px_#14b8a6] overflow-hidden"
       >
         {/* Modal Header */}
         <div className="bg-black p-3 flex justify-between items-center">
@@ -1004,15 +1300,36 @@ const UploadModal = ({ onClose, onSubmit }) => {
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              onClick={() => fileInputRef.current?.click()}
-              className="group cursor-pointer border-4 border-dashed border-zinc-200 hover:border-pink-500 bg-zinc-50 h-56 rounded-xl flex flex-col items-center justify-center transition-colors"
+              onClick={() => !validating && fileInputRef.current?.click()}
+              className={`group cursor-pointer border-4 border-dashed bg-zinc-50 h-56 rounded-xl flex flex-col items-center justify-center transition-colors ${
+                validating 
+                  ? 'border-teal-400 bg-teal-50' 
+                  : 'border-zinc-200 hover:border-rose-400'
+              }`}
             >
               <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFile} />
-              <div className="bg-white p-4 rounded-full border-2 border-zinc-100 shadow-lg mb-3 group-hover:scale-110 transition-transform">
-                <Camera size={32} className="text-zinc-400 group-hover:text-pink-500" />
-              </div>
-              <p className="font-bold text-zinc-400 uppercase text-sm group-hover:text-pink-600">Tap to Add Photo</p>
-              <p className="text-zinc-300 text-xs mt-1">Take photo or choose from library</p>
+              
+              {validating ? (
+                <>
+                  <motion.div 
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    className="bg-teal-400 p-4 rounded-full shadow-lg mb-3"
+                  >
+                    <Loader2 size={32} className="text-white" />
+                  </motion.div>
+                  <p className="font-bold text-teal-600 uppercase text-sm">Analyzing Image...</p>
+                  <p className="text-teal-500 text-xs mt-1">🤖 AI is checking for potholes</p>
+                </>
+              ) : (
+                <>
+                  <div className="bg-white p-4 rounded-full border-2 border-zinc-100 shadow-lg mb-3 group-hover:scale-110 transition-transform">
+                    <Camera size={32} className="text-zinc-400 group-hover:text-rose-500" />
+                  </div>
+                  <p className="font-bold text-zinc-400 uppercase text-sm group-hover:text-rose-500">Tap to Add Photo</p>
+                  <p className="text-zinc-300 text-xs mt-1">Take photo or choose from library</p>
+                </>
+              )}
             </motion.div>
           ) : (
             <motion.div 
@@ -1040,13 +1357,13 @@ const UploadModal = ({ onClose, onSubmit }) => {
                       key={s.level}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setSize(s.level)}
-                      className={`flex-1 py-2.5 rounded-lg border-2 font-bold text-xl transition-all ${size === s.level ? 'bg-pink-500 border-black text-white -translate-y-1 shadow-[3px_3px_0px_0px_#000]' : 'bg-white border-zinc-200 text-zinc-300 hover:border-zinc-400'}`}
+                      className={`flex-1 py-2.5 rounded-lg border-2 font-bold text-xl transition-all ${size === s.level ? 'bg-rose-500 border-zinc-800 text-white -translate-y-1 shadow-[3px_3px_0px_0px_#27272a]' : 'bg-white border-zinc-200 text-zinc-300 hover:border-zinc-400'}`}
                     >
                       {s.emoji}
                     </motion.button>
                   ))}
                 </div>
-                <div className="text-center mt-1.5 font-black uppercase text-pink-600 text-sm">
+                <div className="text-center mt-1.5 font-black uppercase text-rose-500 text-sm">
                   "{SIZES.find(s => s.level === size).title}"
                 </div>
               </div>
@@ -1060,17 +1377,17 @@ const UploadModal = ({ onClose, onSubmit }) => {
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     placeholder="e.g. 5th Avenue Intersection"
-                    className="flex-1 bg-zinc-100 border-2 border-transparent focus:bg-white focus:border-yellow-400 rounded-lg p-2.5 font-bold text-sm outline-none transition-colors"
+                    className="flex-1 bg-zinc-100 border-2 border-transparent focus:bg-white focus:border-teal-400 rounded-lg p-2.5 font-bold text-sm outline-none transition-colors"
                   />
                   <motion.button
                     type="button"
                     whileTap={{ scale: 0.9 }}
                     onClick={getLocation}
                     disabled={fetchingLocation}
-                    className={`px-3 rounded-lg border-2 border-black font-bold transition-all flex items-center justify-center ${
+                    className={`px-3 rounded-lg border-2 border-zinc-800 font-bold transition-all flex items-center justify-center ${
                       fetchingLocation 
                         ? 'bg-zinc-200 text-zinc-400 cursor-wait' 
-                        : 'bg-yellow-400 hover:bg-yellow-300 text-black hover:-translate-y-0.5 shadow-[2px_2px_0px_0px_#000]'
+                        : 'bg-teal-400 hover:bg-teal-300 text-white hover:-translate-y-0.5 shadow-[2px_2px_0px_0px_#27272a]'
                     }`}
                     title="Get current location"
                   >

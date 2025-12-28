@@ -28,3 +28,4 @@ yarn-error.log*
 .vscode/ # VS Code
 .DS_Store # macOS system files
 Thumbs.db # Windows system files
+node_modules

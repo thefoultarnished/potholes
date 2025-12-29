@@ -1273,16 +1273,26 @@ const UploadModal = ({ onClose, onSubmit, darkMode }) => {
   };
 
   const handleSubmit = async () => {
-    if (!imgFile) return;
+    if (!imgFile) {
+      setError('No image selected. Please add a photo first.');
+      return;
+    }
     
     setUploading(true);
     setError('');
 
     try {
-      const fileExt = imgFile.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
+      // Check if we have valid Supabase credentials
+      if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+        throw new Error('Configuration error: Missing Supabase credentials. Please check your environment variables.');
+      }
 
-      // Upload image
+      const fileExt = imgFile.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+
+      console.log('📤 Starting upload...', { fileName, fileSize: (imgFile.size / 1024).toFixed(1) + 'KB' });
+
+      // Upload image to storage
       const uploadResponse = await fetch(
         `${SUPABASE_URL}/storage/v1/object/potholes/${fileName}`,
         {
@@ -1296,17 +1306,34 @@ const UploadModal = ({ onClose, onSubmit, darkMode }) => {
         }
       );
 
-      if (!uploadResponse.ok) throw new Error('Upload failed');
+      if (!uploadResponse.ok) {
+        const errorText = await uploadResponse.text();
+        console.error('Upload failed:', uploadResponse.status, errorText);
+        
+        if (uploadResponse.status === 413) {
+          throw new Error('Image file is too large. Please try a smaller image.');
+        } else if (uploadResponse.status === 401 || uploadResponse.status === 403) {
+          throw new Error('Authentication failed. Please refresh the page and try again.');
+        } else if (uploadResponse.status === 500) {
+          throw new Error('Server error. Please try again in a moment.');
+        } else {
+          throw new Error(`Failed to upload image (Error ${uploadResponse.status}). Please try again.`);
+        }
+      }
+
+      console.log('✅ Image uploaded successfully');
 
       const imageUrl = `${SUPABASE_URL}/storage/v1/object/public/potholes/${fileName}`;
       const sizeData = SIZES.find(s => s.level === size);
       
       const newPothole = {
         image_url: imageUrl,
-        location: location || "Somewhere On Earth",
+        location: location.trim() || "Unknown Location",
         severity: sizeData.dbLabel,
         votes: 1
       };
+
+      console.log('📝 Saving to database...');
 
       // Insert to database
       const insertResponse = await fetch(`${SUPABASE_URL}/rest/v1/potholes`, {
@@ -1320,14 +1347,32 @@ const UploadModal = ({ onClose, onSubmit, darkMode }) => {
         body: JSON.stringify(newPothole)
       });
 
-      if (!insertResponse.ok) throw new Error('Database insert failed');
+      if (!insertResponse.ok) {
+        const errorText = await insertResponse.text();
+        console.error('Database insert failed:', insertResponse.status, errorText);
+        
+        if (insertResponse.status === 401 || insertResponse.status === 403) {
+          throw new Error('Permission denied. Please refresh and try again.');
+        } else {
+          throw new Error(`Failed to save report (Error ${insertResponse.status}). The image was uploaded but the report wasn't saved.`);
+        }
+      }
 
       const [created] = await insertResponse.json();
+      console.log('✅ Report saved successfully:', created.id);
       onSubmit(created);
 
     } catch (err) {
       console.error('Upload error:', err);
-      setError(err.message);
+      
+      // Handle specific error types
+      if (err.name === 'TypeError' && err.message.includes('fetch')) {
+        setError('Network error. Please check your internet connection and try again.');
+      } else if (err.name === 'AbortError') {
+        setError('Upload timed out. Please try again with a smaller image.');
+      } else {
+        setError(err.message || 'An unexpected error occurred. Please try again.');
+      }
     } finally {
       setUploading(false);
     }
@@ -1338,27 +1383,44 @@ const UploadModal = ({ onClose, onSubmit, darkMode }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl"
     >
       <motion.div 
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.9, opacity: 0, y: 20 }}
-        className={`w-full max-w-sm rounded-2xl border-2 overflow-hidden ${darkMode ? 'bg-zinc-900 border-zinc-700' : 'bg-white border-zinc-800'}`}
+        className={`w-full max-w-sm rounded-2xl backdrop-blur-xl border overflow-hidden shadow-2xl ${darkMode 
+          ? 'bg-zinc-900/90 border-white/10' 
+          : 'bg-white/90 border-black/10'}`}
       >
         {/* Modal Header */}
-        <div className={`p-3 flex justify-between items-center ${darkMode ? 'bg-zinc-800 border-b border-zinc-700' : 'bg-zinc-900'}`}>
-          <h3 className="text-white font-black uppercase tracking-wider text-sm">Report Pothole</h3>
-          <button onClick={onClose} className="text-zinc-400 hover:text-red-500 transition-colors">
+        <div className={`p-3 flex justify-between items-center border-b ${darkMode 
+          ? 'bg-white/5 border-white/10' 
+          : 'bg-black/5 border-black/5'}`}>
+          <h3 className={`font-black uppercase tracking-wider text-sm ${darkMode ? 'text-white' : 'text-zinc-900'}`}>Report Pothole</h3>
+          <button onClick={onClose} className={`transition-colors ${darkMode ? 'text-zinc-400 hover:text-red-400' : 'text-zinc-500 hover:text-red-500'}`}>
             <X size={20} />
           </button>
         </div>
 
         <div className="p-4">
           {error && (
-            <div className={`text-sm font-bold p-2 rounded-lg mb-4 border-2 ${darkMode ? 'bg-red-900/30 border-red-800 text-red-400' : 'bg-red-100 border-red-500 text-red-700'}`}>
-              {error}
-            </div>
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`text-sm font-medium p-3 rounded-xl mb-4 backdrop-blur-sm border flex items-start gap-2 ${darkMode 
+                ? 'bg-red-500/10 border-red-500/30 text-red-400' 
+                : 'bg-red-500/10 border-red-500/20 text-red-600'}`}
+            >
+              <AlertTriangle size={18} className="flex-shrink-0 mt-0.5" />
+              <span className="flex-1">{error}</span>
+              <button 
+                onClick={() => setError('')}
+                className="flex-shrink-0 hover:opacity-70 transition-opacity"
+              >
+                <X size={16} />
+              </button>
+            </motion.div>
           )}
 
           {step === 1 ? (

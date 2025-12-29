@@ -23,8 +23,8 @@ import {
 } from 'lucide-react';
 
 // --- SUPABASE CONFIG ---
-const SUPABASE_URL = 'https://wqqkrjukegrqpnpulcit.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxcWtyanVrZWdycXBucHVsY2l0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY4MjAyODYsImV4cCI6MjA4MjM5NjI4Nn0.cYMGASOsnDXYsXmOLpK7fmZLfNRL0fSpNLWJNzmSOeI';
+const SUPABASE_URL = process.env.REACT_APP_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.REACT_APP_SUPABASE_ANON_KEY;
 
 // --- SEVERITY SIZES ---
 const SIZES = [
@@ -706,6 +706,7 @@ const App = () => {
             data={selectedPothole} 
             onClose={() => setSelectedPothole(null)} 
             onVote={() => handleVote(selectedPothole.id, selectedPothole.votes)}
+            darkMode={darkMode}
           />
         )}
       </AnimatePresence>
@@ -949,7 +950,7 @@ const ReportCard = ({ data, index, onVote, onSelect, darkMode }) => {
   );
 };
 
-const PotholeDetailModal = ({ data, onClose, onVote }) => {
+const PotholeDetailModal = ({ data, onClose, onVote, darkMode }) => {
   const [zoom, setZoom] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const sizeInfo = getSizeFromSeverity(data.severity);
@@ -975,7 +976,7 @@ const PotholeDetailModal = ({ data, onClose, onVote }) => {
         exit={{ scale: 0.5, opacity: 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 25 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-white w-full max-w-4xl rounded-2xl md:rounded-3xl border-4 border-zinc-800 shadow-[8px_8px_0px_0px_#14b8a6] md:shadow-[12px_12px_0px_0px_#14b8a6] overflow-hidden max-h-[95vh] flex flex-col md:flex-row"
+        className={`w-full max-w-4xl rounded-2xl md:rounded-3xl border-4 shadow-[8px_8px_0px_0px_#14b8a6] md:shadow-[12px_12px_0px_0px_#14b8a6] overflow-hidden max-h-[95vh] flex flex-col md:flex-row ${darkMode ? 'bg-zinc-900 border-zinc-700' : 'bg-white border-zinc-800'}`}
       >
         {/* Image Section - Takes most space */}
         <div className="relative bg-zinc-900 overflow-hidden flex-1 min-h-[250px] md:min-h-[450px]">
@@ -1044,47 +1045,47 @@ const PotholeDetailModal = ({ data, onClose, onVote }) => {
         </div>
 
         {/* Details Sidebar */}
-        <div className="w-full md:w-72 bg-white border-t-4 md:border-t-0 md:border-l-4 border-black p-4 flex flex-col">
+        <div className={`w-full md:w-72 border-t-4 md:border-t-0 md:border-l-4 p-4 flex flex-col ${darkMode ? 'bg-zinc-900 border-zinc-700' : 'bg-white border-black'}`}>
           {/* Header with close */}
           <div className="hidden md:flex justify-between items-start mb-4">
             <div className={`${sizeInfo.color} text-white text-3xl p-3 rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_#000]`}>
               {sizeInfo.emoji}
             </div>
-            <button onClick={onClose} className="text-zinc-400 hover:text-red-500 transition-colors">
+            <button onClick={onClose} className={`transition-colors ${darkMode ? 'text-zinc-500 hover:text-red-400' : 'text-zinc-400 hover:text-red-500'}`}>
               <X size={24} />
             </button>
           </div>
 
           {/* Title */}
-          <h2 className="text-xl md:text-2xl font-black uppercase leading-tight mb-1">{sizeInfo.title}</h2>
-          <div className="flex items-center gap-1 text-zinc-500 font-bold text-xs mb-4">
+          <h2 className={`text-xl md:text-2xl font-black uppercase leading-tight mb-1 ${darkMode ? 'text-white' : 'text-zinc-900'}`}>{sizeInfo.title}</h2>
+          <div className={`flex items-center gap-1 font-bold text-xs mb-4 ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
             <MapPin size={12} /> {getDisplayLocation(data.location)}
           </div>
 
           {/* Stats */}
           <div className="space-y-2 mb-4 flex-1">
-            <div className="flex items-center justify-between bg-zinc-100 rounded-lg p-2 border border-zinc-200">
-              <span className="text-zinc-500 text-xs font-bold uppercase flex items-center gap-1">
+            <div className={`flex items-center justify-between rounded-lg p-2 border ${darkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-zinc-100 border-zinc-200'}`}>
+              <span className={`text-xs font-bold uppercase flex items-center gap-1 ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
                 <AlertTriangle size={12} /> Severity
               </span>
-              <span className="font-black text-sm">{data.severity}</span>
+              <span className={`font-black text-sm ${darkMode ? 'text-white' : 'text-zinc-900'}`}>{data.severity}</span>
             </div>
-            <div className="flex items-center justify-between bg-zinc-100 rounded-lg p-2 border border-zinc-200">
-              <span className="text-zinc-500 text-xs font-bold uppercase flex items-center gap-1">
+            <div className={`flex items-center justify-between rounded-lg p-2 border ${darkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-zinc-100 border-zinc-200'}`}>
+              <span className={`text-xs font-bold uppercase flex items-center gap-1 ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
                 <Calendar size={12} /> Reported
               </span>
-              <span className="font-black text-sm">
+              <span className={`font-black text-sm ${darkMode ? 'text-white' : 'text-zinc-900'}`}>
                 {new Date(data.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               </span>
             </div>
           </div>
 
           {/* Vote Section */}
-          <div className="bg-gradient-to-br from-rose-50 to-pink-50 rounded-2xl p-4 border border-rose-200/50">
+          <div className={`rounded-2xl p-4 border ${darkMode ? 'bg-gradient-to-br from-rose-900/30 to-pink-900/30 border-rose-800/50' : 'bg-gradient-to-br from-rose-50 to-pink-50 border-rose-200/50'}`}>
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-sm font-bold uppercase text-rose-400">Angry Voters</span>
-                <span className="block text-3xl font-black text-rose-600">🔥 {data.votes}</span>
+                <span className={`text-sm font-bold uppercase ${darkMode ? 'text-rose-300' : 'text-rose-400'}`}>Angry Voters</span>
+                <span className={`block text-3xl font-black ${darkMode ? 'text-rose-400' : 'text-rose-600'}`}>🔥 {data.votes}</span>
               </div>
               <UpvoteButton onVote={onVote} votes={data.votes} size="md" />
             </div>

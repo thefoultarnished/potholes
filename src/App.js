@@ -458,7 +458,6 @@ const App = () => {
                 <div className={`relative py-6 px-6 rounded-3xl backdrop-blur-xl border ${darkMode 
                   ? 'bg-white/5 border-white/10' 
                   : 'bg-white/40 border-white/60'}`}>
-                  <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-0.5 rounded-full ${darkMode ? 'bg-gradient-to-r from-transparent via-rose-400 to-transparent opacity-50' : 'bg-gradient-to-r from-transparent via-rose-400 to-transparent opacity-30'}`} />
                   
                   <div className="flex flex-row justify-center items-end gap-4 max-w-4xl mx-auto">
                     {top3[1] && (

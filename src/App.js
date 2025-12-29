@@ -1165,6 +1165,71 @@ const UploadModal = ({ onClose, onSubmit }) => {
     }
   };
 
+  // Compress image to reduce file size while maintaining quality
+  // Max dimension: 1920px (Full HD), Quality: 88% JPEG
+  const compressImage = (imageElement, originalFile) => {
+    return new Promise((resolve) => {
+      const MAX_DIMENSION = 1920; // Full HD
+      const QUALITY = 0.88; // 88% quality - excellent visual quality with good compression
+
+      let { width, height } = imageElement;
+      
+      // Calculate new dimensions while maintaining aspect ratio
+      if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+        if (width > height) {
+          height = Math.round((height * MAX_DIMENSION) / width);
+          width = MAX_DIMENSION;
+        } else {
+          width = Math.round((width * MAX_DIMENSION) / height);
+          height = MAX_DIMENSION;
+        }
+      }
+
+      // Create canvas for compression
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext('2d');
+      
+      // Use high-quality image smoothing for resize
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      
+      // Draw image to canvas at new size
+      ctx.drawImage(imageElement, 0, 0, width, height);
+
+      // Convert to blob
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            // Create a new File object with proper name
+            const compressedFile = new File(
+              [blob], 
+              originalFile.name.replace(/\.[^/.]+$/, '.jpg'), // Ensure .jpg extension
+              { type: 'image/jpeg' }
+            );
+            
+            // Log compression stats
+            const originalSize = (originalFile.size / 1024 / 1024).toFixed(2);
+            const compressedSize = (compressedFile.size / 1024 / 1024).toFixed(2);
+            const savings = ((1 - compressedFile.size / originalFile.size) * 100).toFixed(0);
+            console.log(`📸 Image compressed: ${originalSize}MB → ${compressedSize}MB (${savings}% smaller)`);
+            console.log(`📐 Dimensions: ${imageElement.width}x${imageElement.height} → ${width}x${height}`);
+            
+            resolve(compressedFile);
+          } else {
+            // Fallback to original if compression fails
+            console.warn('Compression failed, using original file');
+            resolve(originalFile);
+          }
+        },
+        'image/jpeg',
+        QUALITY
+      );
+    });
+  };
+
   const handleFile = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -1184,7 +1249,9 @@ const UploadModal = ({ onClose, onSubmit }) => {
       const isPothole = await validateImage(img);
 
       if (isPothole) {
-        setImgFile(file);
+        // Compress the image before storing
+        const compressedFile = await compressImage(img, file);
+        setImgFile(compressedFile);
         setStep(2);
         setValidating(false);
       } else {
@@ -1319,7 +1386,7 @@ const UploadModal = ({ onClose, onSubmit }) => {
                     <Loader2 size={32} className="text-white" />
                   </motion.div>
                   <p className="font-bold text-teal-600 uppercase text-sm">Analyzing Image...</p>
-                  <p className="text-teal-500 text-xs mt-1">🤖 AI is checking for potholes</p>
+                  <p className="text-teal-500 text-xs mt-1">AI is checking for potholes</p>
                 </>
               ) : (
                 <>

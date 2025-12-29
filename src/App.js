@@ -19,19 +19,36 @@ import {
   AlertTriangle,
   Sun,
   Moon,
-  ChevronUp
+  ChevronUp,
+  Frown,
+  Coffee,
+  Skull,
+  Waves,
+  Globe
 } from 'lucide-react';
 
 // --- SUPABASE CONFIG ---
 const SUPABASE_URL = process.env.REACT_APP_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.REACT_APP_SUPABASE_ANON_KEY;
 
+// Severity Icon Components
+const SeverityIcon = ({ level, size = 16, className = "" }) => {
+  const icons = {
+    1: Frown,      // Ankle Twister - hurt face
+    2: Coffee,     // Coffee Spiller - cup
+    3: Skull,      // Rim Reaper - skull
+    4: Waves,      // Swimming Pool - water waves
+  };
+  const Icon = icons[level] || Frown;
+  return <Icon size={size} className={className} />;
+};
+
 // --- SEVERITY SIZES ---
 const SIZES = [
-  { level: 1, label: "Baby", title: "Ankle Twister", emoji: "🤕", dbLabel: "Baby Pothole", color: "bg-blue-500", text: "text-blue-500" },
-  { level: 2, label: "Street", title: "Coffee Spiller", emoji: "☕", dbLabel: "Street Acne", color: "bg-yellow-500", text: "text-yellow-600" },
-  { level: 3, label: "Wheel", title: "The Rim Reaper", emoji: "💀", dbLabel: "Wheel Destroyer", color: "bg-orange-600", text: "text-orange-600" },
-  { level: 4, label: "Crater", title: "Swimming Pool", emoji: "🏊", dbLabel: "Crater", color: "bg-red-600", text: "text-red-600" },
+  { level: 1, label: "Baby", title: "Ankle Twister", dbLabel: "Baby Pothole", color: "bg-blue-500", text: "text-blue-500" },
+  { level: 2, label: "Street", title: "Coffee Spiller", dbLabel: "Street Acne", color: "bg-yellow-500", text: "text-yellow-600" },
+  { level: 3, label: "Wheel", title: "The Rim Reaper", dbLabel: "Wheel Destroyer", color: "bg-orange-600", text: "text-orange-600" },
+  { level: 4, label: "Crater", title: "Swimming Pool", dbLabel: "Crater", color: "bg-red-600", text: "text-red-600" },
 ];
 
 const getSizeFromSeverity = (severity) => {
@@ -41,12 +58,12 @@ const getSizeFromSeverity = (severity) => {
 // Helper to display location or fallback
 const getDisplayLocation = (location) => {
   if (!location || location.trim() === '' || location === 'null' || location === 'undefined') {
-    return 'Somewhere on Earth 🌍';
+    return 'Unknown Location';
   }
   // Also check for "unknown location" variations
   const lowerLocation = location.toLowerCase().trim();
   if (lowerLocation === 'unknown location' || lowerLocation === 'unknown' || lowerLocation === 'n/a') {
-    return 'Somewhere on Earth 🌍';
+    return 'Unknown Location';
   }
   return location;
 };
@@ -728,8 +745,8 @@ const HallOfShameCard = ({ data, rank, onVote, onSelect, darkMode }) => {
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
         />
         {/* Severity Badge */}
-        <div className={`absolute top-2 left-2 ${sizeInfo.color} text-white text-[9px] font-bold uppercase px-2 py-0.5 rounded-full backdrop-blur-sm`}>
-          {sizeInfo.emoji} {sizeInfo.label}
+        <div className={`absolute top-2 left-2 ${sizeInfo.color} text-white text-[9px] font-bold uppercase px-2 py-0.5 rounded-full backdrop-blur-sm flex items-center gap-1`}>
+          <SeverityIcon level={sizeInfo.level} size={10} /> {sizeInfo.label}
         </div>
         {/* Hover overlay */}
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300 flex items-center justify-center">
@@ -780,8 +797,8 @@ const FeedCard = ({ data, onVote, onSelect, darkMode }) => {
         className={`w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden relative cursor-pointer ${darkMode ? 'ring-1 ring-white/10' : 'ring-1 ring-black/5'}`}
       >
         <img src={data.image_url} alt={data.location} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
-        <div className="absolute bottom-0 left-0 right-0 backdrop-blur-sm bg-black/60 text-white text-[7px] font-bold text-center py-0.5">
-          {sizeInfo.emoji} {sizeInfo.label}
+        <div className="absolute bottom-0 left-0 right-0 backdrop-blur-sm bg-black/60 text-white text-[7px] font-bold text-center py-0.5 flex items-center justify-center gap-0.5">
+          <SeverityIcon level={sizeInfo.level} size={8} /> {sizeInfo.label}
         </div>
       </div>
 
@@ -834,8 +851,8 @@ const ReportCard = ({ data, index, onVote, onSelect, darkMode }) => {
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
         />
         {/* Severity Badge */}
-        <div className={`absolute top-2 left-2 ${sizeInfo.color} text-white text-[9px] font-bold uppercase px-2 py-0.5 rounded-full backdrop-blur-sm`}>
-          {sizeInfo.emoji} {sizeInfo.label}
+        <div className={`absolute top-2 left-2 ${sizeInfo.color} text-white text-[9px] font-bold uppercase px-2 py-0.5 rounded-full backdrop-blur-sm flex items-center gap-1`}>
+          <SeverityIcon level={sizeInfo.level} size={10} /> {sizeInfo.label}
         </div>
         {/* Hover overlay */}
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300 flex items-center justify-center">
@@ -951,8 +968,8 @@ const PotholeDetailModal = ({ data, onClose, onVote, darkMode }) => {
           </div>
 
           {/* Severity Badge on image */}
-          <div className={`absolute top-3 left-3 ${sizeInfo.color} text-white text-xs font-black uppercase px-3 py-1.5 rounded-lg backdrop-blur-sm shadow-lg`}>
-            {sizeInfo.emoji} {sizeInfo.label}
+          <div className={`absolute top-3 left-3 ${sizeInfo.color} text-white text-xs font-black uppercase px-3 py-1.5 rounded-lg backdrop-blur-sm shadow-lg flex items-center gap-1.5`}>
+            <SeverityIcon level={sizeInfo.level} size={14} /> {sizeInfo.label}
           </div>
         </div>
 
@@ -960,8 +977,8 @@ const PotholeDetailModal = ({ data, onClose, onVote, darkMode }) => {
         <div className={`w-full md:w-72 border-t md:border-t-0 md:border-l p-4 flex flex-col ${darkMode ? 'border-white/10' : 'border-black/10'}`}>
           {/* Header with close */}
           <div className="hidden md:flex justify-between items-start mb-4">
-            <div className={`${sizeInfo.color} text-white text-3xl p-3 rounded-xl shadow-lg`}>
-              {sizeInfo.emoji}
+            <div className={`${sizeInfo.color} text-white text-3xl p-3 rounded-xl shadow-lg flex items-center justify-center`}>
+              <SeverityIcon level={sizeInfo.level} size={32} />
             </div>
             <button onClick={onClose} className={`transition-colors ${darkMode ? 'text-zinc-500 hover:text-red-400' : 'text-zinc-400 hover:text-red-500'}`}>
               <X size={24} />
@@ -1399,21 +1416,21 @@ const UploadModal = ({ onClose, onSubmit, darkMode }) => {
               {/* Size Selector */}
               <div>
                 <label className={`block text-[10px] font-black uppercase mb-1.5 ${darkMode ? 'text-zinc-500' : 'text-zinc-600'}`}>Severity Level</label>
-                <div className="flex gap-1">
+                <div className="flex gap-2">
                   {SIZES.map(s => (
                     <motion.button
                       key={s.level}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setSize(s.level)}
-                      className={`flex-1 py-2.5 rounded-lg border-2 font-bold text-xl transition-all ${
+                      className={`flex-1 py-3 rounded-xl backdrop-blur-sm border font-bold transition-all flex items-center justify-center ${
                         size === s.level 
-                          ? 'bg-rose-500 border-black text-white -translate-y-1 shadow-[2px_2px_0px_0px_#000]' 
+                          ? `${s.color} text-white border-transparent shadow-lg` 
                           : darkMode 
-                            ? 'bg-zinc-800 border-zinc-700 text-zinc-500 hover:border-zinc-600' 
-                            : 'bg-white border-zinc-200 text-zinc-500 hover:border-zinc-300'
+                            ? 'bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10' 
+                            : 'bg-black/5 border-black/5 text-zinc-500 hover:bg-black/10'
                       }`}
                     >
-                      {s.emoji}
+                      <SeverityIcon level={s.level} size={20} />
                     </motion.button>
                   ))}
                 </div>

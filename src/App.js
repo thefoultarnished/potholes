@@ -51,27 +51,13 @@ const getDisplayLocation = (location) => {
   return location;
 };
 
-// Custom upvote icon (boxicons)
-const UpvoteIcon = ({ size = 24, className = "" }) => (
-  <svg 
-    width={size} 
-    height={size} 
-    viewBox="0 0 24 24" 
-    xmlns="http://www.w3.org/2000/svg"
-    className={className}
-    fill="currentColor"
-  >
-    <path d="M4 14h4v7a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-7h4a1.001 1.001 0 0 0 .781-1.625l-8-10c-.381-.475-1.181-.475-1.562 0l-8 10A1.001 1.001 0 0 0 4 14z"/>
-  </svg>
-);
-
 // Animated Upvote Button with count
-const UpvoteButton = ({ onVote, votes = 0, size = "md" }) => {
+const UpvoteButton = ({ onVote, votes = 0, size = "md", darkMode = true }) => {
   const [isAnimating, setIsAnimating] = useState(false);
   
   const sizes = {
-    sm: { padding: "px-3 py-1.5", icon: 14, text: "text-sm" },
-    md: { padding: "px-4 py-2", icon: 16, text: "text-base" },
+    sm: { padding: "px-2.5 py-1", icon: 12, text: "text-xs" },
+    md: { padding: "px-3 py-1.5", icon: 14, text: "text-sm" },
   };
   
   const s = sizes[size] || sizes.md;
@@ -88,32 +74,12 @@ const UpvoteButton = ({ onVote, votes = 0, size = "md" }) => {
       whileTap={{ scale: 0.9 }}
       whileHover={{ scale: 1.05 }}
       onClick={handleClick}
-      className={`${s.padding} rounded-full bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold ${s.text} shadow-md shadow-rose-500/25 hover:shadow-rose-500/40 transition-all duration-300 flex items-center gap-1.5 relative overflow-visible flex-shrink-0`}
+      className={`${s.padding} rounded-lg font-bold ${s.text} transition-all duration-200 flex items-center gap-1 flex-shrink-0 backdrop-blur-sm border ${
+        darkMode 
+          ? 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border-rose-500/30' 
+          : 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-600 border-rose-500/30'
+      }`}
     >
-      {/* Burst particles */}
-      <AnimatePresence>
-        {isAnimating && (
-          <>
-            {[...Array(6)].map((_, i) => (
-              <motion.div
-                key={i}
-                initial={{ scale: 0, x: 0, y: 0, opacity: 1 }}
-                animate={{ 
-                  scale: [0, 1, 0],
-                  x: Math.cos((i * 60) * Math.PI / 180) * 30,
-                  y: Math.sin((i * 60) * Math.PI / 180) * 30,
-                  opacity: [1, 1, 0]
-                }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-                className="absolute w-1.5 h-1.5 rounded-full bg-yellow-300"
-                style={{ pointerEvents: 'none' }}
-              />
-            ))}
-          </>
-        )}
-      </AnimatePresence>
-      
       {/* Vote count */}
       <motion.span 
         key={votes}
@@ -127,12 +93,12 @@ const UpvoteButton = ({ onVote, votes = 0, size = "md" }) => {
       {/* Icon with animation */}
       <motion.div
         animate={isAnimating ? { 
-          y: [0, -4, 0],
+          y: [0, -3, 0],
           scale: [1, 1.2, 1]
         } : {}}
         transition={{ duration: 0.3, ease: "easeOut" }}
       >
-        <UpvoteIcon size={s.icon} />
+        <ChevronUp size={s.icon} strokeWidth={3} />
       </motion.div>
     </motion.button>
   );
@@ -207,7 +173,7 @@ const App = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#fff0f5] flex items-center justify-center">
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -216,255 +182,213 @@ const App = () => {
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            className="w-16 h-16 border-4 border-black border-t-teal-400 rounded-full mx-auto mb-4"
+            className="w-16 h-16 border-4 border-zinc-700 border-t-teal-400 rounded-full mx-auto mb-4"
           />
-          <p className="font-black uppercase text-zinc-600">Loading disasters...</p>
+          <p className="font-black uppercase text-zinc-400">Loading disasters...</p>
         </motion.div>
       </div>
     );
   }
 
   return (
-    <div className={`relative min-h-screen font-sans selection:bg-teal-400 overflow-x-hidden transition-colors duration-500 ${darkMode ? 'bg-slate-950 text-white' : 'bg-gradient-to-br from-slate-50 via-zinc-50 to-stone-100 text-zinc-900'}`}>
+    <div className={`relative min-h-screen font-sans selection:bg-teal-400 overflow-x-hidden ${darkMode ? 'text-white' : 'text-zinc-900'}`}>
       
-      {/* Animated Dark Mode Background */}
-      {darkMode && (
-        <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          {/* Mesh gradient base */}
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-zinc-900 to-slate-950" />
-          
-          {/* Animated orbs */}
-          <motion.div 
-            animate={{ 
-              x: [0, 100, 50, 0], 
-              y: [0, -50, 50, 0],
-              scale: [1, 1.2, 0.9, 1]
-            }}
-            transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-1/4 left-1/4 w-96 h-96 bg-teal-600/20 rounded-full blur-3xl"
-          />
-          <motion.div 
-            animate={{ 
-              x: [0, -80, 0], 
-              y: [0, 100, 0],
-              scale: [1.2, 1, 1.2]
-            }}
-            transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-rose-500/15 rounded-full blur-3xl"
-          />
-          <motion.div 
-            animate={{ 
-              x: [0, 60, -30, 0], 
-              y: [0, -40, 40, 0]
-            }}
-            transition={{ duration: 30, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-1/2 right-1/3 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl"
-          />
-          <motion.div 
-            animate={{ 
-              x: [0, -50, 0], 
-              y: [0, 80, 0]
-            }}
-            transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute bottom-1/3 left-1/3 w-72 h-72 bg-cyan-500/10 rounded-full blur-3xl"
-          />
-          
-          {/* Subtle grid pattern */}
-          <div 
-            className="absolute inset-0 opacity-[0.03]"
-            style={{
-              backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-              backgroundSize: '50px 50px'
-            }}
-          />
-          
-          {/* Top and bottom glow */}
-          <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-teal-900/20 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-slate-900/20 to-transparent" />
-        </div>
-      )}
+      {/* GLASSMORPHISM BACKGROUND - Gradient Mesh */}
+      <div className="fixed inset-0 pointer-events-none">
+        {/* Base gradient */}
+        <div className={`absolute inset-0 ${darkMode 
+          ? 'bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950' 
+          : 'bg-gradient-to-br from-slate-100 via-zinc-50 to-slate-100'}`} 
+        />
+        {/* Colored orbs for depth */}
+        <div className={`absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full blur-3xl ${darkMode ? 'bg-teal-500/20' : 'bg-teal-400/30'}`} />
+        <div className={`absolute top-1/3 right-0 w-[400px] h-[400px] rounded-full blur-3xl ${darkMode ? 'bg-rose-500/15' : 'bg-rose-400/20'}`} />
+        <div className={`absolute bottom-0 left-1/3 w-[600px] h-[400px] rounded-full blur-3xl ${darkMode ? 'bg-indigo-500/10' : 'bg-indigo-400/15'}`} />
+        {/* Subtle noise texture */}
+        <div className="absolute inset-0 opacity-[0.015]" 
+          style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence baseFrequency=\'0.9\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")' }}
+        />
+      </div>
       
-      {/* --- COMPACT HEADER --- */}
-      <header className="relative z-10 bg-gradient-to-r from-zinc-900 via-slate-800 to-zinc-900 text-white py-6 px-4 overflow-hidden">
-        {/* Animated Gradient Orbs - Smaller */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <motion.div 
-            animate={{ x: [0, 50, 0], y: [0, -30, 0] }}
-            transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -top-20 left-1/4 w-64 h-64 bg-teal-500/30 rounded-full blur-3xl"
-          />
-          <motion.div 
-            animate={{ x: [0, -40, 0], y: [0, 30, 0] }}
-            transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -bottom-20 right-1/4 w-48 h-48 bg-rose-500/20 rounded-full blur-3xl"
-          />
-        </div>
-
-        <div className="relative z-10 max-w-6xl mx-auto">
-          {/* Main Row: Logo + Title | Report Button */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            {/* Left: Brand */}
-            <div className="flex items-center gap-4">
-              <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: "spring", stiffness: 200 }}
-                className="hidden md:flex p-3 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-xl shadow-lg shadow-teal-500/30"
-              >
-                <Siren size={24} className="text-white" />
-              </motion.div>
-              <div>
-                <motion.h1 
-                  initial={{ x: -20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  className="text-2xl md:text-3xl font-black uppercase tracking-tight leading-none"
+      {/* --- HEADER (Glassmorphism) --- */}
+      <header className="sticky top-0 z-50">
+        <div className={`backdrop-blur-xl border-b ${darkMode 
+          ? 'bg-zinc-900/70 border-white/10' 
+          : 'bg-white/70 border-black/5'}`}
+        >
+          <div className="max-w-6xl mx-auto px-4 py-4">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              {/* Left: Brand */}
+              <div className="flex items-center gap-3">
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 200 }}
+                  className={`hidden md:flex p-2.5 rounded-xl backdrop-blur-sm ${darkMode 
+                    ? 'bg-teal-500/20 border border-teal-500/30' 
+                    : 'bg-teal-500 border border-teal-600/30'}`}
                 >
-                  <span className="text-white">MARKMY</span>
-                  <span className="text-teal-400">POTHOLE</span>
-                </motion.h1>
-                <motion.p 
+                  <Siren size={22} className={darkMode ? 'text-teal-400' : 'text-white'} />
+                </motion.div>
+                <div>
+                  <motion.h1 
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    className="text-xl md:text-2xl font-black uppercase tracking-tight leading-none"
+                  >
+                    <span className={darkMode ? 'text-white' : 'text-zinc-900'}>MARKMY</span>
+                    <span className="text-teal-500">POTHOLE</span>
+                  </motion.h1>
+                  <motion.p 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className={`text-xs font-medium mt-0.5 ${darkMode ? 'text-zinc-400' : 'text-zinc-600'}`}
+                  >
+                    They ignore it, <span className={darkMode ? 'text-white' : 'text-zinc-900'}>We expose it.</span>
+                  </motion.p>
+                </div>
+              </div>
+
+              {/* Right: Actions */}
+              <div className="flex items-center gap-2">
+                <motion.button
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.2, type: "spring" }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setShowUpload(true)}
+                  className={`flex items-center gap-2 font-bold py-2.5 px-4 rounded-xl transition-all backdrop-blur-sm border ${darkMode 
+                    ? 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border-rose-500/30' 
+                    : 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-600 border-rose-500/30'}`}
+                >
+                  <Camera size={18} strokeWidth={2.5} />
+                  <span className="hidden sm:inline text-sm">REPORT</span>
+                </motion.button>
+                
+                <motion.button
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className="text-xs md:text-sm font-medium text-zinc-400 mt-1"
+                  transition={{ delay: 0.3 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setDarkMode(!darkMode)}
+                  className={`p-2.5 rounded-xl backdrop-blur-sm transition-all ${darkMode 
+                    ? 'bg-white/10 hover:bg-white/20 border border-white/10' 
+                    : 'bg-black/5 hover:bg-black/10 border border-black/5'}`}
+                  title={darkMode ? 'Light Mode' : 'Dark Mode'}
                 >
-                  They ignore it, <span className="text-white">We expose it.</span>
-                </motion.p>
+                  {darkMode ? (
+                    <Sun size={18} className="text-amber-400" />
+                  ) : (
+                    <Moon size={18} className="text-zinc-600" />
+                  )}
+                </motion.button>
               </div>
-            </div>
-
-            {/* Right: Report Button + Dark Mode */}
-            <div className="flex items-center gap-3">
-              <motion.button
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.2, type: "spring" }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowUpload(true)}
-                className="flex items-center gap-2 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-400 hover:to-pink-400 text-white font-bold py-3 px-5 rounded-xl shadow-lg shadow-rose-500/30 transition-all"
-              >
-                <Camera size={20} strokeWidth={2.5} />
-                <span className="hidden sm:inline">REPORT</span>
-              </motion.button>
-              
-              <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                whileHover={{ scale: 1.1, rotate: 15 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setDarkMode(!darkMode)}
-                className="p-3 rounded-xl glass hover:bg-white/20 transition-all"
-                title={darkMode ? 'Light Mode' : 'Dark Mode'}
-              >
-                {darkMode ? (
-                  <Sun size={20} className="text-amber-400" />
-                ) : (
-                  <Moon size={20} className="text-zinc-300" />
-                )}
-              </motion.button>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Animated Light Mode Background */}
-      {!darkMode && (
-        <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <motion.div 
-            animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
-            transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-20 left-10 w-72 h-72 bg-gradient-to-br from-rose-200/40 to-pink-200/30 rounded-full blur-3xl"
-          />
-          <motion.div 
-            animate={{ x: [0, -40, 0], y: [0, 30, 0] }}
-            transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute bottom-40 right-10 w-80 h-80 bg-gradient-to-br from-teal-200/30 to-cyan-200/20 rounded-full blur-3xl"
-          />
-          <motion.div 
-            animate={{ x: [0, 20, -20, 0], y: [0, -30, 0] }}
-            transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-1/2 left-1/3 w-64 h-64 bg-gradient-to-br from-amber-100/30 to-orange-100/20 rounded-full blur-3xl"
-          />
-        </div>
-      )}
-
-      {/* 🔥 HERO STATS BAR */}
-      <div className={`relative z-10 ${darkMode ? 'bg-gradient-to-r from-zinc-900/80 via-slate-800/80 to-zinc-900/80 border-b border-zinc-700/50' : 'bg-gradient-to-r from-white/70 via-zinc-50/80 to-white/70 border-b border-zinc-200/50'} backdrop-blur-lg`}>
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex flex-wrap justify-center gap-6 md:gap-12">
-            {/* Total Reports */}
+      {/* STATS BAR (Glassmorphism Cards) */}
+      <div className="relative z-10 py-6 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-wrap justify-center gap-4">
+            {/* Reported */}
             <motion.div 
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.1 }}
-              className="text-center"
+              className={`flex items-center gap-3 px-5 py-3 rounded-2xl backdrop-blur-xl border ${darkMode 
+                ? 'bg-white/5 border-white/10' 
+                : 'bg-white/60 border-white/80 shadow-lg shadow-black/5'}`}
             >
-              <motion.span 
-                key={reports.length}
-                initial={{ scale: 1.5, color: '#f43f5e' }}
-                animate={{ scale: 1, color: darkMode ? '#fff' : '#18181b' }}
-                className="block text-3xl md:text-4xl font-black"
-              >
-                {reports.length}
-              </motion.span>
-              <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                🕳️ Disasters Exposed
-              </span>
+              <div className={`p-2 rounded-xl ${darkMode ? 'bg-rose-500/20' : 'bg-rose-500/10'}`}>
+                <AlertTriangle size={18} className="text-rose-500" />
+              </div>
+              <div>
+                <motion.span 
+                  key={reports.length}
+                  initial={{ scale: 1.3 }}
+                  animate={{ scale: 1 }}
+                  className="block text-2xl font-black leading-none"
+                >
+                  {reports.length}
+                </motion.span>
+                <span className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                  Reported
+                </span>
+              </div>
             </motion.div>
             
-            {/* Total Upvotes */}
+            {/* Upvotes */}
             <motion.div 
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="text-center"
+              className={`flex items-center gap-3 px-5 py-3 rounded-2xl backdrop-blur-xl border ${darkMode 
+                ? 'bg-white/5 border-white/10' 
+                : 'bg-white/60 border-white/80 shadow-lg shadow-black/5'}`}
             >
-              <motion.span 
-                key={reports.reduce((sum, r) => sum + r.votes, 0)}
-                initial={{ scale: 1.5, color: '#14b8a6' }}
-                animate={{ scale: 1, color: darkMode ? '#fff' : '#18181b' }}
-                className="block text-3xl md:text-4xl font-black"
-              >
-                {reports.reduce((sum, r) => sum + r.votes, 0)}
-              </motion.span>
-              <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                🔥 Angry Upvotes
-              </span>
+              <div className={`p-2 rounded-xl ${darkMode ? 'bg-teal-500/20' : 'bg-teal-500/10'}`}>
+                <Flame size={18} className="text-teal-500" />
+              </div>
+              <div>
+                <motion.span 
+                  key={reports.reduce((sum, r) => sum + r.votes, 0)}
+                  initial={{ scale: 1.3 }}
+                  animate={{ scale: 1 }}
+                  className="block text-2xl font-black leading-none"
+                >
+                  {reports.reduce((sum, r) => sum + r.votes, 0)}
+                </motion.span>
+                <span className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                  Upvotes
+                </span>
+              </div>
             </motion.div>
             
-            {/* Fixed (humorous) */}
+            {/* Fixed */}
             <motion.div 
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="text-center"
+              className={`flex items-center gap-3 px-5 py-3 rounded-2xl backdrop-blur-xl border border-dashed ${darkMode 
+                ? 'bg-white/[0.02] border-white/10' 
+                : 'bg-white/40 border-zinc-300 shadow-lg shadow-black/5'}`}
             >
-              <span className={`block text-3xl md:text-4xl font-black ${darkMode ? 'text-rose-400' : 'text-rose-500'}`}>
-                0
-              </span>
-              <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                🛠️ Fixed (lol)
-              </span>
+              <div className={`p-2 rounded-xl ${darkMode ? 'bg-zinc-500/20' : 'bg-zinc-500/10'}`}>
+                <Trophy size={18} className={darkMode ? 'text-zinc-500' : 'text-zinc-500'} />
+              </div>
+              <div>
+                <span className={`block text-2xl font-black leading-none ${darkMode ? 'text-zinc-600' : 'text-zinc-300'}`}>
+                  0
+                </span>
+                <span className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? 'text-zinc-600' : 'text-zinc-500'}`}>
+                  Fixed (lol)
+                </span>
+              </div>
             </motion.div>
           </div>
         </div>
       </div>
 
-      {/* 🎢 SCROLLING MARQUEE TICKER */}
-      <div className={`relative z-10 overflow-hidden py-3 ${darkMode ? 'bg-zinc-900/90 border-y border-zinc-800' : 'bg-zinc-100/90 border-y border-zinc-200'}`}>
+      {/* SCROLLING MARQUEE TICKER */}
+      <div className={`relative z-10 overflow-hidden py-2 backdrop-blur-sm ${darkMode 
+        ? 'bg-white/[0.02] border-y border-white/5' 
+        : 'bg-black/[0.02] border-y border-black/5'}`}>
         <div className="animate-marquee whitespace-nowrap">
           {[...Array(2)].map((_, i) => (
-            <span key={i} className={`inline-block mx-8 text-sm font-bold uppercase tracking-wider ${darkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>
-              🚨 POTHOLE CRISIS • 🕳️ ROADS ARE BROKEN • 💰 WHERE ARE OUR TAX DOLLARS? • 🚗 RIP SUSPENSION • ⚠️ DANGER ZONE • 
-              🔥 MOST WANTED POTHOLES • 😤 WE'RE MAD • 🛣️ FIX THE ROADS • 📢 CITIZENS UNITE • 🏆 HALL OF SHAME • 
+            <span key={i} className={`inline-block mx-4 text-[11px] font-medium uppercase tracking-widest ${darkMode ? 'text-zinc-500' : 'text-zinc-500'}`}>
+              <span className="text-rose-500">●</span> POTHOLE CRISIS <span className={darkMode ? 'text-zinc-700' : 'text-zinc-300'}>—</span> ROADS ARE BROKEN <span className={darkMode ? 'text-zinc-700' : 'text-zinc-300'}>—</span> WHERE ARE OUR TAX DOLLARS? <span className={darkMode ? 'text-zinc-700' : 'text-zinc-300'}>—</span> RIP SUSPENSION <span className={darkMode ? 'text-zinc-700' : 'text-zinc-300'}>—</span> 
+              <span className="text-teal-500">●</span> MOST WANTED POTHOLES <span className={darkMode ? 'text-zinc-700' : 'text-zinc-300'}>—</span> FIX THE ROADS <span className={darkMode ? 'text-zinc-700' : 'text-zinc-300'}>—</span> CITIZENS UNITE <span className={darkMode ? 'text-zinc-700' : 'text-zinc-300'}>—</span> HALL OF SHAME <span className={darkMode ? 'text-zinc-700' : 'text-zinc-300'}>—</span> 
             </span>
           ))}
         </div>
       </div>
 
-      <main className="relative z-10 max-w-6xl mx-auto px-4 py-8 pb-16 noise-overlay">
+      <main className="relative z-10 max-w-6xl mx-auto px-4 py-8 pb-16">
         
         {/* --- HALL OF SHAME (TOP 3) --- */}
         {top3.length > 0 && (
@@ -475,7 +399,7 @@ const App = () => {
                 <motion.div
                   animate={{ scale: [1, 1.1, 1] }}
                   transition={{ duration: 2, repeat: Infinity }}
-                  className="p-2 bg-gradient-to-br from-rose-500 to-pink-600 rounded-xl shadow-lg shadow-rose-500/30"
+                  className="p-2 bg-rose-500 rounded-xl shadow-lg shadow-rose-500/30"
                 >
                   <Trophy className="text-white" size={20} />
                 </motion.div>
@@ -500,7 +424,7 @@ const App = () => {
                   <motion.div
                     animate={{ scale: [1, 1.1, 1] }}
                     transition={{ duration: 2, repeat: Infinity }}
-                    className="p-2 bg-gradient-to-br from-rose-500 to-pink-600 rounded-xl shadow-lg shadow-rose-500/30"
+                    className="p-2 bg-rose-500 rounded-xl shadow-lg shadow-rose-500/30"
                   >
                     <Trophy className="text-white" size={20} />
                   </motion.div>
@@ -514,8 +438,10 @@ const App = () => {
 
               {/* Desktop Content Area */}
               <div className="flex-1">
-                <div className={`relative py-6 px-6 rounded-3xl ${darkMode ? 'bg-gradient-to-b from-slate-800/60 to-zinc-800/40 border border-zinc-700/30' : 'bg-gradient-to-b from-zinc-100/80 to-slate-50/50 border border-zinc-200/50'}`}>
-                  <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-0.5 rounded-full ${darkMode ? 'bg-gradient-to-r from-transparent via-rose-400 to-transparent' : 'bg-gradient-to-r from-transparent via-rose-400 to-transparent'}`} />
+                <div className={`relative py-6 px-6 rounded-3xl backdrop-blur-xl border ${darkMode 
+                  ? 'bg-white/5 border-white/10' 
+                  : 'bg-white/40 border-white/60'}`}>
+                  <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-0.5 rounded-full ${darkMode ? 'bg-gradient-to-r from-transparent via-rose-400 to-transparent opacity-50' : 'bg-gradient-to-r from-transparent via-rose-400 to-transparent opacity-30'}`} />
                   
                   <div className="flex flex-row justify-center items-end gap-4 max-w-4xl mx-auto">
                     {top3[1] && (
@@ -650,7 +576,7 @@ const App = () => {
                 <motion.div
                   animate={{ scale: [1, 1.05, 1] }}
                   transition={{ duration: 2, repeat: Infinity }}
-                  className="p-2 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg shadow-md shadow-teal-500/30"
+                  className="p-2 bg-teal-500 rounded-lg shadow-md shadow-teal-500/30"
                 >
                   <Megaphone className="text-white" size={18} />
                 </motion.div>
@@ -658,8 +584,8 @@ const App = () => {
                   Recent Reports
                 </h2>
               </div>
-              <p className={`text-xs font-medium ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                📢 {theRest.length} more awaiting justice
+              <p className={`text-xs font-medium ${darkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                {theRest.length} more awaiting justice
               </p>
             </motion.div>
 
@@ -698,7 +624,7 @@ const App = () => {
 
       {/* --- MODALS --- */}
       <AnimatePresence>
-        {showUpload && <UploadModal onClose={() => setShowUpload(false)} onSubmit={handleCreate} />}
+        {showUpload && <UploadModal onClose={() => setShowUpload(false)} onSubmit={handleCreate} darkMode={darkMode} />}
       </AnimatePresence>
       <AnimatePresence>
         {selectedPothole && (
@@ -711,36 +637,37 @@ const App = () => {
         )}
       </AnimatePresence>
 
-      {/* 📱 FLOATING ACTION BUTTON (Mobile) */}
+      {/* Mobile FAB */}
       <motion.button
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 1, type: "spring", stiffness: 200 }}
+        transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
         whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
+        whileTap={{ scale: 0.95 }}
         onClick={() => setShowUpload(true)}
-        className="fixed bottom-6 right-6 z-40 md:hidden w-16 h-16 rounded-full bg-gradient-to-br from-rose-500 via-pink-500 to-rose-600 text-white shadow-2xl shadow-rose-500/50 flex items-center justify-center"
+        className={`fixed bottom-6 right-6 z-40 md:hidden w-14 h-14 rounded-2xl backdrop-blur-xl border flex items-center justify-center transition-all ${darkMode 
+          ? 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border-rose-500/30' 
+          : 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-600 border-rose-500/30'}`}
       >
-        {/* Pulsing ring */}
-        <motion.div
-          animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
-          transition={{ duration: 2, repeat: Infinity }}
-          className="absolute inset-0 rounded-full bg-rose-500"
-        />
-        <Camera size={28} className="relative z-10" />
+        <Camera size={24} />
       </motion.button>
 
       {/* Footer */}
-      <footer className={`relative z-10 py-12 text-center border-t ${darkMode ? 'bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 border-zinc-800' : 'bg-gradient-to-r from-zinc-100 via-white to-zinc-100 border-zinc-200'}`}>
-        <motion.p 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className={`text-sm font-medium tracking-wide mb-2 ${darkMode ? 'text-zinc-500' : 'text-zinc-600'}`}
-        >
-          Built because my suspension broke 🚗💔
-        </motion.p>
-        <p className={`text-xs ${darkMode ? 'text-zinc-700' : 'text-zinc-500'}`}>Made with frustration and React</p>
+      <footer className={`relative z-10 backdrop-blur-xl border-t ${darkMode 
+        ? 'bg-white/5 border-white/10' 
+        : 'bg-white/60 border-black/5'}`}>
+        <div className="py-10 text-center">
+          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 backdrop-blur-sm ${darkMode 
+            ? 'bg-white/10 border border-white/10' 
+            : 'bg-black/5 border border-black/5'}`}>
+            <Siren size={16} className="text-teal-500" />
+            <span className="text-xs font-bold uppercase tracking-wider">MarkMyPothole</span>
+          </div>
+          <p className={`text-sm font-medium mb-1 ${darkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
+            Built because my suspension broke
+          </p>
+          <p className={`text-xs ${darkMode ? 'text-zinc-600' : 'text-zinc-500'}`}>Made with frustration and React</p>
+        </div>
       </footer>
     </div>
   );
@@ -751,11 +678,11 @@ const App = () => {
 const HallOfShameCard = ({ data, rank, onVote, onSelect, darkMode }) => {
   const sizeInfo = getSizeFromSeverity(data.severity);
   
-  // Badge colors and emojis based on rank
+  // Badge colors based on rank
   const rankStyles = {
-    1: { gradient: 'from-rose-500 via-pink-500 to-rose-600', shadow: 'shadow-rose-500/40', emoji: '👑' },
-    2: { gradient: 'from-zinc-300 via-slate-400 to-zinc-500', shadow: 'shadow-zinc-400/30', emoji: '🥈' },
-    3: { gradient: 'from-orange-500 via-amber-600 to-orange-600', shadow: 'shadow-orange-500/30', emoji: '🥉' },
+    1: { bg: 'bg-rose-500', glow: 'shadow-rose-500/30' },
+    2: { bg: 'bg-zinc-400', glow: 'shadow-zinc-400/20' },
+    3: { bg: 'bg-amber-500', glow: 'shadow-amber-500/20' },
   };
   
   const style = rankStyles[rank] || rankStyles[3];
@@ -769,70 +696,59 @@ const HallOfShameCard = ({ data, rank, onVote, onSelect, darkMode }) => {
       whileHover={{ y: -8, scale: 1.02 }}
       transition={{ 
         layout: { type: "spring", stiffness: 350, damping: 30 },
-        delay: rank * 0.1,
-        hover: { duration: 0.3 }
+        delay: rank * 0.1
       }}
       className={`
-        relative p-4 rounded-3xl flex flex-col h-full transition-all duration-500 cursor-pointer group/card
+        relative p-4 rounded-2xl flex flex-col h-full cursor-pointer group backdrop-blur-xl border
         ${darkMode 
-          ? 'bg-zinc-900/70 backdrop-blur-xl border border-zinc-700/50 hover:border-teal-500/50' 
-          : 'bg-white/70 backdrop-blur-xl border border-zinc-200/50 hover:border-rose-300'}
-        ${rank === 1 
-          ? 'shadow-2xl shadow-rose-500/20 ring-2 ring-rose-400/30 hover:shadow-rose-500/40' 
-          : 'shadow-xl shadow-black/10 hover:shadow-2xl'}
+          ? 'bg-white/5 border-white/10 hover:bg-white/10' 
+          : 'bg-white/60 border-white/80 hover:bg-white/80'}
+        ${rank === 1 ? `shadow-xl ${style.glow}` : 'shadow-lg shadow-black/5'}
+        transition-all duration-300
       `}
     >
-      {/* Hover glow effect */}
-      <div className={`absolute inset-0 rounded-3xl opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 ${rank === 1 ? 'bg-gradient-to-br from-rose-500/5 to-transparent' : 'bg-gradient-to-br from-teal-500/5 to-transparent'}`} />
-      
-      {/* Public Enemy Badge - All Ranks */}
+      {/* Rank Badge */}
       <motion.div 
-        initial={{ scale: 0, rotate: -10 }}
-        animate={{ scale: 1, rotate: 0 }}
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
         transition={{ delay: 0.3 + rank * 0.1, type: "spring" }}
-        className={`absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r ${style.gradient} text-white font-bold text-xs px-4 py-2 rounded-full whitespace-nowrap z-30 flex items-center gap-2 shadow-lg ${style.shadow}`}
+        className={`absolute -top-3 left-1/2 -translate-x-1/2 ${style.bg} text-white font-bold text-[10px] px-3 py-1 rounded-full whitespace-nowrap z-30 shadow-lg`}
       >
-        <motion.span 
-          animate={rank === 1 ? { scale: [1, 1.2, 1] } : {}} 
-          transition={{ duration: 1, repeat: Infinity }}
-        >
-          {style.emoji}
-        </motion.span>
-        Public Enemy #{rank}
+        #{rank} PUBLIC ENEMY
       </motion.div>
 
-      {/* Image with parallax-style hover */}
+      {/* Image Container */}
       <div 
         onClick={() => onSelect(data)}
-        className={`relative aspect-square rounded-2xl overflow-hidden mb-4 group cursor-pointer ring-1 ${darkMode ? 'bg-zinc-800 ring-zinc-700' : 'bg-zinc-100 ring-zinc-200'}`}
+        className={`relative aspect-square rounded-xl overflow-hidden mb-3 cursor-pointer ${darkMode ? 'ring-1 ring-white/10' : 'ring-1 ring-black/5'}`}
       >
-        <motion.img 
+        <img 
           src={data.image_url} 
           alt={data.location} 
-          className="w-full h-full object-cover"
-          whileHover={{ scale: 1.15 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
         />
-        <div className={`absolute top-3 left-3 ${sizeInfo.color} text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full shadow-lg backdrop-blur-sm`}>
+        {/* Severity Badge */}
+        <div className={`absolute top-2 left-2 ${sizeInfo.color} text-white text-[9px] font-bold uppercase px-2 py-0.5 rounded-full backdrop-blur-sm`}>
           {sizeInfo.emoji} {sizeInfo.label}
         </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4">
-          <span className="text-white text-sm font-medium flex items-center gap-2">
-            <ZoomIn className="w-4 h-4" /> View Details
-          </span>
+        {/* Hover overlay */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300 flex items-center justify-center">
+          <div className="backdrop-blur-sm bg-white/80 text-black text-xs font-bold px-3 py-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+            View Details
+          </div>
         </div>
       </div>
 
-      {/* Compact info row: Title + Location + Vote */}
-      <div className="flex items-center justify-between gap-3">
+      {/* Info row */}
+      <div className="flex items-center justify-between gap-2">
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-bold leading-tight truncate">{sizeInfo.title}</h3>
-          <div className={`flex items-center gap-1 text-xs truncate ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+          <div className={`flex items-center gap-1 text-xs truncate ${darkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
             <MapPin size={10} className="flex-shrink-0" /> 
             <span className="truncate">{getDisplayLocation(data.location)}</span>
           </div>
         </div>
-        <UpvoteButton onVote={onVote} votes={data.votes} size="sm" />
+        <UpvoteButton onVote={onVote} votes={data.votes} size="sm" darkMode={darkMode} />
       </div>
     </motion.div>
   );
@@ -848,40 +764,37 @@ const FeedCard = ({ data, onVote, onSelect, darkMode }) => {
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 20 }}
-      whileHover={{ scale: 1.02, x: 4 }}
+      whileHover={{ x: 4 }}
       transition={{ 
         layout: { type: "spring", stiffness: 400, damping: 35 },
         opacity: { duration: 0.2 }
       }}
-      className={`rounded-2xl p-4 flex gap-4 items-center transition-all duration-300 cursor-pointer ${
+      className={`rounded-xl p-3 flex gap-3 items-center cursor-pointer backdrop-blur-xl border ${
         darkMode 
-          ? 'bg-gradient-to-r from-zinc-900 to-zinc-800/80 border border-zinc-800 shadow-lg shadow-black/20' 
-          : 'bg-white border border-zinc-200 shadow-md shadow-black/5 hover:shadow-lg'
-      }`}
+          ? 'bg-white/5 border-white/10 hover:bg-white/10' 
+          : 'bg-white/60 border-white/80 hover:bg-white/80'
+      } transition-all duration-200`}
     >
       <div 
         onClick={() => onSelect(data)}
-        className={`w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden relative cursor-pointer group ring-1 ${darkMode ? 'bg-zinc-800 ring-zinc-700' : 'bg-zinc-100 ring-zinc-200'}`}
+        className={`w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden relative cursor-pointer ${darkMode ? 'ring-1 ring-white/10' : 'ring-1 ring-black/5'}`}
       >
-        <img src={data.image_url} alt={data.location} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end justify-center pb-1">
-          <span className="text-white text-[8px] font-bold">{sizeInfo.emoji} {sizeInfo.label}</span>
+        <img src={data.image_url} alt={data.location} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
+        <div className="absolute bottom-0 left-0 right-0 backdrop-blur-sm bg-black/60 text-white text-[7px] font-bold text-center py-0.5">
+          {sizeInfo.emoji} {sizeInfo.label}
         </div>
       </div>
 
       <div className="flex-1 min-w-0">
-        <div className="flex flex-wrap gap-1.5 mb-1.5">
-          <span className={`${sizeInfo.color} text-white text-[9px] font-bold px-2 py-0.5 rounded-full`}>
-            {sizeInfo.title}
-          </span>
-        </div>
-        <h3 className="text-sm font-bold leading-tight mb-1 truncate">{data.severity}</h3>
-        <p className={`text-xs flex items-center gap-1 ${darkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>
+        <span className={`${sizeInfo.color} text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full inline-block mb-1`}>
+          {sizeInfo.title}
+        </span>
+        <p className={`text-xs flex items-center gap-1 ${darkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
           <MapPin size={10} /> {getDisplayLocation(data.location)}
         </p>
       </div>
 
-      <UpvoteButton onVote={onVote} votes={data.votes} size="sm" />
+      <UpvoteButton onVote={onVote} votes={data.votes} size="sm" darkMode={darkMode} />
     </motion.div>
   );
 };
@@ -894,57 +807,54 @@ const ReportCard = ({ data, index, onVote, onSelect, darkMode }) => {
     <motion.div 
       layout
       layoutId={`report-${data.id}`}
-      initial={{ opacity: 0, y: 30, scale: 0.9, filter: 'blur(10px)' }}
-      animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-      exit={{ opacity: 0, scale: 0.9 }}
+      initial={{ opacity: 0, y: 30, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
       whileHover={{ y: -8, scale: 1.02 }}
       transition={{ 
         layout: { type: "spring", stiffness: 400, damping: 35 },
-        delay: index * 0.08
+        delay: index * 0.05
       }}
       className={`
-        relative p-4 rounded-3xl flex flex-col transition-all duration-500 cursor-pointer group/card
+        relative p-4 rounded-2xl flex flex-col cursor-pointer group backdrop-blur-xl border
         ${darkMode 
-          ? 'bg-zinc-900/70 backdrop-blur-xl border border-zinc-700/50 hover:border-teal-500/50' 
-          : 'bg-white/70 backdrop-blur-xl border border-zinc-200/50 hover:border-rose-300'}
-        shadow-lg hover:shadow-2xl
+          ? 'bg-white/5 border-white/10 hover:bg-white/10' 
+          : 'bg-white/60 border-white/80 hover:bg-white/80'}
+        shadow-lg shadow-black/5 hover:shadow-xl transition-all duration-300
       `}
     >
-      {/* Hover glow */}
-      <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-teal-500/5 via-transparent to-rose-500/5 opacity-0 group-hover/card:opacity-100 transition-opacity duration-500" />
-      
-      {/* Image with zoom effect */}
+      {/* Image Container */}
       <div 
         onClick={() => onSelect(data)}
-        className={`relative aspect-square rounded-2xl overflow-hidden mb-4 group cursor-pointer ring-1 ${darkMode ? 'bg-zinc-800 ring-zinc-700' : 'bg-zinc-100 ring-zinc-200'}`}
+        className={`relative aspect-square rounded-xl overflow-hidden mb-3 cursor-pointer ${darkMode ? 'ring-1 ring-white/10' : 'ring-1 ring-black/5'}`}
       >
-        <motion.img 
+        <img 
           src={data.image_url} 
           alt={data.location} 
-          className="w-full h-full object-cover"
-          whileHover={{ scale: 1.15 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
         />
-        <div className={`absolute top-3 left-3 ${sizeInfo.color} text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full shadow-lg backdrop-blur-sm`}>
+        {/* Severity Badge */}
+        <div className={`absolute top-2 left-2 ${sizeInfo.color} text-white text-[9px] font-bold uppercase px-2 py-0.5 rounded-full backdrop-blur-sm`}>
           {sizeInfo.emoji} {sizeInfo.label}
         </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4">
-          <span className="text-white text-sm font-medium flex items-center gap-2 backdrop-blur-sm bg-black/20 px-3 py-1.5 rounded-full">
-            <ZoomIn className="w-4 h-4" /> View Details
-          </span>
+        {/* Hover overlay */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300 flex items-center justify-center">
+          <div className="backdrop-blur-sm bg-white/80 text-black text-xs font-bold px-3 py-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+            View Details
+          </div>
         </div>
       </div>
 
-      {/* Compact info row: Title + Location + Vote */}
-      <div className="flex items-center justify-between gap-3 relative z-10">
+      {/* Info row */}
+      <div className="flex items-center justify-between gap-2">
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-bold leading-tight truncate">{sizeInfo.title}</h3>
-          <div className={`flex items-center gap-1 text-xs truncate ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+          <div className={`flex items-center gap-1 text-xs truncate ${darkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
             <MapPin size={10} className="flex-shrink-0" /> 
             <span className="truncate">{getDisplayLocation(data.location)}</span>
           </div>
         </div>
-        <UpvoteButton onVote={onVote} votes={data.votes} size="sm" />
+        <UpvoteButton onVote={onVote} votes={data.votes} size="sm" darkMode={darkMode} />
       </div>
     </motion.div>
   );
@@ -968,7 +878,7 @@ const PotholeDetailModal = ({ data, onClose, onVote, darkMode }) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4 bg-black/90 backdrop-blur-md"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4 bg-black/80 backdrop-blur-xl"
     >
       <motion.div 
         initial={{ scale: 0.5, opacity: 0 }}
@@ -976,9 +886,11 @@ const PotholeDetailModal = ({ data, onClose, onVote, darkMode }) => {
         exit={{ scale: 0.5, opacity: 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 25 }}
         onClick={(e) => e.stopPropagation()}
-        className={`w-full max-w-4xl rounded-2xl md:rounded-3xl border-4 shadow-[8px_8px_0px_0px_#14b8a6] md:shadow-[12px_12px_0px_0px_#14b8a6] overflow-hidden max-h-[95vh] flex flex-col md:flex-row ${darkMode ? 'bg-zinc-900 border-zinc-700' : 'bg-white border-zinc-800'}`}
+        className={`w-full max-w-4xl rounded-2xl md:rounded-3xl border backdrop-blur-xl overflow-hidden max-h-[95vh] flex flex-col md:flex-row shadow-2xl ${darkMode 
+          ? 'bg-zinc-900/90 border-white/10' 
+          : 'bg-white/90 border-black/10'}`}
       >
-        {/* Image Section - Takes most space */}
+        {/* Image Section */}
         <div className="relative bg-zinc-900 overflow-hidden flex-1 min-h-[250px] md:min-h-[450px]">
           <motion.div
             drag={zoom > 1}
@@ -1003,7 +915,7 @@ const PotholeDetailModal = ({ data, onClose, onVote, darkMode }) => {
           {/* Close button on image */}
           <button 
             onClick={onClose} 
-            className="absolute top-3 right-3 bg-black/70 hover:bg-red-600 text-white p-2 rounded-full transition-colors md:hidden"
+            className="absolute top-3 right-3 backdrop-blur-sm bg-black/50 hover:bg-red-600 text-white p-2 rounded-full transition-colors md:hidden"
           >
             <X size={20} />
           </button>
@@ -1014,41 +926,41 @@ const PotholeDetailModal = ({ data, onClose, onVote, darkMode }) => {
               whileTap={{ scale: 0.9 }}
               onClick={handleZoomOut}
               disabled={zoom <= 1}
-              className="bg-black/80 hover:bg-black text-white p-2 rounded-lg border-2 border-white/20 backdrop-blur-sm disabled:opacity-40"
+              className="backdrop-blur-sm bg-black/50 hover:bg-black/70 text-white p-2 rounded-lg border border-white/20 disabled:opacity-40"
             >
               <ZoomOut size={16} />
             </motion.button>
-            <div className="bg-black/80 text-white text-xs font-bold px-3 py-2 rounded-lg border-2 border-white/20 backdrop-blur-sm">
+            <div className="backdrop-blur-sm bg-black/50 text-white text-xs font-bold px-3 py-2 rounded-lg border border-white/20">
               {Math.round(zoom * 100)}%
             </div>
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={handleZoomIn}
               disabled={zoom >= 4}
-              className="bg-black/80 hover:bg-black text-white p-2 rounded-lg border-2 border-white/20 backdrop-blur-sm disabled:opacity-40"
+              className="backdrop-blur-sm bg-black/50 hover:bg-black/70 text-white p-2 rounded-lg border border-white/20 disabled:opacity-40"
             >
               <ZoomIn size={16} />
             </motion.button>
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={handleReset}
-              className="bg-black/80 hover:bg-black text-white p-2 rounded-lg border-2 border-white/20 backdrop-blur-sm"
+              className="backdrop-blur-sm bg-black/50 hover:bg-black/70 text-white p-2 rounded-lg border border-white/20"
             >
               <RotateCcw size={16} />
             </motion.button>
           </div>
 
           {/* Severity Badge on image */}
-          <div className={`absolute top-3 left-3 ${sizeInfo.color} text-white text-xs font-black uppercase px-3 py-1.5 rounded-lg border-2 border-black shadow-lg`}>
+          <div className={`absolute top-3 left-3 ${sizeInfo.color} text-white text-xs font-black uppercase px-3 py-1.5 rounded-lg backdrop-blur-sm shadow-lg`}>
             {sizeInfo.emoji} {sizeInfo.label}
           </div>
         </div>
 
         {/* Details Sidebar */}
-        <div className={`w-full md:w-72 border-t-4 md:border-t-0 md:border-l-4 p-4 flex flex-col ${darkMode ? 'bg-zinc-900 border-zinc-700' : 'bg-white border-black'}`}>
+        <div className={`w-full md:w-72 border-t md:border-t-0 md:border-l p-4 flex flex-col ${darkMode ? 'border-white/10' : 'border-black/10'}`}>
           {/* Header with close */}
           <div className="hidden md:flex justify-between items-start mb-4">
-            <div className={`${sizeInfo.color} text-white text-3xl p-3 rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_#000]`}>
+            <div className={`${sizeInfo.color} text-white text-3xl p-3 rounded-xl shadow-lg`}>
               {sizeInfo.emoji}
             </div>
             <button onClick={onClose} className={`transition-colors ${darkMode ? 'text-zinc-500 hover:text-red-400' : 'text-zinc-400 hover:text-red-500'}`}>
@@ -1058,20 +970,20 @@ const PotholeDetailModal = ({ data, onClose, onVote, darkMode }) => {
 
           {/* Title */}
           <h2 className={`text-xl md:text-2xl font-black uppercase leading-tight mb-1 ${darkMode ? 'text-white' : 'text-zinc-900'}`}>{sizeInfo.title}</h2>
-          <div className={`flex items-center gap-1 font-bold text-xs mb-4 ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+          <div className={`flex items-center gap-1 font-bold text-xs mb-4 ${darkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
             <MapPin size={12} /> {getDisplayLocation(data.location)}
           </div>
 
           {/* Stats */}
           <div className="space-y-2 mb-4 flex-1">
-            <div className={`flex items-center justify-between rounded-lg p-2 border ${darkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-zinc-100 border-zinc-200'}`}>
-              <span className={`text-xs font-bold uppercase flex items-center gap-1 ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+            <div className={`flex items-center justify-between rounded-xl p-3 backdrop-blur-sm border ${darkMode ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/5'}`}>
+              <span className={`text-xs font-bold uppercase flex items-center gap-1 ${darkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
                 <AlertTriangle size={12} /> Severity
               </span>
               <span className={`font-black text-sm ${darkMode ? 'text-white' : 'text-zinc-900'}`}>{data.severity}</span>
             </div>
-            <div className={`flex items-center justify-between rounded-lg p-2 border ${darkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-zinc-100 border-zinc-200'}`}>
-              <span className={`text-xs font-bold uppercase flex items-center gap-1 ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+            <div className={`flex items-center justify-between rounded-xl p-3 backdrop-blur-sm border ${darkMode ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/5'}`}>
+              <span className={`text-xs font-bold uppercase flex items-center gap-1 ${darkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
                 <Calendar size={12} /> Reported
               </span>
               <span className={`font-black text-sm ${darkMode ? 'text-white' : 'text-zinc-900'}`}>
@@ -1081,7 +993,7 @@ const PotholeDetailModal = ({ data, onClose, onVote, darkMode }) => {
           </div>
 
           {/* Vote Section */}
-          <div className={`rounded-2xl p-4 border ${darkMode ? 'bg-gradient-to-br from-rose-900/30 to-pink-900/30 border-rose-800/50' : 'bg-gradient-to-br from-rose-50 to-pink-50 border-rose-200/50'}`}>
+          <div className={`rounded-2xl p-4 backdrop-blur-sm border ${darkMode ? 'bg-rose-500/10 border-rose-500/20' : 'bg-rose-500/5 border-rose-500/10'}`}>
             <div className="flex items-center justify-between">
               <div>
                 <span className={`text-sm font-bold uppercase ${darkMode ? 'text-rose-300' : 'text-rose-400'}`}>Angry Voters</span>
@@ -1097,7 +1009,7 @@ const PotholeDetailModal = ({ data, onClose, onVote, darkMode }) => {
 };
 
 
-const UploadModal = ({ onClose, onSubmit }) => {
+const UploadModal = ({ onClose, onSubmit, darkMode }) => {
   const [step, setStep] = useState(1);
   const [imgPreview, setImgPreview] = useState(null);
   const [imgFile, setImgFile] = useState(null);
@@ -1325,7 +1237,7 @@ const UploadModal = ({ onClose, onSubmit }) => {
         setValidating(false);
       } else {
         // Not a pothole - reject!
-        setError('🚫 This doesn\'t look like a pothole! Please upload an image of an actual pothole.');
+        setError('This doesn\'t look like a pothole! Please upload an image of an actual pothole.');
         setImgPreview(null);
         setImgFile(null);
         setValidating(false);
@@ -1415,19 +1327,19 @@ const UploadModal = ({ onClose, onSubmit }) => {
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.9, opacity: 0, y: 20 }}
-        className="bg-white w-full max-w-sm rounded-2xl border-4 border-zinc-800 shadow-[10px_10px_0px_0px_#14b8a6] overflow-hidden"
+        className={`w-full max-w-sm rounded-2xl border-2 overflow-hidden ${darkMode ? 'bg-zinc-900 border-zinc-700' : 'bg-white border-zinc-800'}`}
       >
         {/* Modal Header */}
-        <div className="bg-black p-3 flex justify-between items-center">
-          <h3 className="text-white font-black uppercase tracking-wider text-sm">Report Disaster</h3>
-          <button onClick={onClose} className="text-white hover:text-red-500 transition-colors">
+        <div className={`p-3 flex justify-between items-center ${darkMode ? 'bg-zinc-800 border-b border-zinc-700' : 'bg-zinc-900'}`}>
+          <h3 className="text-white font-black uppercase tracking-wider text-sm">Report Pothole</h3>
+          <button onClick={onClose} className="text-zinc-400 hover:text-red-500 transition-colors">
             <X size={20} />
           </button>
         </div>
 
         <div className="p-4">
           {error && (
-            <div className="bg-red-100 border-2 border-red-500 text-red-700 text-sm font-bold p-2 rounded-lg mb-4">
+            <div className={`text-sm font-bold p-2 rounded-lg mb-4 border-2 ${darkMode ? 'bg-red-900/30 border-red-800 text-red-400' : 'bg-red-100 border-red-500 text-red-700'}`}>
               {error}
             </div>
           )}
@@ -1437,10 +1349,10 @@ const UploadModal = ({ onClose, onSubmit }) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               onClick={() => !validating && fileInputRef.current?.click()}
-              className={`group cursor-pointer border-4 border-dashed bg-zinc-50 h-56 rounded-xl flex flex-col items-center justify-center transition-colors ${
+              className={`group cursor-pointer border-2 border-dashed h-56 rounded-xl flex flex-col items-center justify-center transition-colors ${
                 validating 
-                  ? 'border-teal-400 bg-teal-50' 
-                  : 'border-zinc-200 hover:border-rose-400'
+                  ? darkMode ? 'border-teal-500 bg-teal-900/20' : 'border-teal-400 bg-teal-50'
+                  : darkMode ? 'border-zinc-700 bg-zinc-800/50 hover:border-teal-500' : 'border-zinc-200 bg-zinc-50 hover:border-teal-400'
               }`}
             >
               <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFile} />
@@ -1450,20 +1362,20 @@ const UploadModal = ({ onClose, onSubmit }) => {
                   <motion.div 
                     animate={{ rotate: 360 }}
                     transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    className="bg-teal-400 p-4 rounded-full shadow-lg mb-3"
+                    className="bg-teal-500 p-4 rounded-full mb-3"
                   >
                     <Loader2 size={32} className="text-white" />
                   </motion.div>
-                  <p className="font-bold text-teal-600 uppercase text-sm">Analyzing Image...</p>
-                  <p className="text-teal-500 text-xs mt-1">AI is checking for potholes</p>
+                  <p className={`font-bold uppercase text-sm ${darkMode ? 'text-teal-400' : 'text-teal-600'}`}>Analyzing Image...</p>
+                  <p className={`text-xs mt-1 ${darkMode ? 'text-teal-500' : 'text-teal-500'}`}>AI is checking for potholes</p>
                 </>
               ) : (
                 <>
-                  <div className="bg-white p-4 rounded-full border-2 border-zinc-100 shadow-lg mb-3 group-hover:scale-110 transition-transform">
-                    <Camera size={32} className="text-zinc-400 group-hover:text-rose-500" />
+                  <div className={`p-4 rounded-full border-2 mb-3 group-hover:scale-110 transition-transform ${darkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-white border-zinc-200'}`}>
+                    <Camera size={32} className={`${darkMode ? 'text-zinc-500 group-hover:text-teal-400' : 'text-zinc-500 group-hover:text-teal-500'}`} />
                   </div>
-                  <p className="font-bold text-zinc-400 uppercase text-sm group-hover:text-rose-500">Tap to Add Photo</p>
-                  <p className="text-zinc-300 text-xs mt-1">Take photo or choose from library</p>
+                  <p className={`font-bold uppercase text-sm ${darkMode ? 'text-zinc-400 group-hover:text-teal-400' : 'text-zinc-600 group-hover:text-teal-500'}`}>Tap to Add Photo</p>
+                  <p className={`text-xs mt-1 ${darkMode ? 'text-zinc-600' : 'text-zinc-500'}`}>Take photo or choose from library</p>
                 </>
               )}
             </motion.div>
@@ -1474,11 +1386,11 @@ const UploadModal = ({ onClose, onSubmit }) => {
               className="space-y-4"
             >
               {/* Preview */}
-              <div className="relative h-36 bg-black rounded-xl border-2 border-black overflow-hidden">
-                <img src={imgPreview} className="w-full h-full object-cover opacity-80" alt="Preview" />
+              <div className="relative h-36 bg-zinc-900 rounded-xl border-2 border-zinc-700 overflow-hidden">
+                <img src={imgPreview} className="w-full h-full object-cover" alt="Preview" />
                 <button 
                   onClick={() => { setStep(1); setImgPreview(null); setImgFile(null); }} 
-                  className="absolute top-2 right-2 bg-black/60 text-white text-xs font-bold px-2 py-1 rounded backdrop-blur-sm hover:bg-red-500 transition-colors"
+                  className="absolute top-2 right-2 backdrop-blur-sm bg-black/50 text-white text-xs font-bold px-2 py-1 rounded hover:bg-red-500 transition-colors"
                 >
                   RETAKE
                 </button>
@@ -1486,44 +1398,58 @@ const UploadModal = ({ onClose, onSubmit }) => {
 
               {/* Size Selector */}
               <div>
-                <label className="block text-[10px] font-black uppercase text-zinc-400 mb-1.5">Severity Level</label>
+                <label className={`block text-[10px] font-black uppercase mb-1.5 ${darkMode ? 'text-zinc-500' : 'text-zinc-600'}`}>Severity Level</label>
                 <div className="flex gap-1">
                   {SIZES.map(s => (
                     <motion.button
                       key={s.level}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setSize(s.level)}
-                      className={`flex-1 py-2.5 rounded-lg border-2 font-bold text-xl transition-all ${size === s.level ? 'bg-rose-500 border-zinc-800 text-white -translate-y-1 shadow-[3px_3px_0px_0px_#27272a]' : 'bg-white border-zinc-200 text-zinc-300 hover:border-zinc-400'}`}
+                      className={`flex-1 py-2.5 rounded-lg border-2 font-bold text-xl transition-all ${
+                        size === s.level 
+                          ? 'bg-rose-500 border-black text-white -translate-y-1 shadow-[2px_2px_0px_0px_#000]' 
+                          : darkMode 
+                            ? 'bg-zinc-800 border-zinc-700 text-zinc-500 hover:border-zinc-600' 
+                            : 'bg-white border-zinc-200 text-zinc-500 hover:border-zinc-300'
+                      }`}
                     >
                       {s.emoji}
                     </motion.button>
                   ))}
                 </div>
-                <div className="text-center mt-1.5 font-black uppercase text-rose-500 text-sm">
+                <div className={`text-center mt-1.5 font-black uppercase text-sm ${darkMode ? 'text-rose-400' : 'text-rose-500'}`}>
                   "{SIZES.find(s => s.level === size).title}"
                 </div>
               </div>
 
               {/* Location */}
               <div>
-                <label className="block text-[10px] font-black uppercase text-zinc-400 mb-1.5">Location</label>
+                <label className={`block text-[10px] font-black uppercase mb-1.5 ${darkMode ? 'text-zinc-500' : 'text-zinc-600'}`}>Location</label>
                 <div className="flex gap-2">
                   <input 
                     type="text" 
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     placeholder="e.g. 5th Avenue Intersection"
-                    className="flex-1 bg-zinc-100 border-2 border-transparent focus:bg-white focus:border-teal-400 rounded-lg p-2.5 font-bold text-sm outline-none transition-colors"
+                    className={`flex-1 border-2 rounded-lg p-2.5 font-bold text-sm outline-none transition-colors ${
+                      darkMode 
+                        ? 'bg-zinc-800 border-zinc-700 text-white placeholder-zinc-600 focus:border-teal-500' 
+                        : 'bg-zinc-100 border-transparent text-zinc-900 placeholder-zinc-400 focus:bg-white focus:border-teal-400'
+                    }`}
                   />
                   <motion.button
                     type="button"
                     whileTap={{ scale: 0.9 }}
                     onClick={getLocation}
                     disabled={fetchingLocation}
-                    className={`px-3 rounded-lg border-2 border-zinc-800 font-bold transition-all flex items-center justify-center ${
+                    className={`px-3 rounded-lg backdrop-blur-sm border font-bold transition-all flex items-center justify-center ${
                       fetchingLocation 
-                        ? 'bg-zinc-200 text-zinc-400 cursor-wait' 
-                        : 'bg-teal-400 hover:bg-teal-300 text-white hover:-translate-y-0.5 shadow-[2px_2px_0px_0px_#27272a]'
+                        ? darkMode 
+                          ? 'bg-zinc-600/50 text-zinc-500 cursor-wait border-zinc-600' 
+                          : 'bg-zinc-300/50 text-zinc-500 cursor-wait border-zinc-300'
+                        : darkMode 
+                          ? 'bg-teal-500/20 hover:bg-teal-500/30 text-teal-400 border-teal-500/30' 
+                          : 'bg-teal-500/20 hover:bg-teal-500/30 text-teal-600 border-teal-500/30'
                     }`}
                     title="Get current location"
                   >
@@ -1534,14 +1460,18 @@ const UploadModal = ({ onClose, onSubmit }) => {
                     )}
                   </motion.button>
                 </div>
-                <p className="text-[9px] text-zinc-400 mt-1">Type manually or tap GPS button</p>
+                <p className={`text-[9px] mt-1 ${darkMode ? 'text-zinc-600' : 'text-zinc-500'}`}>Type manually or tap GPS button</p>
               </div>
 
               <motion.button 
                 whileTap={{ scale: 0.98 }}
                 onClick={handleSubmit}
                 disabled={uploading}
-                className="w-full bg-black text-white font-black uppercase py-3 rounded-xl text-sm hover:bg-zinc-800 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className={`w-full font-black uppercase py-3 rounded-xl text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 backdrop-blur-sm border ${
+                  darkMode 
+                    ? 'bg-teal-500/20 hover:bg-teal-500/30 text-teal-400 border-teal-500/30' 
+                    : 'bg-teal-500/20 hover:bg-teal-500/30 text-teal-600 border-teal-500/30'
+                }`}
               >
                 {uploading ? (
                   <>
@@ -1551,7 +1481,7 @@ const UploadModal = ({ onClose, onSubmit }) => {
                 ) : (
                   <>
                     <Upload size={18} />
-                    Submit to Hall of Shame
+                    Submit Report
                   </>
                 )}
               </motion.button>

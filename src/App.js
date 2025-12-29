@@ -135,6 +135,12 @@ const App = () => {
   }, []);
 
   const loadPotholes = async () => {
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      console.warn('Missing Supabase credentials. Use REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY.');
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch(`${SUPABASE_URL}/rest/v1/potholes?select=*&order=created_at.desc`, {
         headers: {
@@ -1283,7 +1289,7 @@ const UploadModal = ({ onClose, onSubmit, darkMode }) => {
     try {
       // Check if we have valid Supabase credentials
       if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-        throw new Error('Configuration error: Missing Supabase credentials. Please check your environment variables.');
+        throw new Error('Production Error: Missing Supabase credentials. You must add REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY to your deployment environment variables (Netlify/Vercel settings).');
       }
 
       const fileExt = imgFile.name.split('.').pop();

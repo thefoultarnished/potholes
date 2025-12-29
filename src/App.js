@@ -143,7 +143,7 @@ const App = () => {
   const [showUpload, setShowUpload] = useState(false);
   const [selectedPothole, setSelectedPothole] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
 
   useEffect(() => {
     loadPotholes();
@@ -468,17 +468,10 @@ const App = () => {
         
         {/* --- HALL OF SHAME (TOP 3) --- */}
         {top3.length > 0 && (
-          <div className="mb-12 flex gap-4">
-            {/* Vertical Title - Left Side */}
-            <motion.div 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="hidden md:flex flex-col items-center justify-center"
-            >
-              <div 
-                className="flex items-center gap-3"
-                style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
-              >
+          <div className="mb-12">
+            {/* Mobile Title */}
+            <div className="md:hidden text-center mb-6">
+              <div className="flex items-center justify-center gap-2 mb-1">
                 <motion.div
                   animate={{ scale: [1, 1.1, 1] }}
                   transition={{ duration: 2, repeat: Infinity }}
@@ -486,85 +479,160 @@ const App = () => {
                 >
                   <Trophy className="text-white" size={20} />
                 </motion.div>
-                <h2 className={`text-xl font-black uppercase tracking-widest ${darkMode ? 'text-white' : 'text-zinc-800'}`}
-                  style={{ transform: 'rotate(180deg)' }}
-                >
+                <h2 className={`text-xl font-black uppercase ${darkMode ? 'text-white' : 'text-zinc-800'}`}>
                   Hall of Shame
                 </h2>
               </div>
-            </motion.div>
-
-            {/* Mobile Title */}
-            <div className="md:hidden w-full text-center mb-4">
-              <h2 className={`text-xl font-black uppercase ${darkMode ? 'text-white' : 'text-zinc-800'}`}>
-                🏆 Hall of Shame
-              </h2>
             </div>
 
-            {/* Content Area */}
-            <div className="flex-1">
-              {/* Podium Container */}
-              <div className={`relative py-6 px-3 md:px-6 rounded-3xl ${darkMode ? 'bg-gradient-to-b from-slate-800/60 to-zinc-800/40 border border-zinc-700/30' : 'bg-gradient-to-b from-zinc-100/80 to-slate-50/50 border border-zinc-200/50'}`}>
-                {/* Top edge highlight */}
-                <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-0.5 rounded-full ${darkMode ? 'bg-gradient-to-r from-transparent via-rose-400 to-transparent' : 'bg-gradient-to-r from-transparent via-rose-400 to-transparent'}`} />
-              
-              {/* Mobile: Vertical stack, Desktop: Arc Layout */}
-              <div className="flex flex-col md:flex-row justify-center items-center md:items-end gap-4 md:gap-4 max-w-4xl mx-auto">
-                {/* 2nd Place - Left on desktop, second on mobile */}
-                {top3[1] && (
-                  <motion.div 
-                    initial={{ opacity: 0, x: -50 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2, type: "spring" }}
-                    className="w-full md:flex-1 max-w-[280px] order-2 md:order-1"
-                    style={{ transform: 'md:rotate(-6deg) md:translateY(16px)' }}
+            {/* Desktop Layout with Vertical Title */}
+            <div className="hidden md:flex gap-4">
+              {/* Vertical Title - Left Side */}
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="flex flex-col items-center justify-center"
+              >
+                <div 
+                  className="flex items-center gap-3"
+                  style={{ writingMode: 'vertical-rl', textOrientation: 'mixed' }}
+                >
+                  <motion.div
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="p-2 bg-gradient-to-br from-rose-500 to-pink-600 rounded-xl shadow-lg shadow-rose-500/30"
                   >
-                    <HallOfShameCard 
-                      data={top3[1]} 
-                      rank={2} 
-                      onVote={() => handleVote(top3[1].id, top3[1].votes)}
-                      onSelect={setSelectedPothole}
-                      darkMode={darkMode}
-                    />
+                    <Trophy className="text-white" size={20} />
                   </motion.div>
-                )}
-                
-                {/* 1st Place - Center on desktop, first on mobile */}
-                {top3[0] && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 50, scale: 0.8 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
-                    className="w-full md:flex-1 max-w-[320px] z-10 order-1 md:order-2"
+                  <h2 className={`text-xl font-black uppercase tracking-widest ${darkMode ? 'text-white' : 'text-zinc-800'}`}
+                    style={{ transform: 'rotate(180deg)' }}
                   >
-                    <HallOfShameCard 
-                      data={top3[0]} 
-                      rank={1} 
-                      onVote={() => handleVote(top3[0].id, top3[0].votes)}
-                      onSelect={setSelectedPothole}
-                      darkMode={darkMode}
-                    />
-                  </motion.div>
-                )}
-                
-                {/* 3rd Place - Right on desktop, third on mobile */}
-                {top3[2] && (
-                  <motion.div 
-                    initial={{ opacity: 0, x: 50 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3, type: "spring" }}
-                    className="w-full md:flex-1 max-w-[280px] order-3"
-                  >
-                    <HallOfShameCard 
-                      data={top3[2]} 
-                      rank={3} 
-                      onVote={() => handleVote(top3[2].id, top3[2].votes)}
-                      onSelect={setSelectedPothole}
-                      darkMode={darkMode}
-                    />
-                  </motion.div>
-                )}
+                    Hall of Shame
+                  </h2>
+                </div>
+              </motion.div>
+
+              {/* Desktop Content Area */}
+              <div className="flex-1">
+                <div className={`relative py-6 px-6 rounded-3xl ${darkMode ? 'bg-gradient-to-b from-slate-800/60 to-zinc-800/40 border border-zinc-700/30' : 'bg-gradient-to-b from-zinc-100/80 to-slate-50/50 border border-zinc-200/50'}`}>
+                  <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-0.5 rounded-full ${darkMode ? 'bg-gradient-to-r from-transparent via-rose-400 to-transparent' : 'bg-gradient-to-r from-transparent via-rose-400 to-transparent'}`} />
+                  
+                  <div className="flex flex-row justify-center items-end gap-4 max-w-4xl mx-auto">
+                    {top3[1] && (
+                      <motion.div 
+                        initial={{ opacity: 0, x: -50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.2, type: "spring" }}
+                        className="flex-1 max-w-[280px]"
+                      >
+                        <HallOfShameCard 
+                          data={top3[1]} 
+                          rank={2} 
+                          onVote={() => handleVote(top3[1].id, top3[1].votes)}
+                          onSelect={setSelectedPothole}
+                          darkMode={darkMode}
+                        />
+                      </motion.div>
+                    )}
+                    
+                    {top3[0] && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 50, scale: 0.8 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+                        className="flex-1 max-w-[320px] z-10"
+                      >
+                        <HallOfShameCard 
+                          data={top3[0]} 
+                          rank={1} 
+                          onVote={() => handleVote(top3[0].id, top3[0].votes)}
+                          onSelect={setSelectedPothole}
+                          darkMode={darkMode}
+                        />
+                      </motion.div>
+                    )}
+                    
+                    {top3[2] && (
+                      <motion.div 
+                        initial={{ opacity: 0, x: 50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.3, type: "spring" }}
+                        className="flex-1 max-w-[280px]"
+                      >
+                        <HallOfShameCard 
+                          data={top3[2]} 
+                          rank={3} 
+                          onVote={() => handleVote(top3[2].id, top3[2].votes)}
+                          onSelect={setSelectedPothole}
+                          darkMode={darkMode}
+                        />
+                      </motion.div>
+                    )}
+                  </div>
+                </div>
               </div>
+            </div>
+
+            {/* Mobile Layout - Vertical Stack */}
+            <div className="md:hidden">
+              <div className={`relative py-6 px-4 rounded-3xl ${darkMode ? 'bg-gradient-to-b from-slate-800/60 to-zinc-800/40 border border-zinc-700/30' : 'bg-gradient-to-b from-zinc-100/80 to-slate-50/50 border border-zinc-200/50'}`}>
+                <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-0.5 rounded-full ${darkMode ? 'bg-gradient-to-r from-transparent via-rose-400 to-transparent' : 'bg-gradient-to-r from-transparent via-rose-400 to-transparent'}`} />
+                
+                <div className="flex flex-col items-center gap-6">
+                  {/* 1st Place */}
+                  {top3[0] && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 30 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1, type: "spring" }}
+                      className="w-full max-w-[300px]"
+                    >
+                      <HallOfShameCard 
+                        data={top3[0]} 
+                        rank={1} 
+                        onVote={() => handleVote(top3[0].id, top3[0].votes)}
+                        onSelect={setSelectedPothole}
+                        darkMode={darkMode}
+                      />
+                    </motion.div>
+                  )}
+                  
+                  {/* 2nd Place */}
+                  {top3[1] && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 30 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2, type: "spring" }}
+                      className="w-full max-w-[280px]"
+                    >
+                      <HallOfShameCard 
+                        data={top3[1]} 
+                        rank={2} 
+                        onVote={() => handleVote(top3[1].id, top3[1].votes)}
+                        onSelect={setSelectedPothole}
+                        darkMode={darkMode}
+                      />
+                    </motion.div>
+                  )}
+                  
+                  {/* 3rd Place */}
+                  {top3[2] && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 30 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3, type: "spring" }}
+                      className="w-full max-w-[280px]"
+                    >
+                      <HallOfShameCard 
+                        data={top3[2]} 
+                        rank={3} 
+                        onVote={() => handleVote(top3[2].id, top3[2].votes)}
+                        onSelect={setSelectedPothole}
+                        darkMode={darkMode}
+                      />
+                    </motion.div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

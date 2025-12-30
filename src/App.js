@@ -70,54 +70,32 @@ const getDisplayLocation = (location) => {
 
 // Animated Upvote Button with count
 const UpvoteButton = ({ onVote, votes = 0, size = "md", darkMode = true }) => {
-  const [isAnimating, setIsAnimating] = useState(false);
-  
   const sizes = {
-    sm: { padding: "px-2.5 py-1", icon: 12, text: "text-xs" },
-    md: { padding: "px-3 py-1.5", icon: 14, text: "text-sm" },
+    sm: { padding: "px-3 py-2", icon: 14, text: "text-xs" },
+    md: { padding: "px-4 py-2.5", icon: 16, text: "text-sm" },
   };
   
   const s = sizes[size] || sizes.md;
   
   const handleClick = (e) => {
     e.stopPropagation();
-    setIsAnimating(true);
+    e.preventDefault();
     onVote();
-    setTimeout(() => setIsAnimating(false), 600);
   };
 
   return (
-    <motion.button
-      whileTap={{ scale: 0.9 }}
-      whileHover={{ scale: 1.05 }}
+    <button
+      type="button"
       onClick={handleClick}
-      className={`${s.padding} rounded-lg font-bold ${s.text} transition-all duration-200 flex items-center gap-1 flex-shrink-0 backdrop-blur-sm border ${
+      className={`${s.padding} rounded-xl font-black ${s.text} transition-all duration-150 flex items-center gap-1.5 flex-shrink-0 self-stretch hover:scale-105 active:scale-95 ${
         darkMode 
-          ? 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border-rose-500/30' 
-          : 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-600 border-rose-500/30'
+          ? 'bg-[#0f172a] text-rose-400 shadow-[4px_4px_8px_#020617,-4px_-4px_8px_#1e293b] active:shadow-[inset_2px_2px_4px_#020617,inset_-2px_-2px_4px_#1e293b]' 
+          : 'bg-[#f8fafc] text-rose-500 shadow-[4px_4px_8px_#d1d5db,-4px_-4px_8px_#ffffff] active:shadow-[inset_2px_2px_4px_#d1d5db,inset_-2px_-2px_4px_#ffffff]'
       }`}
     >
-      {/* Vote count */}
-      <motion.span 
-        key={votes}
-        initial={{ scale: 1.3 }}
-        animate={{ scale: 1 }}
-        className="font-black"
-      >
-        {votes}
-      </motion.span>
-      
-      {/* Icon with animation */}
-      <motion.div
-        animate={isAnimating ? { 
-          y: [0, -3, 0],
-          scale: [1, 1.2, 1]
-        } : {}}
-        transition={{ duration: 0.3, ease: "easeOut" }}
-      >
-        <ChevronUp size={s.icon} strokeWidth={3} />
-      </motion.div>
-    </motion.button>
+      <span className="font-black">{votes}</span>
+      <ChevronUp size={s.icon} strokeWidth={3} />
+    </button>
   );
 };
 
@@ -160,16 +138,29 @@ const App = () => {
     }
   };
 
-  // Sort by votes descending for Hall of Shame
-  const sortedReports = [...reports].sort((a, b) => b.votes - a.votes);
-  const top3 = sortedReports.slice(0, 3);
-  const theRest = sortedReports.slice(3);
+  // Get top 3 by votes for Hall of Shame (stable sort with ID tiebreaker)
+  const sortedByVotes = [...reports].sort((a, b) => {
+    if (b.votes !== a.votes) return b.votes - a.votes;
+    return String(a.id).localeCompare(String(b.id)); // Stable tiebreaker
+  });
+  const top3 = sortedByVotes.slice(0, 3);
+  const top3Ids = new Set(top3.map(r => r.id));
+  
+  // Keep the rest in original creation order (stable, no jumping)
+  const theRest = reports.filter(r => !top3Ids.has(r.id));
 
   const handleVote = async (id, currentVotes) => {
+    const newVotes = currentVotes + 1;
+
     // Optimistic update
     setReports(prev => prev.map(item => 
-      item.id === id ? { ...item, votes: item.votes + 1 } : item
+      item.id === id ? { ...item, votes: newVotes } : item
     ));
+
+    // Update selected modal state if open
+    if (selectedPothole && selectedPothole.id === id) {
+      setSelectedPothole(prev => ({ ...prev, votes: newVotes }));
+    }
 
     try {
       await fetch(`${SUPABASE_URL}/rest/v1/potholes?id=eq.${id}`, {
@@ -179,13 +170,16 @@ const App = () => {
           'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ votes: currentVotes + 1 })
+        body: JSON.stringify({ votes: newVotes })
       });
     } catch (err) {
       // Revert on error
       setReports(prev => prev.map(item => 
-        item.id === id ? { ...item, votes: item.votes - 1 } : item
+        item.id === id ? { ...item, votes: currentVotes } : item
       ));
+      if (selectedPothole && selectedPothole.id === id) {
+        setSelectedPothole(prev => ({ ...prev, votes: currentVotes }));
+      }
     }
   };
 
@@ -220,8 +214,8 @@ const App = () => {
       <div className="fixed inset-0 pointer-events-none">
         {/* Base gradient */}
         <div className={`absolute inset-0 ${darkMode 
-          ? 'bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950' 
-          : 'bg-gradient-to-br from-slate-100 via-zinc-50 to-slate-100'}`} 
+          ? 'bg-gradient-to-br from-[#0f172a] via-[#0b1120] to-[#0f172a]' 
+          : 'bg-[#e2e8f0]'}`} 
         />
         {/* Colored orbs for depth */}
         <div className={`absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full blur-3xl ${darkMode ? 'bg-teal-500/20' : 'bg-teal-400/30'}`} />
@@ -282,9 +276,9 @@ const App = () => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setShowUpload(true)}
-                  className={`flex items-center gap-2 font-bold py-2.5 px-4 rounded-xl transition-all backdrop-blur-sm border ${darkMode 
-                    ? 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border-rose-500/30' 
-                    : 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-600 border-rose-500/30'}`}
+                  className={`flex items-center gap-2 font-bold py-2.5 px-4 rounded-xl transition-all active:scale-95 duration-200 ${darkMode 
+                    ? 'bg-[#1e1e20] text-rose-400 shadow-[4px_4px_8px_#151516,-4px_-4px_8px_#27272a] hover:shadow-[6px_6px_12px_#151516,-6px_-6px_12px_#27272a] active:shadow-[inset_3px_3px_6px_#151516,inset_-3px_-3px_6px_#27272a]' 
+                    : 'bg-slate-100 text-rose-500 shadow-[5px_5px_10px_#cbd5e1,-5px_-5px_10px_#ffffff] hover:shadow-[7px_7px_14px_#cbd5e1,-7px_-7px_14px_#ffffff] active:shadow-[inset_4px_4px_8px_#cbd5e1,inset_-4px_-4px_8px_#ffffff]'}`}
                 >
                   <Camera size={18} strokeWidth={2.5} />
                   <span className="hidden sm:inline text-sm">REPORT</span>
@@ -297,9 +291,9 @@ const App = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setDarkMode(!darkMode)}
-                  className={`p-2.5 rounded-xl backdrop-blur-sm transition-all ${darkMode 
-                    ? 'bg-white/10 hover:bg-white/20 border border-white/10' 
-                    : 'bg-black/5 hover:bg-black/10 border border-black/5'}`}
+                  className={`p-2.5 rounded-xl transition-all duration-200 active:scale-95 ${darkMode 
+                    ? 'bg-[#0f172a] text-amber-400 shadow-[4px_4px_10px_#020617,-4px_-4px_10px_#1e293b] hover:shadow-[6px_6px_12px_#020617,-6px_-6px_12px_#1e293b] active:shadow-[inset_3px_3px_6px_#020617,inset_-3px_-3px_6px_#1e293b]' 
+                    : 'bg-[#f8fafc] text-zinc-600 shadow-[5px_5px_10px_#d1d5db,-5px_-5px_10px_#ffffff] hover:shadow-[7px_7px_14px_#d1d5db,-7px_-7px_14px_#ffffff] active:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff]'}`}
                   title={darkMode ? 'Light Mode' : 'Dark Mode'}
                 >
                   {darkMode ? (
@@ -323,9 +317,9 @@ const App = () => {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.1 }}
-              className={`flex items-center gap-3 px-5 py-3 rounded-2xl backdrop-blur-xl border ${darkMode 
-                ? 'bg-white/5 border-white/10' 
-                : 'bg-white/60 border-white/80 shadow-lg shadow-black/5'}`}
+              className={`flex items-center gap-3 px-5 py-3 rounded-2xl border transition-all hover:-translate-y-1 duration-300 ${darkMode 
+                ? 'bg-[#0f172a] border-white/5 shadow-[4px_4px_10px_#020617,-4px_-4px_10px_#1e293b]' 
+                : 'bg-[#e2e8f0] border-white/20 shadow-[5px_5px_10px_#cbd5e1,-5px_-5px_10px_#ffffff]'}`}
             >
               <div className={`p-2 rounded-xl ${darkMode ? 'bg-rose-500/20' : 'bg-rose-500/10'}`}>
                 <AlertTriangle size={18} className="text-rose-500" />
@@ -350,9 +344,9 @@ const App = () => {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className={`flex items-center gap-3 px-5 py-3 rounded-2xl backdrop-blur-xl border ${darkMode 
-                ? 'bg-white/5 border-white/10' 
-                : 'bg-white/60 border-white/80 shadow-lg shadow-black/5'}`}
+              className={`flex items-center gap-3 px-5 py-3 rounded-2xl border transition-all hover:-translate-y-1 duration-300 ${darkMode 
+                ? 'bg-[#0f172a] border-white/5 shadow-[4px_4px_10px_#020617,-4px_-4px_10px_#1e293b]' 
+                : 'bg-[#e2e8f0] border-white/20 shadow-[5px_5px_10px_#cbd5e1,-5px_-5px_10px_#ffffff]'}`}
             >
               <div className={`p-2 rounded-xl ${darkMode ? 'bg-teal-500/20' : 'bg-teal-500/10'}`}>
                 <Flame size={18} className="text-teal-500" />
@@ -377,9 +371,9 @@ const App = () => {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className={`flex items-center gap-3 px-5 py-3 rounded-2xl backdrop-blur-xl border border-dashed ${darkMode 
-                ? 'bg-white/[0.02] border-white/10' 
-                : 'bg-white/40 border-zinc-300 shadow-lg shadow-black/5'}`}
+              className={`flex items-center gap-3 px-5 py-3 rounded-2xl border border-dashed transition-all hover:-translate-y-1 duration-300 ${darkMode 
+                ? 'bg-[#0f172a] border-white/5 shadow-[4px_4px_10px_#020617,-4px_-4px_10px_#1e293b]' 
+                : 'bg-[#e2e8f0] border-zinc-300 shadow-[5px_5px_10px_#cbd5e1,-5px_-5px_10px_#ffffff]'}`}
             >
               <div className={`p-2 rounded-xl ${darkMode ? 'bg-zinc-500/20' : 'bg-zinc-500/10'}`}>
                 <Trophy size={18} className={darkMode ? 'text-zinc-500' : 'text-zinc-500'} />
@@ -723,9 +717,14 @@ const HallOfShameCard = ({ data, rank, onVote, onSelect, darkMode }) => {
       className={`
         relative p-4 rounded-2xl flex flex-col h-full cursor-pointer group backdrop-blur-xl border
         ${darkMode 
-          ? 'bg-white/5 border-white/10 hover:bg-white/10' 
-          : 'bg-white/60 border-white/80 hover:bg-white/80'}
-        ${rank === 1 ? `shadow-xl ${style.glow}` : 'shadow-lg shadow-black/5'}
+          ? 'bg-[#0f172a] border-white/5' 
+          : 'bg-[#e2e8f0] border-white/20'}
+        ${rank === 1 
+          ? `shadow-xl ${style.glow}` 
+          : darkMode 
+            ? 'shadow-[4px_4px_12px_#020617,-4px_-4px_12px_#1e293b]' 
+            : 'shadow-[6px_6px_12px_#cbd5e1,-6px_-6px_12px_#ffffff]'
+        }
         transition-all duration-300
       `}
     >
@@ -791,10 +790,10 @@ const FeedCard = ({ data, onVote, onSelect, darkMode }) => {
         layout: { type: "spring", stiffness: 400, damping: 35 },
         opacity: { duration: 0.2 }
       }}
-      className={`rounded-xl p-3 flex gap-3 items-center cursor-pointer backdrop-blur-xl border ${
+      className={`rounded-xl p-3 flex gap-3 items-center cursor-pointer border ${
         darkMode 
-          ? 'bg-white/5 border-white/10 hover:bg-white/10' 
-          : 'bg-white/60 border-white/80 hover:bg-white/80'
+          ? 'bg-[#0f172a] border-white/5 shadow-[4px_4px_10px_#020617,-4px_-4px_10px_#1e293b] hover:shadow-[6px_6px_14px_#020617,-6px_-6px_14px_#1e293b]' 
+          : 'bg-[#e2e8f0] border-white/20 shadow-[5px_5px_10px_#cbd5e1,-5px_-5px_10px_#ffffff] hover:shadow-[7px_7px_14px_#cbd5e1,-7px_-7px_14px_#ffffff]'
       } transition-all duration-200`}
     >
       <div 
@@ -816,7 +815,7 @@ const FeedCard = ({ data, onVote, onSelect, darkMode }) => {
         </p>
       </div>
 
-      <UpvoteButton onVote={onVote} votes={data.votes} size="sm" darkMode={darkMode} />
+      <UpvoteButton onVote={onVote} votes={data.votes} size="md" darkMode={darkMode} />
     </motion.div>
   );
 };
@@ -827,22 +826,17 @@ const ReportCard = ({ data, index, onVote, onSelect, darkMode }) => {
 
   return (
     <motion.div 
-      layout
-      layoutId={`report-${data.id}`}
-      initial={{ opacity: 0, y: 30, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      whileHover={{ y: -8, scale: 1.02 }}
-      transition={{ 
-        layout: { type: "spring", stiffness: 400, damping: 35 },
-        delay: index * 0.05
-      }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      whileHover={{ y: -6 }}
+      transition={{ duration: 0.2 }}
       className={`
-        relative p-4 rounded-2xl flex flex-col cursor-pointer group backdrop-blur-xl border
+        relative p-4 rounded-2xl flex flex-col cursor-pointer group border
         ${darkMode 
-          ? 'bg-white/5 border-white/10 hover:bg-white/10' 
-          : 'bg-white/60 border-white/80 hover:bg-white/80'}
-        shadow-lg shadow-black/5 hover:shadow-xl transition-all duration-300
+          ? 'bg-[#0f172a] border-white/5 shadow-[4px_4px_10px_#020617,-4px_-4px_10px_#1e293b] hover:shadow-[6px_6px_14px_#020617,-6px_-6px_14px_#1e293b]' 
+          : 'bg-[#e2e8f0] border-white/20 shadow-[5px_5px_10px_#cbd5e1,-5px_-5px_10px_#ffffff] hover:shadow-[7px_7px_14px_#cbd5e1,-7px_-7px_14px_#ffffff]'}
+        transition-all duration-300
       `}
     >
       {/* Image Container */}
@@ -876,7 +870,7 @@ const ReportCard = ({ data, index, onVote, onSelect, darkMode }) => {
             <span className="truncate">{getDisplayLocation(data.location)}</span>
           </div>
         </div>
-        <UpvoteButton onVote={onVote} votes={data.votes} size="sm" darkMode={darkMode} />
+        <UpvoteButton onVote={onVote} votes={data.votes} size="md" darkMode={darkMode} />
       </div>
     </motion.div>
   );
@@ -985,8 +979,12 @@ const PotholeDetailModal = ({ data, onClose, onVote, darkMode }) => {
             <div className={`${sizeInfo.color} text-white text-3xl p-3 rounded-xl shadow-lg flex items-center justify-center`}>
               <SeverityIcon level={sizeInfo.level} size={32} />
             </div>
-            <button onClick={onClose} className={`transition-colors ${darkMode ? 'text-zinc-500 hover:text-red-400' : 'text-zinc-400 hover:text-red-500'}`}>
-              <X size={24} />
+            <button onClick={onClose} className={`transition-all duration-200 active:scale-90 p-1.5 rounded-full ${
+              darkMode 
+                ? 'bg-[#0f172a] text-zinc-500 hover:text-red-400 shadow-[4px_4px_8px_#020617,-4px_-4px_8px_#1e293b] active:shadow-[inset_2px_2px_4px_#020617,inset_-2px_-2px_4px_#1e293b]' 
+                : 'bg-[#f8fafc] text-zinc-400 hover:text-red-500 shadow-[4px_4px_8px_#d1d5db,-4px_-4px_8px_#ffffff] active:shadow-[inset_2px_2px_4px_#d1d5db,inset_-2px_-2px_4px_#ffffff]'
+            }`}>
+              <X size={20} />
             </button>
           </div>
 
@@ -1403,8 +1401,12 @@ const UploadModal = ({ onClose, onSubmit, darkMode }) => {
           ? 'bg-white/5 border-white/10' 
           : 'bg-black/5 border-black/5'}`}>
           <h3 className={`font-black uppercase tracking-wider text-sm ${darkMode ? 'text-white' : 'text-zinc-900'}`}>Report Pothole</h3>
-          <button onClick={onClose} className={`transition-colors ${darkMode ? 'text-zinc-400 hover:text-red-400' : 'text-zinc-500 hover:text-red-500'}`}>
-            <X size={20} />
+          <button onClick={onClose} className={`transition-all duration-200 active:scale-90 p-1.5 rounded-full ${
+            darkMode 
+              ? 'bg-[#0f172a] text-zinc-400 hover:text-red-400 shadow-[4px_4px_8px_#020617,-4px_-4px_8px_#1e293b] active:shadow-[inset_2px_2px_4px_#020617,inset_-2px_-2px_4px_#1e293b]' 
+              : 'bg-[#f8fafc] text-zinc-500 hover:text-red-500 shadow-[4px_4px_8px_#d1d5db,-4px_-4px_8px_#ffffff] active:shadow-[inset_2px_2px_4px_#d1d5db,inset_-2px_-2px_4px_#ffffff]'
+          }`}>
+            <X size={18} />
           </button>
         </div>
 
@@ -1489,12 +1491,14 @@ const UploadModal = ({ onClose, onSubmit, darkMode }) => {
                       key={s.level}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setSize(s.level)}
-                      className={`flex-1 py-3 rounded-xl backdrop-blur-sm border font-bold transition-all flex items-center justify-center ${
+                      className={`flex-1 py-3 rounded-xl font-bold transition-all flex items-center justify-center duration-200 active:scale-95 ${
                         size === s.level 
-                          ? `${s.color} text-white border-transparent shadow-lg` 
+                          ? darkMode
+                            ? 'bg-[#0f172a] text-teal-400 shadow-[inset_4px_4px_10px_#020617,inset_-4px_-4px_10px_#1e293b] border border-teal-500/20'
+                            : 'bg-[#f8fafc] text-teal-600 shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff] border border-teal-500/20'
                           : darkMode 
-                            ? 'bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10' 
-                            : 'bg-black/5 border-black/5 text-zinc-500 hover:bg-black/10'
+                            ? 'bg-[#0f172a] text-zinc-500 shadow-[4px_4px_10px_#020617,-4px_-4px_10px_#1e293b] hover:shadow-[6px_6px_12px_#020617,-6px_-6px_12px_#1e293b]' 
+                            : 'bg-[#f8fafc] text-zinc-400 shadow-[5px_5px_10px_#d1d5db,-5px_-5px_10px_#ffffff] hover:shadow-[7px_7px_14px_#d1d5db,-7px_-7px_14px_#ffffff]'
                       }`}
                     >
                       <SeverityIcon level={s.level} size={20} />
@@ -1515,10 +1519,10 @@ const UploadModal = ({ onClose, onSubmit, darkMode }) => {
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     placeholder="e.g. 5th Avenue Intersection"
-                    className={`flex-1 border-2 rounded-lg p-2.5 font-bold text-sm outline-none transition-colors ${
+                    className={`flex-1 rounded-lg p-2.5 font-bold text-sm outline-none transition-all ${
                       darkMode 
-                        ? 'bg-zinc-800 border-zinc-700 text-white placeholder-zinc-600 focus:border-teal-500' 
-                        : 'bg-zinc-100 border-transparent text-zinc-900 placeholder-zinc-400 focus:bg-white focus:border-teal-400'
+                        ? 'bg-[#0f172a] text-white placeholder-zinc-600 shadow-[inset_4px_4px_10px_#020617,inset_-4px_-4px_10px_#1e293b] focus:shadow-[inset_6px_6px_12px_#020617,inset_-6px_-6px_12px_#1e293b]' 
+                        : 'bg-[#e2e8f0] text-zinc-900 placeholder-zinc-500 shadow-[inset_4px_4px_8px_#cbd5e1,inset_-4px_-4px_8px_#ffffff] focus:shadow-[inset_6px_6px_12px_#cbd5e1,inset_-6px_-6px_12px_#ffffff]'
                     }`}
                   />
                   <motion.button
@@ -1526,14 +1530,14 @@ const UploadModal = ({ onClose, onSubmit, darkMode }) => {
                     whileTap={{ scale: 0.9 }}
                     onClick={getLocation}
                     disabled={fetchingLocation}
-                    className={`px-3 rounded-lg backdrop-blur-sm border font-bold transition-all flex items-center justify-center ${
+                    className={`px-3 rounded-lg font-bold transition-all flex items-center justify-center duration-200 active:scale-95 ${
                       fetchingLocation 
                         ? darkMode 
-                          ? 'bg-zinc-600/50 text-zinc-500 cursor-wait border-zinc-600' 
-                          : 'bg-zinc-300/50 text-zinc-500 cursor-wait border-zinc-300'
+                          ? 'bg-zinc-800 text-zinc-600 shadow-none cursor-wait' 
+                          : 'bg-zinc-200 text-zinc-400 shadow-none cursor-wait'
                         : darkMode 
-                          ? 'bg-teal-500/20 hover:bg-teal-500/30 text-teal-400 border-teal-500/30' 
-                          : 'bg-teal-500/20 hover:bg-teal-500/30 text-teal-600 border-teal-500/30'
+                          ? 'bg-[#0f172a] text-teal-400 shadow-[4px_4px_10px_#020617,-4px_-4px_10px_#1e293b] hover:shadow-[6px_6px_12px_#020617,-6px_-6px_12px_#1e293b] active:shadow-[inset_3px_3px_6px_#020617,inset_-3px_-3px_6px_#1e293b]' 
+                          : 'bg-[#f8fafc] text-teal-600 shadow-[5px_5px_10px_#d1d5db,-5px_-5px_10px_#ffffff] hover:shadow-[7px_7px_14px_#d1d5db,-7px_-7px_14px_#ffffff] active:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff]'
                     }`}
                     title="Get current location"
                   >
@@ -1551,10 +1555,10 @@ const UploadModal = ({ onClose, onSubmit, darkMode }) => {
                 whileTap={{ scale: 0.98 }}
                 onClick={handleSubmit}
                 disabled={uploading}
-                className={`w-full font-black uppercase py-3 rounded-xl text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 backdrop-blur-sm border ${
+                className={`w-full font-black uppercase py-3 rounded-xl text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 duration-200 active:scale-95 ${
                   darkMode 
-                    ? 'bg-teal-500/20 hover:bg-teal-500/30 text-teal-400 border-teal-500/30' 
-                    : 'bg-teal-500/20 hover:bg-teal-500/30 text-teal-600 border-teal-500/30'
+                    ? 'bg-[#0f172a] text-teal-400 shadow-[4px_4px_10px_#020617,-4px_-4px_10px_#1e293b] hover:shadow-[6px_6px_12px_#020617,-6px_-6px_12px_#1e293b] active:shadow-[inset_3px_3px_6px_#020617,inset_-3px_-3px_6px_#1e293b]' 
+                    : 'bg-[#f8fafc] text-teal-600 shadow-[5px_5px_10px_#d1d5db,-5px_-5px_10px_#ffffff] hover:shadow-[7px_7px_14px_#d1d5db,-7px_-7px_14px_#ffffff] active:shadow-[inset_4px_4px_8px_#d1d5db,inset_-4px_-4px_8px_#ffffff]'
                 }`}
               >
                 {uploading ? (

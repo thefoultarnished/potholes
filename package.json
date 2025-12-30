@@ -2,6 +2,7 @@
   "name": "pothole-app",
   "version": "1.0.0",
   "dependencies": {
+    "canvas-confetti": "^1.9.4",
     "framer-motion": "^12.23.26",
     "gsap": "^3.14.2",
     "lucide-react": "^0.263.1",

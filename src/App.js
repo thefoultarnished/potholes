@@ -604,7 +604,7 @@ const App = () => {
       {/* MAIN CONTENT */}
       <main className="pt-24 pb-20 relative z-10">
         {/* LEGENDARY POTHOLES */}
-        <section className="mb-16 max-w-6xl mx-auto px-4">
+        <section className="mb-16 max-w-7xl mx-auto px-4">
           <div className="flex items-center gap-3 mb-8">
             <div className={`p-2.5 rounded-2xl ${
               darkMode 
@@ -689,7 +689,7 @@ const App = () => {
         </section>
 
         {/* LIVE FEED */}
-        <section className="max-w-6xl mx-auto px-4">
+        <section className="max-w-7xl mx-auto px-4">
           <div className="flex items-center gap-3 mb-8">
             <div className={`p-2.5 rounded-2xl ${
               darkMode 
@@ -734,7 +734,7 @@ const App = () => {
               <p className={`text-sm mt-1 ${darkMode ? 'text-zinc-600' : 'text-slate-400'}`}>Be the first to report a pothole!</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <AnimatePresence>
                 {reports.map((p, i) => (
                   <ReportCard key={p.id} data={p} index={i} onVote={() => handleVote(p.id)} onSelect={setSelectedPothole} darkMode={darkMode} soundEnabled={soundEnabled} />
@@ -753,7 +753,7 @@ const App = () => {
         <p className={`text-sm font-medium ${darkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
           Built with 💙 using <span className={darkMode ? 'text-cyan-400' : 'text-cyan-600'}>React</span> & <span className={darkMode ? 'text-sky-400' : 'text-sky-600'}>Tailwind</span> by <span className={darkMode ? 'text-indigo-400' : 'text-indigo-600'}>d.veloper</span>
         </p>
-        <p className={`text-[10px] mt-3 max-w-sm mx-auto leading-relaxed opacity-60 ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>
+        <p className={`text-[10px] mt-4 max-w-sm mx-auto leading-relaxed font-bold ${darkMode ? 'text-white' : 'text-black'}`}>
           Disclaimer: This platform displays user-generated content. We do not assume responsibility for the accuracy or authenticity of reports submitted by the community.
         </p>
       </footer>

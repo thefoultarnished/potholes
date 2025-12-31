@@ -78,8 +78,8 @@ const playPopSound = (enabled) => {
 
 const UpvoteButton = ({ onVote, votes = 0, size = "md", darkMode = true, soundEnabled = true }) => {
   const sizes = {
-    sm: { height: "h-9", padding: "px-3", icon: 12, text: "text-[11px]" },
-    md: { height: "h-10", padding: "px-4", icon: 14, text: "text-xs" },
+    sm: { height: "h-8", padding: "px-3", icon: 12, text: "text-[11px]" },
+    md: { height: "h-9", padding: "px-3.5", icon: 14, text: "text-xs" },
   };
   
   const s = sizes[size] || sizes.md;
@@ -104,40 +104,35 @@ const UpvoteButton = ({ onVote, votes = 0, size = "md", darkMode = true, soundEn
 
   return (
     <motion.button
+      whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       animate={controls}
       onClick={handleClick}
       className={`relative ${s.height} ${s.padding} rounded-full font-bold ${s.text} transition-all duration-200 flex items-center gap-2 flex-shrink-0 ${
         darkMode 
-          ? 'bg-[#1e2235] text-cyan-400 shadow-[inset_0_2px_4px_rgba(0,0,0,0.3),0_1px_0_rgba(255,255,255,0.05)]' 
-          : 'bg-[#e8e8ec] text-cyan-600 shadow-[4px_4px_10px_#c8c8cc,-4px_-4px_10px_#ffffff,inset_0_1px_0_rgba(255,255,255,0.7)]'
+          ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] text-cyan-400 shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] hover:from-[#323d5e] hover:to-[#252f4e]' 
+          : 'bg-white text-cyan-600 shadow-[0_2px_8px_rgba(0,0,0,0.1),0_1px_2px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]'
       }`}
     >
-      {/* Upvote Icon with Inner Pill */}
-      <div className={`flex items-center justify-center h-7 w-7 rounded-full ${
-        darkMode 
-          ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] shadow-[0_2px_6px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]' 
-          : 'bg-white shadow-[0_2px_6px_rgba(0,0,0,0.1),0_1px_2px_rgba(0,0,0,0.06)]'
-      }`}>
-        <motion.svg 
-          viewBox="0 0 24 24" 
-          fill="currentColor" 
-          width={s.icon} 
-          height={s.icon}
-          animate={burstKey > 0 ? { 
-            rotate: [0, -12, 12, 0],
-            scale: [1, 1.15, 1] 
-          } : {}}
-          key={`svg-${burstKey}`}
-          transition={{ duration: 0.3 }}
-          className={darkMode ? 'text-cyan-400' : 'text-cyan-500'}
-        >
-          <path d="M4 14h4v7a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-7h4a1.001 1.001 0 0 0 .781-1.625l-8-10c-.381-.475-1.181-.475-1.562 0l-8 10A1.001 1.001 0 0 0 4 14z"/>
-        </motion.svg>
-      </div>
+      {/* Upvote Icon */}
+      <motion.svg 
+        viewBox="0 0 24 24" 
+        fill="currentColor" 
+        width={s.icon} 
+        height={s.icon}
+        animate={burstKey > 0 ? { 
+          rotate: [0, -12, 12, 0],
+          scale: [1, 1.15, 1] 
+        } : {}}
+        key={`svg-${burstKey}`}
+        transition={{ duration: 0.3 }}
+        className={darkMode ? 'text-cyan-400' : 'text-cyan-500'}
+      >
+        <path d="M4 14h4v7a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-7h4a1.001 1.001 0 0 0 .781-1.625l-8-10c-.381-.475-1.181-.475-1.562 0l-8 10A1.001 1.001 0 0 0 4 14z"/>
+      </motion.svg>
       
       {/* Vote Count */}
-      <div className="relative overflow-hidden h-[1.2em] flex items-center min-w-[1.5em]">
+      <div className="relative overflow-hidden h-[1.2em] flex items-center min-w-[1.2em]">
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.span
             key={votes}
@@ -182,6 +177,7 @@ const UpvoteButton = ({ onVote, votes = 0, size = "md", darkMode = true, soundEn
   );
 };
 
+
 const ModeToggle = ({ darkMode, setDarkMode }) => {
   return (
     <div className={`relative h-11 rounded-full flex items-center p-1 transition-all duration-300 ${ 
@@ -191,17 +187,15 @@ const ModeToggle = ({ darkMode, setDarkMode }) => {
     }`}>
       {/* Sliding Active Indicator */}
       <motion.div
-        className={`absolute top-1 bottom-1 rounded-full z-0 ${
+        className={`absolute top-1 bottom-1 w-[calc(50%-2px)] rounded-full z-0 ${
           darkMode 
             ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]' 
             : 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.1),0_1px_2px_rgba(0,0,0,0.06)]'
         }`}
         initial={false}
-        animate={{ 
-          left: darkMode ? 'calc(50% - 2px)' : '4px',
-          right: darkMode ? '4px' : 'calc(50% - 2px)'
-        }}
-        transition={{ type: "spring", stiffness: 500, damping: 35 }}
+        animate={{ x: darkMode ? 'calc(100% + 4px)' : 0 }}
+        style={{ left: 4 }}
+        transition={{ type: "spring", stiffness: 400, damping: 30 }}
       />
       
       {/* Light Option */}
@@ -217,6 +211,7 @@ const ModeToggle = ({ darkMode, setDarkMode }) => {
           <motion.div 
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
+            transition={{ delay: 0.1 }}
             className="w-1.5 h-1.5 rounded-full bg-rose-400 shadow-[0_0_6px_#fb7185]" 
           />
         )}
@@ -237,6 +232,7 @@ const ModeToggle = ({ darkMode, setDarkMode }) => {
           <motion.div 
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
+            transition={{ delay: 0.1 }}
             className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee]" 
           />
         )}
@@ -274,6 +270,110 @@ const SoundToggle = ({ soundEnabled, setSoundEnabled, darkMode }) => {
     </motion.button>
   );
 };
+
+// --- LOADING SCREEN ---
+const LoadingScreen = ({ darkMode }) => (
+  <div className={`fixed inset-0 z-50 flex flex-col items-center justify-center transition-colors duration-300 ${
+    darkMode ? 'bg-[#0f1219]' : 'bg-[#e4e4e7]'
+  }`}>
+    {/* Static gradient background for loading screen */}
+    <div className={`absolute inset-0 ${
+      darkMode 
+        ? 'bg-gradient-to-br from-[#0c1929] via-[#162544] to-[#1a1a3e]' 
+        : 'bg-gradient-to-br from-[#e4e4e7] via-[#f1f5f9] to-[#e2e8f0]'
+    }`}>
+      {/* Gradient orbs */}
+      <div className={`absolute top-0 left-0 w-[400px] h-[400px] rounded-full blur-[100px] ${
+        darkMode ? 'bg-cyan-500/30' : 'bg-purple-300/40'
+      }`} />
+      <div className={`absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full blur-[100px] ${
+        darkMode ? 'bg-purple-600/30' : 'bg-pink-200/40'
+      }`} />
+    </div>
+    
+    {/* Loading content */}
+    <div className="relative z-10 flex flex-col items-center">
+      {/* Animated logo/icon */}
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+        className="relative mb-8"
+      >
+        {/* Outer ring */}
+        <div className={`absolute inset-0 rounded-full animate-ping opacity-20 ${
+          darkMode ? 'bg-cyan-400' : 'bg-purple-500'
+        }`} style={{ animationDuration: '2s' }} />
+        
+        {/* Main loader container */}
+        <div className={`relative w-24 h-24 rounded-full flex items-center justify-center backdrop-blur-xl ${
+          darkMode 
+            ? 'bg-white/5 border border-white/10 shadow-[0_0_60px_rgba(6,182,212,0.3)]' 
+            : 'bg-white/70 border border-white/50 shadow-[0_0_60px_rgba(168,85,247,0.2)]'
+        }`}>
+          {/* Rotating ring */}
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+            className="absolute inset-2"
+          >
+            <div className={`w-full h-full rounded-full border-2 border-transparent ${
+              darkMode ? 'border-t-cyan-400 border-r-purple-500' : 'border-t-purple-500 border-r-pink-400'
+            }`} />
+          </motion.div>
+          
+          {/* Center icon */}
+          <MapPin size={32} className={darkMode ? 'text-cyan-400' : 'text-purple-500'} />
+        </div>
+      </motion.div>
+      
+      {/* Loading text */}
+      <motion.div
+        initial={{ y: 10, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2, duration: 0.5 }}
+        className="text-center"
+      >
+        <h2 className={`text-xl font-bold tracking-tight mb-2 ${
+          darkMode ? 'text-white' : 'text-slate-700'
+        }`}>
+          Loading Potholes
+        </h2>
+        <div className="flex items-center justify-center gap-1">
+          {[0, 1, 2].map((i) => (
+            <motion.div
+              key={i}
+              animate={{ 
+                scale: [1, 1.3, 1],
+                opacity: [0.5, 1, 0.5]
+              }}
+              transition={{ 
+                duration: 1,
+                repeat: Infinity,
+                delay: i * 0.2
+              }}
+              className={`w-2 h-2 rounded-full ${
+                darkMode ? 'bg-cyan-400' : 'bg-purple-500'
+              }`}
+            />
+          ))}
+        </div>
+      </motion.div>
+      
+      {/* Subtitle */}
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5, duration: 0.5 }}
+        className={`mt-4 text-sm ${
+          darkMode ? 'text-zinc-500' : 'text-slate-400'
+        }`}
+      >
+        Scanning the roads...
+      </motion.p>
+    </div>
+  </div>
+);
 
 // --- MAIN APP ---
 
@@ -379,23 +479,73 @@ const App = () => {
         ? 'bg-[#0f1219] text-white' 
         : 'bg-[#e4e4e7] text-slate-700'
     }`}>
-      {/* DYNAMIC BACKGROUND */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        {darkMode ? (
-          <>
-            {/* Base gradient */}
-            <div className="absolute inset-0 bg-gradient-to-br from-[#0f1219] via-[#151822] to-[#0f1219]" />
-            {/* Cyan orb - top right */}
-            <div className="absolute top-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-cyan-500/20 blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
-            {/* Purple orb - bottom left */}
-            <div className="absolute bottom-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-violet-500/15 blur-[120px] animate-pulse" style={{ animationDuration: '10s', animationDelay: '2s' }} />
-            {/* Accent orb - center */}
-            <div className="absolute top-[40%] left-[30%] w-[30%] h-[30%] rounded-full bg-blue-500/10 blur-[100px]" />
-          </>
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-[#e8e8ec] via-[#e0e0e4] to-[#e8e8ec]" />
-        )}
+      {/* STATIC GRADIENT BACKGROUND */}
+      <div className={`fixed inset-0 pointer-events-none ${
+        darkMode 
+          ? 'bg-[#0a1628]' 
+          : 'bg-gradient-to-br from-[#e4e4e7] via-[#f1f5f9] to-[#e2e8f0]'
+      }`}>
+        {/* Multiple gradient orbs with wide color variety */}
+        <div className="absolute inset-0 overflow-hidden">
+          {/* Top-left: Cyan */}
+          <div className={`absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full blur-[100px] transition-colors duration-500 ${
+            darkMode ? 'bg-cyan-400/80' : 'bg-cyan-300/70'
+          }`} />
+          {/* Top-center: Pink */}
+          <div className={`absolute -top-20 left-1/3 w-[400px] h-[400px] rounded-full blur-[90px] transition-colors duration-500 ${
+            darkMode ? 'bg-pink-500/60' : 'bg-pink-300/50'
+          }`} />
+          {/* Top-right: Violet */}
+          <div className={`absolute -top-32 -right-20 w-[500px] h-[500px] rounded-full blur-[100px] transition-colors duration-500 ${
+            darkMode ? 'bg-violet-500/80' : 'bg-purple-300/70'
+          }`} />
+          {/* Left-center: Emerald */}
+          <div className={`absolute top-1/3 -left-20 w-[450px] h-[450px] rounded-full blur-[90px] transition-colors duration-500 ${
+            darkMode ? 'bg-emerald-500/60' : 'bg-emerald-300/50'
+          }`} />
+          {/* Center: Blue */}
+          <div className={`absolute top-1/3 left-1/2 -translate-x-1/2 w-[700px] h-[700px] rounded-full blur-[140px] transition-colors duration-500 ${
+            darkMode ? 'bg-blue-500/50' : 'bg-blue-300/40'
+          }`} />
+          {/* Right-center: Rose */}
+          <div className={`absolute top-1/4 -right-10 w-[400px] h-[400px] rounded-full blur-[80px] transition-colors duration-500 ${
+            darkMode ? 'bg-rose-500/50' : 'bg-rose-300/40'
+          }`} />
+          {/* Mid-right: Sky Blue */}
+          <div className={`absolute top-1/2 right-1/4 w-[350px] h-[350px] rounded-full blur-[80px] transition-colors duration-500 ${
+            darkMode ? 'bg-sky-400/80' : 'bg-sky-300/60'
+          }`} />
+          {/* Bottom-left: Teal */}
+          <div className={`absolute -bottom-20 left-0 w-[500px] h-[500px] rounded-full blur-[100px] transition-colors duration-500 ${
+            darkMode ? 'bg-teal-400/80' : 'bg-teal-300/60'
+          }`} />
+          {/* Bottom-center: Indigo */}
+          <div className={`absolute -bottom-32 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full blur-[120px] transition-colors duration-500 ${
+            darkMode ? 'bg-indigo-500/70' : 'bg-indigo-300/50'
+          }`} />
+          {/* Bottom-right: Purple */}
+          <div className={`absolute -bottom-40 -right-40 w-[600px] h-[600px] rounded-full blur-[100px] transition-colors duration-500 ${
+            darkMode ? 'bg-purple-500/90' : 'bg-purple-300/80'
+          }`} />
+          {/* Floating accent: Amber */}
+          <div className={`absolute top-2/3 left-1/4 w-[300px] h-[300px] rounded-full blur-[80px] transition-colors duration-500 ${
+            darkMode ? 'bg-amber-500/30' : 'bg-amber-300/30'
+          }`} />
+        </div>
       </div>
+
+      {/* LOADING SCREEN OVERLAY */}
+      <AnimatePresence>
+        {loading && (
+          <motion.div
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+          >
+            <LoadingScreen darkMode={darkMode} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <header className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
         darkMode 
@@ -453,99 +603,88 @@ const App = () => {
 
       {/* MAIN CONTENT */}
       <main className="pt-24 pb-20 relative z-10">
-        {/* MOST WANTED CAROUSEL */}
-        <section className="mb-16">
-          <div className="max-w-6xl mx-auto px-4 flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className={`p-2.5 rounded-2xl ${
-                darkMode 
-                  ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] shadow-[0_4px_12px_rgba(0,0,0,0.3)]' 
-                  : 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06)]'
-              }`}>
-                <Siren size={20} className={darkMode ? 'text-rose-400' : 'text-rose-500'} />
-              </div>
-              <div>
-                <h2 className={`text-xl font-bold tracking-tight ${darkMode ? 'text-white' : 'text-slate-700'}`}>Most Wanted</h2>
-                <p className={`text-[10px] font-medium tracking-wider ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>HIGHEST PRIORITY POTHOLES</p>
-              </div>
+        {/* LEGENDARY POTHOLES */}
+        <section className="mb-16 max-w-6xl mx-auto px-4">
+          <div className="flex items-center gap-3 mb-8">
+            <div className={`p-2.5 rounded-2xl ${
+              darkMode 
+                ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] shadow-[0_4px_12px_rgba(0,0,0,0.3)]' 
+                : 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06)]'
+            }`}>
+              <Trophy size={20} className={darkMode ? 'text-amber-400' : 'text-amber-500'} />
             </div>
-            <span className={`text-[10px] font-medium hidden sm:block ${darkMode ? 'text-zinc-600' : 'text-slate-400'}`}>Hover to pause</span>
+            <div>
+              <h2 className={`text-xl font-bold tracking-tight ${darkMode ? 'text-white' : 'text-slate-700'}`}>Legendary Potholes</h2>
+              <p className={`text-xs font-semibold tracking-wider ${darkMode ? 'text-amber-400/70' : 'text-amber-600'}`}>🏆 HALL OF INFAMY</p>
+            </div>
           </div>
           
-          {/* Carousel Container */}
-          <div className="relative overflow-hidden">
-            {/* Left fade */}
-            <div className={`absolute left-0 top-0 bottom-0 w-20 z-10 pointer-events-none ${
-              darkMode ? 'bg-gradient-to-r from-[#0f1219] to-transparent' : 'bg-gradient-to-r from-[#e4e4e7] to-transparent'
-            }`} />
-            {/* Right fade */}
-            <div className={`absolute right-0 top-0 bottom-0 w-20 z-10 pointer-events-none ${
-              darkMode ? 'bg-gradient-to-l from-[#0f1219] to-transparent' : 'bg-gradient-to-l from-[#e4e4e7] to-transparent'
-            }`} />
-            
-            {/* Infinite scrolling track */}
-            <div className="flex animate-marquee hover:pause-marquee">
-              {/* First set of cards */}
-              {[...top3, ...top3, ...top3].map((p, i) => {
-                const sizeInfo = getSizeFromSeverity(p.severity);
-                const rank = (i % top3.length) + 1;
-                return (
-                  <div
-                    key={`${p.id}-${i}`}
-                    onClick={() => setSelectedPothole(p)}
-                    className={`relative flex-shrink-0 w-72 mx-3 rounded-3xl overflow-hidden cursor-pointer backdrop-blur-xl border transition-transform hover:scale-[1.02] hover:-translate-y-1 ${
-                      darkMode 
-                        ? 'bg-white/5 border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)]' 
-                        : 'bg-white/70 border-white/50 shadow-[4px_4px_20px_#c8c8cc,-4px_-4px_20px_#ffffff]'
-                    }`}
-                  >
-                    {/* Rank Badge */}
-                    <div className="absolute top-4 left-4 z-20">
-                      <div className={`font-bold w-8 h-8 rounded-xl flex items-center justify-center text-xs backdrop-blur-md ${
-                        rank === 1 
-                          ? 'bg-gradient-to-b from-amber-400 to-amber-500 text-black' 
-                          : darkMode ? 'bg-white/10 text-white' : 'bg-black/10 text-slate-700'
-                      }`}>
-                        #{rank}
-                      </div>
-                    </div>
-                    
-                    {/* Image */}
-                    <div className="aspect-[4/3] relative overflow-hidden">
-                      <img src={p.image_url} alt={p.location} className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                      
-                      {/* Bottom info overlay */}
-                      <div className="absolute bottom-0 left-0 right-0 p-4">
-                        <h3 className="text-white font-bold text-sm leading-tight mb-1">{sizeInfo.title}</h3>
-                        <p className="text-white/70 text-[10px] flex items-center gap-1">
-                          <MapPin size={10} /> {getDisplayLocation(p.location)}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    {/* Stats bar */}
-                    <div className={`p-4 flex items-center justify-between ${darkMode ? 'bg-black/20' : 'bg-white/40'}`}>
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full animate-pulse ${darkMode ? 'bg-cyan-400' : 'bg-cyan-500'}`} />
-                        <span className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-slate-700'}`}>{p.votes.toLocaleString()}</span>
-                        <span className={`text-[10px] font-medium ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>votes</span>
-                      </div>
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={(e) => { e.stopPropagation(); handleVote(p.id); }}
-                        className={`p-2 rounded-xl transition-colors ${
-                          darkMode ? 'bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30' : 'bg-cyan-500/10 text-cyan-600 hover:bg-cyan-500/20'
-                        }`}
-                      >
-                        <ChevronUp size={18} />
-                      </motion.button>
+          {/* Static 3-card grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {top3.map((p, i) => {
+              const sizeInfo = getSizeFromSeverity(p.severity);
+              const rank = i + 1;
+              
+              // Element Frame Logic
+              let frameClass = '';
+              if (p.votes >= 700) frameClass = 'electric-frame';
+              else if (p.votes >= 600) frameClass = 'water-frame';
+              else if (p.votes >= 500) frameClass = 'fire-frame';
+              
+              return (
+                <motion.div
+                  key={p.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  onClick={() => setSelectedPothole(p)}
+                  className={`relative rounded-3xl overflow-hidden cursor-pointer backdrop-blur-xl border transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 ${frameClass} ${
+                    darkMode 
+                      ? 'bg-white/5 border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)]' 
+                      : 'bg-white/10 border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.05)]'
+                  }`}
+                >
+                  {/* Rank Badge */}
+                  <div className="absolute top-4 left-4 z-20">
+                    <div className={`font-bold w-10 h-10 rounded-xl flex items-center justify-center text-sm backdrop-blur-md ${
+                      rank === 1 
+                        ? 'bg-gradient-to-b from-amber-400 to-amber-500 text-black shadow-[0_4px_12px_rgba(251,191,36,0.4)]' 
+                        : rank === 2
+                          ? 'bg-gradient-to-b from-slate-300 to-slate-400 text-slate-700'
+                          : 'bg-gradient-to-b from-amber-600 to-amber-700 text-amber-100'
+                    }`}>
+                      #{rank}
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                  
+                  {/* Image */}
+                  <div className="aspect-square relative overflow-hidden cursor-pointer">
+                    <img src={p.image_url} alt={p.location} className="w-full h-full object-cover" />
+                    {/* Severity badge */}
+                    <div className={`absolute top-3 right-3 text-white text-[9px] font-bold px-2.5 py-1 rounded-full backdrop-blur-md ${
+                      darkMode ? 'bg-white/10' : 'bg-black/20'
+                    }`}>
+                      {sizeInfo.label}
+                    </div>
+                  </div>
+                  
+                  {/* Info section - matching Live Feed */}
+                  <div className={`p-4 ${darkMode ? 'bg-black/10' : 'bg-white/10'}`}>
+                    <h4 className={`text-sm font-bold truncate mb-2 ${darkMode ? 'text-white' : 'text-slate-800'}`}>{getDisplayLocation(p.location)}</h4>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`text-xs font-medium ${darkMode ? 'text-zinc-300' : 'text-slate-600'}`}>{new Date(p.created_at).toLocaleDateString()}</span>
+                      <UpvoteButton 
+                        onVote={() => handleVote(p.id)} 
+                        votes={p.votes} 
+                        size="sm" 
+                        darkMode={darkMode} 
+                        soundEnabled={soundEnabled} 
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         </section>
 
@@ -561,15 +700,30 @@ const App = () => {
             </div>
             <div>
               <h2 className={`text-xl font-bold tracking-tight ${darkMode ? 'text-white' : 'text-slate-700'}`}>Live Feed</h2>
-              <p className={`text-[10px] font-medium tracking-wider ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>RECENT REPORTS</p>
+              <p className={`text-xs font-semibold tracking-wider ${darkMode ? 'text-orange-400/70' : 'text-orange-600'}`}>🔥 FRESH FROM THE STREETS</p>
             </div>
           </div>
           
-          {reports.length === 0 ? (
+          {loading ? (
+            <div className={`text-center py-16 rounded-3xl ${
+              darkMode ? 'bg-white/5' : 'bg-white/10'
+            }`}>
+              <div className="flex flex-col items-center">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+                  className={`w-12 h-12 rounded-full border-2 border-transparent mb-4 ${
+                    darkMode ? 'border-t-cyan-400 border-r-purple-500' : 'border-t-purple-500 border-r-pink-400'
+                  }`}
+                />
+                <p className={`font-medium ${darkMode ? 'text-zinc-400' : 'text-slate-500'}`}>Loading reports...</p>
+              </div>
+            </div>
+          ) : reports.length === 0 ? (
             <div className={`text-center py-16 rounded-3xl ${
               darkMode 
                 ? 'bg-white/5' 
-                : 'bg-white/50'
+                : 'bg-white/10'
             }`}>
               <div className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${
                 darkMode ? 'bg-white/5' : 'bg-slate-100'
@@ -591,17 +745,16 @@ const App = () => {
         </section>
       </main>
 
-      {/* FOOTER */}
       <footer className={`relative z-10 py-12 text-center border-t ${
         darkMode 
           ? 'border-white/5' 
           : 'border-black/5'
       }`}>
-        <p className={`text-sm font-medium ${darkMode ? 'text-zinc-600' : 'text-slate-400'}`}>
-          Built with 💙 by <span className={darkMode ? 'text-cyan-400' : 'text-cyan-600'}>MarkMyPothole</span>
+        <p className={`text-sm font-medium ${darkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
+          Built with 💙 using <span className={darkMode ? 'text-cyan-400' : 'text-cyan-600'}>React</span> & <span className={darkMode ? 'text-sky-400' : 'text-sky-600'}>Tailwind</span> by <span className={darkMode ? 'text-indigo-400' : 'text-indigo-600'}>d.veloper</span>
         </p>
-        <p className={`text-xs mt-1 ${darkMode ? 'text-zinc-700' : 'text-slate-300'}`}>
-          They ignore it, we expose it
+        <p className={`text-[10px] mt-3 max-w-sm mx-auto leading-relaxed opacity-60 ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>
+          Disclaimer: This platform displays user-generated content. We do not assume responsibility for the accuracy or authenticity of reports submitted by the community.
         </p>
       </footer>
 
@@ -630,7 +783,7 @@ const StatCard = ({ icon, count, label, darkMode }) => (
     className={`flex items-center gap-3 px-5 py-4 rounded-3xl transition-all duration-300 backdrop-blur-xl ${
       darkMode 
         ? 'bg-white/5 border border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.3)]' 
-        : 'bg-white/70 shadow-[6px_6px_16px_#c8c8cc,-6px_-6px_16px_#ffffff,inset_0_1px_0_rgba(255,255,255,0.7)]'
+        : 'bg-white/10 border border-white/20 shadow-[0_8px_24px_rgba(0,0,0,0.05)]'
     }`}
   >
     <div className={`p-3 rounded-2xl ${
@@ -682,7 +835,7 @@ const HallOfShameCard = ({ data, rank, onVote, onSelect, darkMode, soundEnabled 
       className={`relative rounded-[2rem] overflow-hidden transition-all duration-300 backdrop-blur-xl border ${frameClass} ${
         darkMode 
           ? 'bg-white/5 border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.4)]' 
-          : 'bg-white/70 border-white/50 shadow-[8px_8px_24px_#c8c8cc,-8px_-8px_24px_#ffffff]'
+          : 'bg-white/10 border-white/20 shadow-[0_12px_40px_rgba(0,0,0,0.05)]'
       }`}
     >
       {frameClass && (
@@ -714,7 +867,7 @@ const HallOfShameCard = ({ data, rank, onVote, onSelect, darkMode, soundEnabled 
         </div>
       </div>
       {/* Info section - semi-transparent */}
-      <div className={`p-5 ${darkMode ? 'bg-black/20' : 'bg-white/30'}`}>
+      <div className={`p-5 ${darkMode ? 'bg-black/20' : 'bg-white/10'}`}>
         <h3 className={`text-lg font-bold leading-tight mb-1 ${darkMode ? 'text-white' : 'text-slate-700'}`}>{sizeInfo.title}</h3>
         <p className={`text-xs flex items-center gap-1 mb-4 ${darkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
           <MapPin size={10} /> {getDisplayLocation(data.location)}
@@ -744,11 +897,10 @@ const ReportCard = ({ data, index, onVote, onSelect, darkMode, soundEnabled }) =
       layout
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      whileHover={{ y: -3 }}
-      className={`rounded-3xl overflow-hidden transition-all duration-300 backdrop-blur-xl border ${frameClass} ${
+      className={`rounded-3xl overflow-hidden backdrop-blur-xl border ${frameClass} ${
         darkMode 
           ? 'bg-white/5 border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.3)]' 
-          : 'bg-white/70 border-white/50 shadow-[6px_6px_18px_#c8c8cc,-6px_-6px_18px_#ffffff]'
+          : 'bg-white/10 border-white/20 shadow-[0_8px_24px_rgba(0,0,0,0.05)]'
       }`}
     >
       {/* Image - stays fully opaque */}
@@ -761,10 +913,10 @@ const ReportCard = ({ data, index, onVote, onSelect, darkMode, soundEnabled }) =
         </div>
       </div>
       {/* Info section - semi-transparent */}
-      <div className={`p-4 ${darkMode ? 'bg-black/20' : 'bg-white/30'}`}>
-        <h4 className={`text-xs font-bold truncate mb-2 ${darkMode ? 'text-white' : 'text-slate-700'}`}>{getDisplayLocation(data.location)}</h4>
+      <div className={`p-4 ${darkMode ? 'bg-black/10' : 'bg-white/10'}`}>
+        <h4 className={`text-sm font-bold truncate mb-2 ${darkMode ? 'text-white' : 'text-slate-800'}`}>{getDisplayLocation(data.location)}</h4>
         <div className="flex items-center justify-between gap-2">
-          <span className={`text-[10px] font-medium ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>{new Date(data.created_at).toLocaleDateString()}</span>
+          <span className={`text-xs font-medium ${darkMode ? 'text-zinc-300' : 'text-slate-600'}`}>{new Date(data.created_at).toLocaleDateString()}</span>
           <UpvoteButton onVote={onVote} votes={data.votes} size="sm" darkMode={darkMode} soundEnabled={soundEnabled} />
         </div>
       </div>

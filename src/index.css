@@ -33,6 +33,16 @@ html {
   display: none;
 }
 
+/* GPU optimization for blurred background orbs */
+.gpu-blur {
+  will-change: filter, transform;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+
 /* ========== PREMIUM EFFECTS ========== */
 
 /* Animated Gradient Text - Rainbow Flow */
@@ -88,67 +98,64 @@ html {
   100% { left: 200%; }
 }
 
-/* 3D Card Tilt */
-.card-3d {
-  transform-style: preserve-3d;
-  transition: transform 0.5s ease;
-}
 
-.card-3d:hover {
-  transform: perspective(1000px) rotateY(-5deg) rotateX(5deg) scale(1.02);
-}
+/* Removed unused CSS:
+   - .card-3d (3D card tilt effect - not used)
+   - .animate-marquee (marquee scrolling - carousel removed)
+   - .animate-glow-rose / .animate-glow-teal (glow effects - not referenced)
+*/
 
-/* Marquee Scrolling */
-@keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-33.33%); }
-}
-
-.animate-marquee {
-  display: flex;
-  animation: marquee 30s linear infinite;
-  will-change: transform;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-}
-
-.animate-marquee:hover {
-  animation-play-state: paused;
-}
-
-/* Glow Pulse - Rose */
-@keyframes glow-pulse-rose {
-  0%, 100% { 
-    box-shadow: 0 0 20px rgba(244, 63, 94, 0.4),
-                0 0 40px rgba(244, 63, 94, 0.2);
+/* Aurora Background Animations */
+@keyframes aurora-drift-slow {
+  0%, 100% {
+    transform: translate(0%, 0%) rotate(0deg) scale(1);
   }
-  50% { 
-    box-shadow: 0 0 40px rgba(244, 63, 94, 0.6),
-                0 0 80px rgba(244, 63, 94, 0.3);
+  25% {
+    transform: translate(5%, -3%) rotate(2deg) scale(1.02);
+  }
+  50% {
+    transform: translate(-3%, 5%) rotate(-1deg) scale(0.98);
+  }
+  75% {
+    transform: translate(-5%, -2%) rotate(1deg) scale(1.01);
   }
 }
 
-.animate-glow-rose {
-  animation: glow-pulse-rose 2s ease-in-out infinite;
-}
-
-/* Glow Pulse - Teal */
-@keyframes glow-pulse-teal {
-  0%, 100% { 
-    box-shadow: 0 0 20px rgba(20, 184, 166, 0.4),
-                0 0 40px rgba(20, 184, 166, 0.2);
+@keyframes aurora-drift-medium {
+  0%, 100% {
+    transform: translate(0%, 0%) rotate(0deg) scale(1);
   }
-  50% { 
-    box-shadow: 0 0 40px rgba(20, 184, 166, 0.6),
-                0 0 80px rgba(20, 184, 166, 0.3);
+  33% {
+    transform: translate(-4%, 4%) rotate(-2deg) scale(1.03);
+  }
+  66% {
+    transform: translate(4%, -3%) rotate(2deg) scale(0.97);
   }
 }
 
-.animate-glow-teal {
-  animation: glow-pulse-teal 2s ease-in-out infinite;
+@keyframes aurora-drift-fast {
+  0%, 100% {
+    transform: translate(0%, 0%) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translate(3%, -4%) scale(1.05);
+    opacity: 0.8;
+  }
 }
+
+.animate-aurora-slow {
+  animation: aurora-drift-slow 25s ease-in-out infinite;
+}
+
+.animate-aurora-medium {
+  animation: aurora-drift-medium 18s ease-in-out infinite;
+}
+
+.animate-aurora-fast {
+  animation: aurora-drift-fast 12s ease-in-out infinite;
+}
+
 
 /* Floating Animation */
 @keyframes float {

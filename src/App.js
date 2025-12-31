@@ -1,16 +1,22 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
-import confetti from 'canvas-confetti';
 
-// Base64 encoded sound.wav (88KB) to ensure it works on Vercel/Supabase without asset path issues
-const VOTE_SOUND_B64 = "data:audio/wav;base64,UklGRlpbAQBXQVZFZm10IBAAAAABAAIARKwAABCxAgAEABAAZGF0YYhYAQD8//v/2vKx7g75y/Wp9Tr47PiQAJ/9zwbBAqYGYhOmEbwZYhZJE+8Mth0UGjsTOBBvHqQaMgKABYoLuA6h5STqSAJtA6Lm7OS17mvr0uAL3xHp9OcI5Rbkj+9R83zlVem/8FHz8/em+NACNf5xA5n/BgVvAg4H2ASlBTMFVxPRFMT+hALJDfMSiwKsB/oVqRULDUILZxhiFWwKuAXxGS0X0Q+iDjYQ7RGgA2YJcghxDCoBigKmCIkHOvwh+nL2n/No9lP0Pu/k7Mfvse4749fmIOfI6sriKua89AX2cezE6ov4tfVF92Dz1QLu/WX+Mvx4BAQG0fgZ/JgF2giNBIkG+wpNCuoHaAevC/sJzQucCOEOtwwrDM0L/AF8BB8GtQosAikGcQejCRwESQUGCLUGsM+lVv9/AACgzqVW/38AAAAAAAAAAAAAAAClVv9/AAAAAAAAAAAAALDPpVb/fwAA9Ay6DAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACiEPJQ4SECQNAAAAAAAAAACiq6oyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/ip9br5F/YAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAExvZ2ljIFBybyBYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAyMDE1LTAyLTAxMDM6NDQ6MDFAfHYJAAAAAAEAAAAAAIIjSkMQVAD3cNilVv9/AAAAHeMAAGAAAAAAAAAAAAAAxvQVCgEAAABwUG11/38AAKDQpVb/fwAA6sYuiwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==";
+// Tiny pop sound (~1KB) - much smaller than original 88KB
+const VOTE_SOUND_B64 = "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACA";
+
+// Dynamic confetti import to reduce initial bundle size
+let confetti = null;
+const loadConfetti = async () => {
+  if (!confetti) {
+    const module = await import('canvas-confetti');
+    confetti = module.default;
+  }
+  return confetti;
+};
 import { 
   Camera, 
   MapPin, 
-  Trophy, 
-  ThumbsUp, 
   X, 
-  Siren,
   Megaphone,
   Flame,
   Upload,
@@ -20,12 +26,12 @@ import {
   ZoomOut,
   RotateCcw,
   Calendar,
-  AlertTriangle,
+  Maximize,
+  Minimize,
   Sun,
   Moon,
   ChevronUp,
-  Maximize,
-  Minimize
+  Trophy
 } from 'lucide-react';
 
 // --- CONFIG & UTILS ---
@@ -48,11 +54,17 @@ const getDisplayLocation = (loc) => {
   return loc.split(',')[0].trim();
 };
 
-const SeverityIcon = ({ level, size = 16 }) => {
-  if (level >= 4) return <Siren size={size} />;
-  if (level >= 3) return <Flame size={size} />;
-  return <AlertTriangle size={size} />;
+// Safe date formatting to prevent crashes from null/undefined dates
+const formatDate = (dateStr) => {
+  if (!dateStr) return 'Unknown date';
+  try {
+    return new Date(dateStr).toLocaleDateString();
+  } catch {
+    return 'Unknown date';
+  }
 };
+
+// SeverityIcon removed - was unused
 
 const ShameIcon = ({ size = 24, className = '' }) => (
   <svg viewBox="0 0 1800 1800" fill="currentColor" width={size} height={size} className={className}>
@@ -62,17 +74,58 @@ const ShameIcon = ({ size = 24, className = '' }) => (
   </svg>
 );
 
+// Cached audio instance to prevent memory leaks
+let cachedAudio = null;
 const playPopSound = (enabled) => {
   if (!enabled) return;
   try {
-    const audio = new Audio(VOTE_SOUND_B64);
-    audio.currentTime = 0;
-    audio.volume = 0.4;
-    audio.play().catch(e => console.warn('Audio play failed', e));
+    if (!cachedAudio) {
+      cachedAudio = new Audio(VOTE_SOUND_B64);
+      cachedAudio.volume = 0.4;
+    }
+    cachedAudio.currentTime = 0;
+    cachedAudio.play().catch(e => console.warn('Audio play failed', e));
   } catch (e) {
     console.warn('Audio context failed', e);
   }
 };
+
+// --- ERROR BOUNDARY ---
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('App Error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-[#0a1628] flex items-center justify-center p-8">
+          <div className="text-center max-w-md">
+            <div className="text-6xl mb-6">🚧</div>
+            <h1 className="text-2xl font-bold text-white mb-4">Something went wrong</h1>
+            <p className="text-zinc-400 mb-6">The app encountered an unexpected error. Please refresh the page to try again.</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-6 py-3 bg-cyan-500 text-white font-bold rounded-xl hover:bg-cyan-400 transition-colors"
+            >
+              Refresh Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // --- COMPONENTS ---
 
@@ -202,9 +255,7 @@ const ModeToggle = ({ darkMode, setDarkMode }) => {
       <button 
         onClick={() => setDarkMode(false)}
         className={`relative z-10 h-full px-5 rounded-full text-[11px] font-bold flex items-center justify-center gap-2 transition-colors duration-200 ${
-          !darkMode 
-            ? (darkMode ? 'text-white' : 'text-slate-800') 
-            : (darkMode ? 'text-zinc-500' : 'text-slate-400')
+          !darkMode ? 'text-slate-800' : 'text-slate-400'
         }`}
       >
         {!darkMode && (
@@ -249,6 +300,7 @@ const SoundToggle = ({ soundEnabled, setSoundEnabled, darkMode }) => {
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       onClick={() => setSoundEnabled(!soundEnabled)}
+      aria-label={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'}
       className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 ${
         darkMode 
           ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] text-cyan-400 shadow-[0_4px_12px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.1)]' 
@@ -274,21 +326,19 @@ const SoundToggle = ({ soundEnabled, setSoundEnabled, darkMode }) => {
 // --- LOADING SCREEN ---
 const LoadingScreen = ({ darkMode }) => (
   <div className={`fixed inset-0 z-50 flex flex-col items-center justify-center transition-colors duration-300 ${
-    darkMode ? 'bg-[#0f1219]' : 'bg-[#e4e4e7]'
+    darkMode ? 'bg-[#0a1628]' : 'bg-[#e4e4e7]'
   }`}>
-    {/* Static gradient background for loading screen */}
+    {/* Multi-orb background for loading screen to match main app */}
     <div className={`absolute inset-0 ${
       darkMode 
-        ? 'bg-gradient-to-br from-[#0c1929] via-[#162544] to-[#1a1a3e]' 
+        ? 'bg-[#0a1628]' 
         : 'bg-gradient-to-br from-[#e4e4e7] via-[#f1f5f9] to-[#e2e8f0]'
     }`}>
-      {/* Gradient orbs */}
-      <div className={`absolute top-0 left-0 w-[400px] h-[400px] rounded-full blur-[100px] ${
-        darkMode ? 'bg-cyan-500/30' : 'bg-purple-300/40'
-      }`} />
-      <div className={`absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full blur-[100px] ${
-        darkMode ? 'bg-purple-600/30' : 'bg-pink-200/40'
-      }`} />
+      <div className="absolute inset-0 overflow-hidden">
+        <div className={`absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full blur-[100px] ${darkMode ? 'bg-cyan-400/80' : 'bg-cyan-300/70'}`} />
+        <div className={`absolute -top-32 -right-20 w-[500px] h-[500px] rounded-full blur-[100px] ${darkMode ? 'bg-violet-500/80' : 'bg-purple-300/70'}`} />
+        <div className={`absolute -bottom-40 -right-40 w-[600px] h-[600px] rounded-full blur-[100px] ${darkMode ? 'bg-purple-500/90' : 'bg-purple-300/80'}`} />
+      </div>
     </div>
     
     {/* Loading content */}
@@ -337,7 +387,7 @@ const LoadingScreen = ({ darkMode }) => (
         <h2 className={`text-xl font-bold tracking-tight mb-2 ${
           darkMode ? 'text-white' : 'text-slate-700'
         }`}>
-          Loading Potholes
+          Loading Reports
         </h2>
         <div className="flex items-center justify-center gap-1">
           {[0, 1, 2].map((i) => (
@@ -391,6 +441,19 @@ const App = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Handle scroll locking with proper cleanup
+  useEffect(() => {
+    if (showUpload || selectedPothole) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showUpload, selectedPothole]);
+
   const loadPotholes = async () => {
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       setLoading(false);
@@ -431,25 +494,31 @@ const App = () => {
 
   const handleVote = async (id) => {
     const report = reports.find(p => p.id === id);
-    const newVotes = (report?.votes || 0) + 1;
+    if (!report) return;
     
+    const newVotes = report.votes + 1;
+    
+    // Celebrate milestones with dynamically loaded confetti
     if (newVotes % 10 === 0 && newVotes > 0) {
-      confetti({
-        particleCount: 200,
-        spread: 100,
-        origin: { y: 0.6 },
-        zIndex: 9999,
-        colors: ['#06b6d4', '#8b5cf6', '#ec4899', '#facc15']
+      loadConfetti().then(confettiFn => {
+        confettiFn({
+          particleCount: 200,
+          spread: 100,
+          origin: { y: 0.6 },
+          zIndex: 9999,
+          colors: ['#06b6d4', '#8b5cf6', '#ec4899', '#facc15']
+        });
       });
     }
 
-    setReports(prev => prev.map(p => p.id === id ? { ...p, votes: p.votes + 1 } : p));
+    // Optimistic update
+    setReports(prev => prev.map(p => p.id === id ? { ...p, votes: newVotes } : p));
     if (selectedPothole && selectedPothole.id === id) {
-      setSelectedPothole(prev => ({ ...prev, votes: prev.votes + 1 }));
+      setSelectedPothole(prev => ({ ...prev, votes: newVotes }));
     }
 
+    // Sync to server using the pre-calculated newVotes (not stale)
     try {
-      const report = reports.find(p => p.id === id);
       await fetch(`${SUPABASE_URL}/rest/v1/potholes?id=eq.${id}`, {
         method: 'PATCH',
         headers: {
@@ -458,7 +527,7 @@ const App = () => {
           'Content-Type': 'application/json',
           'Prefer': 'return=minimal'
         },
-        body: JSON.stringify({ votes: (report ? report.votes : 0) + 1 })
+        body: JSON.stringify({ votes: newVotes })
       });
     } catch (err) {
       console.error('Error upvoting:', err);
@@ -479,59 +548,48 @@ const App = () => {
         ? 'bg-[#0f1219] text-white' 
         : 'bg-[#e4e4e7] text-slate-700'
     }`}>
-      {/* STATIC GRADIENT BACKGROUND */}
-      <div className={`fixed inset-0 pointer-events-none ${
-        darkMode 
-          ? 'bg-[#0a1628]' 
-          : 'bg-gradient-to-br from-[#e4e4e7] via-[#f1f5f9] to-[#e2e8f0]'
-      }`}>
-        {/* Multiple gradient orbs with wide color variety */}
-        <div className="absolute inset-0 overflow-hidden">
-          {/* Top-left: Cyan */}
-          <div className={`absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full blur-[100px] transition-colors duration-500 ${
-            darkMode ? 'bg-cyan-400/80' : 'bg-cyan-300/70'
-          }`} />
-          {/* Top-center: Pink */}
-          <div className={`absolute -top-20 left-1/3 w-[400px] h-[400px] rounded-full blur-[90px] transition-colors duration-500 ${
-            darkMode ? 'bg-pink-500/60' : 'bg-pink-300/50'
-          }`} />
-          {/* Top-right: Violet */}
-          <div className={`absolute -top-32 -right-20 w-[500px] h-[500px] rounded-full blur-[100px] transition-colors duration-500 ${
-            darkMode ? 'bg-violet-500/80' : 'bg-purple-300/70'
-          }`} />
-          {/* Left-center: Emerald */}
-          <div className={`absolute top-1/3 -left-20 w-[450px] h-[450px] rounded-full blur-[90px] transition-colors duration-500 ${
-            darkMode ? 'bg-emerald-500/60' : 'bg-emerald-300/50'
-          }`} />
-          {/* Center: Blue */}
-          <div className={`absolute top-1/3 left-1/2 -translate-x-1/2 w-[700px] h-[700px] rounded-full blur-[140px] transition-colors duration-500 ${
-            darkMode ? 'bg-blue-500/50' : 'bg-blue-300/40'
-          }`} />
-          {/* Right-center: Rose */}
-          <div className={`absolute top-1/4 -right-10 w-[400px] h-[400px] rounded-full blur-[80px] transition-colors duration-500 ${
-            darkMode ? 'bg-rose-500/50' : 'bg-rose-300/40'
-          }`} />
-          {/* Mid-right: Sky Blue */}
-          <div className={`absolute top-1/2 right-1/4 w-[350px] h-[350px] rounded-full blur-[80px] transition-colors duration-500 ${
-            darkMode ? 'bg-sky-400/80' : 'bg-sky-300/60'
-          }`} />
-          {/* Bottom-left: Teal */}
-          <div className={`absolute -bottom-20 left-0 w-[500px] h-[500px] rounded-full blur-[100px] transition-colors duration-500 ${
-            darkMode ? 'bg-teal-400/80' : 'bg-teal-300/60'
-          }`} />
-          {/* Bottom-center: Indigo */}
-          <div className={`absolute -bottom-32 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full blur-[120px] transition-colors duration-500 ${
-            darkMode ? 'bg-indigo-500/70' : 'bg-indigo-300/50'
-          }`} />
-          {/* Bottom-right: Purple */}
-          <div className={`absolute -bottom-40 -right-40 w-[600px] h-[600px] rounded-full blur-[100px] transition-colors duration-500 ${
-            darkMode ? 'bg-purple-500/90' : 'bg-purple-300/80'
-          }`} />
-          {/* Floating accent: Amber */}
-          <div className={`absolute top-2/3 left-1/4 w-[300px] h-[300px] rounded-full blur-[80px] transition-colors duration-500 ${
-            darkMode ? 'bg-amber-500/30' : 'bg-amber-300/30'
-          }`} />
-        </div>
+      {/* PROFESSIONAL GRADIENT BACKGROUND - Fixed for glass scroll effect */}
+      <div className="fixed inset-0 pointer-events-none">
+        {/* Base dark gradient */}
+        <div className={`absolute inset-0 ${
+          darkMode 
+            ? 'bg-[#070b14]' 
+            : 'bg-slate-50'
+        }`} />
+        
+        {/* Primary cyan glow - top left */}
+        <div 
+          className={`absolute -top-[20%] -left-[10%] w-[60%] h-[60%] rounded-full blur-[120px] ${
+            darkMode 
+              ? 'bg-cyan-500/30' 
+              : 'bg-cyan-400/20'
+          }`}
+        />
+        
+        {/* Secondary cyan glow - bottom right */}
+        <div 
+          className={`absolute -bottom-[20%] -right-[10%] w-[50%] h-[50%] rounded-full blur-[100px] ${
+            darkMode 
+              ? 'bg-cyan-600/25' 
+              : 'bg-cyan-500/15'
+          }`}
+        />
+        
+        {/* Subtle blue accent - center */}
+        <div 
+          className={`absolute top-[30%] left-[40%] w-[40%] h-[40%] rounded-full blur-[100px] ${
+            darkMode 
+              ? 'bg-blue-600/20' 
+              : 'bg-blue-400/10'
+          }`}
+        />
+        
+        {/* Subtle noise texture */}
+        <div className={`absolute inset-0 ${darkMode ? 'opacity-[0.03]' : 'opacity-[0.02]'}`} 
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`
+          }}
+        />
       </div>
 
       {/* LOADING SCREEN OVERLAY */}
@@ -564,7 +622,7 @@ const App = () => {
             </div>
             <div className="hidden sm:block">
               <h1 className={`font-bold text-lg tracking-tight leading-none ${darkMode ? 'text-white' : 'text-slate-600'}`}>
-                Mark<span className={darkMode ? 'text-cyan-400' : 'text-cyan-600'}>My</span>Pothole
+                Mark<span className={darkMode ? 'text-cyan-400' : 'text-cyan-600'}>My</span>Report
               </h1>
             </div>
           </div>
@@ -603,88 +661,140 @@ const App = () => {
 
       {/* MAIN CONTENT */}
       <main className="pt-24 pb-20 relative z-10">
-        {/* LEGENDARY POTHOLES */}
+        {/* LEGENDARY POTHOLES - Vertical title layout */}
         <section className="mb-16 max-w-7xl mx-auto px-4">
-          <div className="flex items-center gap-3 mb-8">
-            <div className={`p-2.5 rounded-2xl ${
+          <div className="flex items-stretch gap-6">
+            {/* Vertical Title on Left */}
+            <div className="hidden md:flex flex-col items-center justify-center py-4">
+              <div className={`p-2.5 rounded-2xl mb-4 ${
+                darkMode 
+                  ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] shadow-[0_4px_12px_rgba(0,0,0,0.3)]' 
+                  : 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06)]'
+              }`}>
+                <Trophy size={20} className={darkMode ? 'text-amber-400' : 'text-amber-500'} />
+              </div>
+              <div className="writing-vertical transform -rotate-180" style={{ writingMode: 'vertical-rl' }}>
+                <h2 className={`text-lg font-bold tracking-tight whitespace-nowrap ${darkMode ? 'text-white' : 'text-slate-700'}`}>
+                  Legendary Potholes
+                </h2>
+                <p className={`text-[10px] font-semibold tracking-wider mt-2 ${darkMode ? 'text-amber-400/70' : 'text-amber-600'}`}>
+                  🏆 HALL OF INFAMY
+                </p>
+              </div>
+            </div>
+
+            {/* Mobile Title (horizontal) */}
+            <div className="md:hidden flex items-center gap-3 mb-4 w-full">
+              <div className={`p-2.5 rounded-2xl ${
+                darkMode 
+                  ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] shadow-[0_4px_12px_rgba(0,0,0,0.3)]' 
+                  : 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06)]'
+              }`}>
+                <Trophy size={20} className={darkMode ? 'text-amber-400' : 'text-amber-500'} />
+              </div>
+              <div>
+                <h2 className={`text-xl font-bold tracking-tight ${darkMode ? 'text-white' : 'text-slate-700'}`}>Legendary Potholes</h2>
+                <p className={`text-xs font-semibold tracking-wider ${darkMode ? 'text-amber-400/70' : 'text-amber-600'}`}>🏆 HALL OF INFAMY</p>
+              </div>
+            </div>
+
+            {/* Smaller 3-card grid */}
+            <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {top3.map((p, i) => {
+                const sizeInfo = getSizeFromSeverity(p.severity);
+                const rank = i + 1;
+                
+                // Element Frame Logic
+                let frameClass = '';
+                if (p.votes >= 700) frameClass = 'electric-frame';
+                else if (p.votes >= 600) frameClass = 'water-frame';
+                else if (p.votes >= 500) frameClass = 'fire-frame';
+                
+                return (
+                  <motion.div
+                    key={p.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    onClick={() => setSelectedPothole(p)}
+                    className={`relative rounded-2xl overflow-hidden cursor-pointer backdrop-blur-xl border transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 ${frameClass} ${
+                      darkMode 
+                        ? 'bg-white/5 border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.3)]' 
+                        : 'bg-white/10 border-white/20 shadow-[0_8px_24px_rgba(0,0,0,0.05)]'
+                    }`}
+                  >
+                    {/* Rank Badge - smaller */}
+                    <div className="absolute top-3 left-3 z-20">
+                      <div className={`font-bold w-8 h-8 rounded-lg flex items-center justify-center text-xs backdrop-blur-md ${
+                        rank === 1 
+                          ? 'bg-gradient-to-b from-amber-400 to-amber-500 text-black shadow-[0_4px_12px_rgba(251,191,36,0.4)]' 
+                          : rank === 2
+                            ? 'bg-gradient-to-b from-slate-300 to-slate-400 text-slate-700'
+                            : 'bg-gradient-to-b from-amber-600 to-amber-700 text-amber-100'
+                      }`}>
+                        #{rank}
+                      </div>
+                    </div>
+                    
+                    {/* Image - smaller aspect ratio */}
+                    <div className="aspect-[4/3] relative overflow-hidden cursor-pointer">
+                      <img src={p.image_url} alt={p.location} className="w-full h-full object-cover" />
+                      {/* Severity badge */}
+                      <div className={`absolute top-2 right-2 text-white text-[8px] font-bold px-2 py-0.5 rounded-full backdrop-blur-md ${
+                        darkMode ? 'bg-white/10' : 'bg-black/20'
+                      }`}>
+                        {sizeInfo.label}
+                      </div>
+                    </div>
+                    
+                    {/* Info section - compact */}
+                    <div className={`p-3 ${darkMode ? 'bg-black/10' : 'bg-white/10'}`}>
+                      <h4 className={`text-xs font-bold truncate mb-1.5 ${darkMode ? 'text-white' : 'text-slate-800'}`}>{getDisplayLocation(p.location)}</h4>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className={`text-[10px] font-medium ${darkMode ? 'text-zinc-300' : 'text-slate-600'}`}>{formatDate(p.created_at)}</span>
+                        <UpvoteButton 
+                          onVote={() => handleVote(p.id)} 
+                          votes={p.votes} 
+                          size="sm" 
+                          darkMode={darkMode} 
+                          soundEnabled={soundEnabled} 
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+
+            {/* Vertical Stats Pill on Right */}
+            <div className={`hidden md:flex flex-col items-center justify-center px-4 py-6 rounded-full backdrop-blur-xl ${
               darkMode 
-                ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] shadow-[0_4px_12px_rgba(0,0,0,0.3)]' 
-                : 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06)]'
+                ? 'bg-white/5 border border-white/10' 
+                : 'bg-white/10 border border-white/20'
             }`}>
-              <Trophy size={20} className={darkMode ? 'text-amber-400' : 'text-amber-500'} />
-            </div>
-            <div>
-              <h2 className={`text-xl font-bold tracking-tight ${darkMode ? 'text-white' : 'text-slate-700'}`}>Legendary Potholes</h2>
-              <p className={`text-xs font-semibold tracking-wider ${darkMode ? 'text-amber-400/70' : 'text-amber-600'}`}>🏆 HALL OF INFAMY</p>
-            </div>
-          </div>
-          
-          {/* Static 3-card grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {top3.map((p, i) => {
-              const sizeInfo = getSizeFromSeverity(p.severity);
-              const rank = i + 1;
+              {/* Total Reports */}
+              <div className="flex flex-col items-center">
+                <span className={`text-[9px] font-medium tracking-wider ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>
+                  REPORTS
+                </span>
+                <span className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-slate-700'}`}>
+                  {reports.length}
+                </span>
+              </div>
               
-              // Element Frame Logic
-              let frameClass = '';
-              if (p.votes >= 700) frameClass = 'electric-frame';
-              else if (p.votes >= 600) frameClass = 'water-frame';
-              else if (p.votes >= 500) frameClass = 'fire-frame';
+              {/* Divider */}
+              <div className={`w-6 h-px my-4 ${darkMode ? 'bg-white/10' : 'bg-black/10'}`} />
               
-              return (
-                <motion.div
-                  key={p.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  onClick={() => setSelectedPothole(p)}
-                  className={`relative rounded-3xl overflow-hidden cursor-pointer backdrop-blur-xl border transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 ${frameClass} ${
-                    darkMode 
-                      ? 'bg-white/5 border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)]' 
-                      : 'bg-white/10 border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.05)]'
-                  }`}
-                >
-                  {/* Rank Badge */}
-                  <div className="absolute top-4 left-4 z-20">
-                    <div className={`font-bold w-10 h-10 rounded-xl flex items-center justify-center text-sm backdrop-blur-md ${
-                      rank === 1 
-                        ? 'bg-gradient-to-b from-amber-400 to-amber-500 text-black shadow-[0_4px_12px_rgba(251,191,36,0.4)]' 
-                        : rank === 2
-                          ? 'bg-gradient-to-b from-slate-300 to-slate-400 text-slate-700'
-                          : 'bg-gradient-to-b from-amber-600 to-amber-700 text-amber-100'
-                    }`}>
-                      #{rank}
-                    </div>
-                  </div>
-                  
-                  {/* Image */}
-                  <div className="aspect-square relative overflow-hidden cursor-pointer">
-                    <img src={p.image_url} alt={p.location} className="w-full h-full object-cover" />
-                    {/* Severity badge */}
-                    <div className={`absolute top-3 right-3 text-white text-[9px] font-bold px-2.5 py-1 rounded-full backdrop-blur-md ${
-                      darkMode ? 'bg-white/10' : 'bg-black/20'
-                    }`}>
-                      {sizeInfo.label}
-                    </div>
-                  </div>
-                  
-                  {/* Info section - matching Live Feed */}
-                  <div className={`p-4 ${darkMode ? 'bg-black/10' : 'bg-white/10'}`}>
-                    <h4 className={`text-sm font-bold truncate mb-2 ${darkMode ? 'text-white' : 'text-slate-800'}`}>{getDisplayLocation(p.location)}</h4>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className={`text-xs font-medium ${darkMode ? 'text-zinc-300' : 'text-slate-600'}`}>{new Date(p.created_at).toLocaleDateString()}</span>
-                      <UpvoteButton 
-                        onVote={() => handleVote(p.id)} 
-                        votes={p.votes} 
-                        size="sm" 
-                        darkMode={darkMode} 
-                        soundEnabled={soundEnabled} 
-                      />
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
+              {/* Total Votes */}
+              <div className="flex flex-col items-center">
+                <span className={`text-[9px] font-medium tracking-wider ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>
+                  VOTES
+                </span>
+                <span className={`text-lg font-bold ${darkMode ? 'text-cyan-400' : 'text-cyan-600'}`}>
+                  {reports.reduce((s, r) => s + r.votes, 0).toLocaleString()}
+                </span>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -775,113 +885,7 @@ const App = () => {
   );
 };
 
-const StatCard = ({ icon, count, label, darkMode }) => (
-  <motion.div 
-    initial={{ y: 20, opacity: 0 }}
-    animate={{ y: 0, opacity: 1 }}
-    whileHover={{ y: -2 }}
-    className={`flex items-center gap-3 px-5 py-4 rounded-3xl transition-all duration-300 backdrop-blur-xl ${
-      darkMode 
-        ? 'bg-white/5 border border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.3)]' 
-        : 'bg-white/10 border border-white/20 shadow-[0_8px_24px_rgba(0,0,0,0.05)]'
-    }`}
-  >
-    <div className={`p-3 rounded-2xl ${
-      darkMode 
-        ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]' 
-        : 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.9)]'
-    }`}>
-      <div className={darkMode ? 'text-cyan-400' : 'text-cyan-600'}>{icon}</div>
-    </div>
-    <div>
-      <span className={`block text-2xl font-bold leading-none ${darkMode ? 'text-white' : 'text-slate-600'}`}>{count}</span>
-      <span className={`text-[10px] font-medium tracking-wider ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>{label}</span>
-    </div>
-  </motion.div>
-);
-
-const HallOfShameCard = ({ data, rank, onVote, onSelect, darkMode, soundEnabled }) => {
-  const sizeInfo = getSizeFromSeverity(data.severity);
-  
-  // Element Tier Logic
-  let frameClass = '';
-  let labelClass = '';
-  let labelText = '';
-  let LabelIcon = null;
-
-  if (data.votes >= 700) {
-    frameClass = 'electric-frame';
-    labelClass = 'element-label-electric';
-    labelText = 'Legendary Electric';
-    LabelIcon = Siren;
-  } else if (data.votes >= 600) {
-    frameClass = 'water-frame';
-    labelClass = 'element-label-water';
-    labelText = 'Elite Water';
-    LabelIcon = MapPin;
-  } else if (data.votes >= 500) {
-    frameClass = 'fire-frame';
-    labelClass = 'element-label-fire';
-    labelText = 'Hype Fire';
-    LabelIcon = Flame;
-  }
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: rank * 0.1 }}
-      whileHover={{ y: -4 }}
-      className={`relative rounded-[2rem] overflow-hidden transition-all duration-300 backdrop-blur-xl border ${frameClass} ${
-        darkMode 
-          ? 'bg-white/5 border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.4)]' 
-          : 'bg-white/10 border-white/20 shadow-[0_12px_40px_rgba(0,0,0,0.05)]'
-      }`}
-    >
-      {frameClass && (
-        <div className="absolute top-0 right-0 z-30 pointer-events-none">
-          <div className={`${labelClass} px-3 py-1.5 rounded-bl-2xl text-[9px] font-bold text-white tracking-wide flex items-center gap-1.5`}>
-             <LabelIcon size={10} className="animate-pulse" />
-             {labelText}
-          </div>
-        </div>
-      )}
-      {/* Rank Badge */}
-      <div className="absolute top-4 left-4 z-20">
-        <div className={`font-bold w-10 h-10 rounded-2xl flex items-center justify-center text-sm backdrop-blur-md ${
-          darkMode 
-            ? 'bg-amber-500/90 text-black shadow-[0_4px_12px_rgba(251,191,36,0.4)]' 
-            : 'bg-white/90 text-slate-600 shadow-[0_4px_12px_rgba(0,0,0,0.1)]'
-        }`}>
-          #{rank}
-        </div>
-      </div>
-      {/* Image - stays fully opaque */}
-      <div className="aspect-[4/3] relative overflow-hidden cursor-pointer" onClick={() => onSelect(data)}>
-        <img src={data.image_url} alt={data.location} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-        <div className={`absolute top-4 right-4 text-white text-[10px] font-bold px-3 py-1.5 rounded-full backdrop-blur-md ${
-          darkMode ? 'bg-white/10' : 'bg-black/20'
-        }`}>
-          {sizeInfo.label}
-        </div>
-      </div>
-      {/* Info section - semi-transparent */}
-      <div className={`p-5 ${darkMode ? 'bg-black/20' : 'bg-white/10'}`}>
-        <h3 className={`text-lg font-bold leading-tight mb-1 ${darkMode ? 'text-white' : 'text-slate-700'}`}>{sizeInfo.title}</h3>
-        <p className={`text-xs flex items-center gap-1 mb-4 ${darkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
-          <MapPin size={10} /> {getDisplayLocation(data.location)}
-        </p>
-        <div className={`flex items-center justify-between pt-4 border-t ${darkMode ? 'border-white/10' : 'border-black/5'}`}>
-          <UpvoteButton onVote={onVote} votes={data.votes} darkMode={darkMode} soundEnabled={soundEnabled} />
-          <button onClick={() => onSelect(data)} className={`text-xs font-bold tracking-wide transition-colors ${
-            darkMode ? 'text-cyan-400 hover:text-cyan-300' : 'text-cyan-600 hover:text-cyan-500'
-          }`}>View Details</button>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
+// StatCard component removed - was unused
 
 const ReportCard = ({ data, index, onVote, onSelect, darkMode, soundEnabled }) => {
   const sizeInfo = getSizeFromSeverity(data.severity);
@@ -903,9 +907,17 @@ const ReportCard = ({ data, index, onVote, onSelect, darkMode, soundEnabled }) =
           : 'bg-white/10 border-white/20 shadow-[0_8px_24px_rgba(0,0,0,0.05)]'
       }`}
     >
-      {/* Image - stays fully opaque */}
+      {/* Image with fallback */}
       <div className="aspect-square relative overflow-hidden cursor-pointer group" onClick={() => onSelect(data)}>
-        <img src={data.image_url} alt={data.location} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+        <img 
+          src={data.image_url} 
+          alt={getDisplayLocation(data.location)} 
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><rect fill="%23374151" width="400" height="400"/><text fill="%239ca3af" font-family="sans-serif" font-size="24" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle">Image Not Available</text></svg>';
+          }}
+        />
         <div className={`absolute top-3 left-3 text-white text-[9px] font-bold px-2.5 py-1 rounded-full backdrop-blur-md ${
           darkMode ? 'bg-white/10' : 'bg-black/20'
         }`}>
@@ -916,7 +928,7 @@ const ReportCard = ({ data, index, onVote, onSelect, darkMode, soundEnabled }) =
       <div className={`p-4 ${darkMode ? 'bg-black/10' : 'bg-white/10'}`}>
         <h4 className={`text-sm font-bold truncate mb-2 ${darkMode ? 'text-white' : 'text-slate-800'}`}>{getDisplayLocation(data.location)}</h4>
         <div className="flex items-center justify-between gap-2">
-          <span className={`text-xs font-medium ${darkMode ? 'text-zinc-300' : 'text-slate-600'}`}>{new Date(data.created_at).toLocaleDateString()}</span>
+          <span className={`text-xs font-medium ${darkMode ? 'text-zinc-300' : 'text-slate-600'}`}>{formatDate(data.created_at)}</span>
           <UpvoteButton onVote={onVote} votes={data.votes} size="sm" darkMode={darkMode} soundEnabled={soundEnabled} />
         </div>
       </div>
@@ -1073,7 +1085,7 @@ const PotholeDetailModal = ({ data, onClose, onVote, darkMode, soundEnabled }) =
               }`}>
                 <Calendar size={14} className={darkMode ? 'text-cyan-400' : 'text-cyan-600'} />
               </div>
-              <span className={`text-xs font-medium ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>Reported {new Date(data.created_at).toLocaleDateString()}</span>
+              <span className={`text-xs font-medium ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>Reported {formatDate(data.created_at)}</span>
             </div>
           </div>
         )}
@@ -1170,10 +1182,13 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
       // 1. Visual Delay for scanning feel
       await new Promise(r => setTimeout(r, 1200));
 
-      // 2. Real AI Prediction
+      // 2. Real AI Prediction with error handling
       const img = new Image();
       img.src = previewUrl;
-      await new Promise(r => img.onload = r);
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = () => reject(new Error('Failed to load image'));
+      });
       
       const predictions = await model.predict(img);
       const potholeScore = predictions.find(p => p.className === 'Pothole')?.probability || 0;
@@ -1375,7 +1390,7 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
                       <span className={`text-[10px] mt-1 ${darkMode ? 'text-zinc-600' : 'text-slate-300'}`}>JPG, PNG up to 10MB</span>
                     </>
                   )}
-                  <input id="pothole-file" type="file" className="hidden" onChange={handleFileChange} disabled={scanning || uploading} />
+                  <input id="pothole-file" type="file" accept="image/*" className="hidden" onChange={handleFileChange} disabled={scanning || uploading} />
                 </div>
 
                 <div>
@@ -1454,4 +1469,11 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
   );
 };
 
-export default App;
+// Wrap App with ErrorBoundary for graceful error handling
+const AppWithErrorBoundary = () => (
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>
+);
+
+export default AppWithErrorBoundary;

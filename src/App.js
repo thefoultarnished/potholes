@@ -1,5 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix Leaflet marker icons
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+  iconUrl: require('leaflet/dist/images/marker-icon.png'),
+  shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+});
 
 // Tiny pop sound (~1KB) - much smaller than original 88KB
 const VOTE_SOUND_B64 = "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACA";
@@ -31,7 +42,9 @@ import {
   Sun,
   Moon,
   ChevronUp,
-  Trophy
+  Trophy,
+  Award,
+  Map as MapIcon
 } from 'lucide-react';
 
 // --- CONFIG & UTILS ---
@@ -48,19 +61,40 @@ const SIZES = [
 const getSizeFromSeverity = (sev) => SIZES.find(s => s.level === (sev || 1)) || SIZES[0];
 
 const getDisplayLocation = (loc) => {
-  if (!loc || loc === 'Unknown Location' || loc.startsWith('GPS:')) return 'Somewhere on Earth';
+  if (!loc) return 'Somewhere on Earth';
+  
+  // Handle modern object format
+  if (typeof loc === 'object' && !Array.isArray(loc)) {
+    // If it's a raw object with address components, try to form a short display
+    // But usually we save 'name' as the full address or road
+    return loc.name || loc.address || 'Unknown Location';
+  }
+
+  if (loc === 'Unknown Location' || loc.startsWith('GPS:')) return 'Somewhere on Earth';
   // If it's "Name (GPS: ...)", show only the name
   if (loc.includes(' (GPS:')) return loc.split(' (GPS:')[0];
   return loc.split(',')[0].trim();
 };
 
-// Safe date formatting to prevent crashes from null/undefined dates
+// Relative time formatting (e.g., "2h ago", "Yesterday")
 const formatDate = (dateStr) => {
-  if (!dateStr) return 'Unknown date';
+  if (!dateStr) return 'Unknown';
   try {
-    return new Date(dateStr).toLocaleDateString();
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   } catch {
-    return 'Unknown date';
+    return 'Unknown';
   }
 };
 
@@ -138,33 +172,42 @@ const UpvoteButton = ({ onVote, votes = 0, size = "md", darkMode = true, soundEn
   const s = sizes[size] || sizes.md;
   const controls = useAnimation();
   const [burstKey, setBurstKey] = React.useState(0);
+  const [isAnimating, setIsAnimating] = React.useState(false);
 
   const handleClick = (e) => {
     e.stopPropagation();
     e.preventDefault();
     
     playPopSound(soundEnabled);
+    setIsAnimating(true);
     
     controls.stop();
     controls.start({
-      scale: [1, 1.1, 1],
-      transition: { duration: 0.25, ease: "easeOut" }
+      scale: [1, 1.25, 0.95, 1.05, 1],
+      transition: { duration: 0.4, ease: "easeOut" }
     });
     
     setBurstKey(prev => prev + 1);
     onVote();
+    
+    // Reset active state after animation
+    setTimeout(() => setIsAnimating(false), 300);
   };
 
   return (
     <motion.button
       whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
+      whileTap={{ scale: 0.9 }}
       animate={controls}
       onClick={handleClick}
       className={`relative ${s.height} ${s.padding} rounded-full font-bold ${s.text} transition-all duration-200 flex items-center gap-2 flex-shrink-0 ${
-        darkMode 
-          ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] text-cyan-400 shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] hover:from-[#323d5e] hover:to-[#252f4e]' 
-          : 'bg-white text-cyan-600 shadow-[0_2px_8px_rgba(0,0,0,0.1),0_1px_2px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]'
+        isAnimating && darkMode
+          ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-[0_0_20px_rgba(34,211,238,0.5)]'
+          : isAnimating
+            ? 'bg-gradient-to-r from-cyan-400 to-blue-400 text-white shadow-[0_0_20px_rgba(34,211,238,0.4)]'
+            : darkMode 
+              ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] text-cyan-400 shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] hover:from-[#323d5e] hover:to-[#252f4e]' 
+              : 'bg-white text-cyan-600 shadow-[0_2px_8px_rgba(0,0,0,0.1),0_1px_2px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]'
       }`}
     >
       {/* Upvote Icon */}
@@ -174,33 +217,33 @@ const UpvoteButton = ({ onVote, votes = 0, size = "md", darkMode = true, soundEn
         width={s.icon} 
         height={s.icon}
         animate={burstKey > 0 ? { 
-          rotate: [0, -12, 12, 0],
-          scale: [1, 1.15, 1] 
+          rotate: [0, -20, 20, -10, 10, 0],
+          scale: [1, 1.4, 1] 
         } : {}}
         key={`svg-${burstKey}`}
-        transition={{ duration: 0.3 }}
-        className={darkMode ? 'text-cyan-400' : 'text-cyan-500'}
+        transition={{ duration: 0.5 }}
+        className={isAnimating ? 'text-white' : (darkMode ? 'text-cyan-400' : 'text-cyan-500')}
       >
         <path d="M4 14h4v7a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-7h4a1.001 1.001 0 0 0 .781-1.625l-8-10c-.381-.475-1.181-.475-1.562 0l-8 10A1.001 1.001 0 0 0 4 14z"/>
       </motion.svg>
       
       {/* Vote Count */}
-      <div className="relative overflow-hidden h-[1.2em] flex items-center min-w-[1.2em]">
+      <div className="relative h-[1.2em] flex items-center min-w-[1.2em]">
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.span
             key={votes}
-            initial={{ y: 12, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -12, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 500, damping: 25 }}
-            className="inline-block font-black tracking-wide"
+            initial={{ y: 20, opacity: 0, scale: 0.5 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: -20, opacity: 0, scale: 0.5 }}
+            transition={{ type: "spring", stiffness: 500, damping: 20 }}
+            className={`inline-block font-bold tracking-wide ${isAnimating ? 'text-white' : ''}`}
           >
             {votes}
           </motion.span>
         </AnimatePresence>
       </div>
 
-      {/* Particle Burst */}
+      {/* Enhanced Particle Burst */}
       <div className="absolute inset-0 pointer-events-none">
         <AnimatePresence>
           <motion.div
@@ -208,21 +251,28 @@ const UpvoteButton = ({ onVote, votes = 0, size = "md", darkMode = true, soundEn
             initial={{ opacity: 1 }}
             animate={{ opacity: 0 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.8 }}
           >
-            {burstKey > 0 && [...Array(6)].map((_, i) => (
-              <motion.div
-                key={`${burstKey}-${i}`}
-                initial={{ scale: 0, x: 0, y: 0 }}
-                animate={{ 
-                  scale: [0, 1, 0],
-                  x: Math.cos(i * 60 * Math.PI / 180) * 35,
-                  y: Math.sin(i * 60 * Math.PI / 180) * 35
-                }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-                className="absolute left-1/2 top-1/2 w-1.5 h-1.5 bg-cyan-400 rounded-full shadow-[0_0_6px_#22d3ee]"
-              />
-            ))}
+            {burstKey > 0 && [...Array(12)].map((_, i) => {
+              const angle = (i * 30 * Math.PI) / 180;
+              const colors = ['#22d3ee', '#c084fc', '#f472b6', '#34d399'];
+              const color = colors[i % 4];
+              return (
+                <motion.div
+                  key={`${burstKey}-${i}`}
+                  initial={{ scale: 0, x: 0, y: 0 }}
+                  animate={{ 
+                    scale: [0, 1.5, 0],
+                    x: Math.cos(angle) * (40 + Math.random() * 20),
+                    y: Math.sin(angle) * (40 + Math.random() * 20),
+                    rotate: Math.random() * 360
+                  }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                  className="absolute left-1/2 top-1/2 w-1.5 h-1.5 rounded-full"
+                  style={{ backgroundColor: color, boxShadow: `0 0 10px ${color}` }}
+                />
+              );
+            })}
           </motion.div>
         </AnimatePresence>
       </div>
@@ -233,64 +283,29 @@ const UpvoteButton = ({ onVote, votes = 0, size = "md", darkMode = true, soundEn
 
 const ModeToggle = ({ darkMode, setDarkMode }) => {
   return (
-    <div className={`relative h-11 rounded-full flex items-center p-1 transition-all duration-300 ${ 
-      darkMode 
-        ? 'bg-[#1a2038]/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.3),0_1px_0_rgba(255,255,255,0.05)]' 
-        : 'bg-slate-200/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.06),0_1px_0_rgba(255,255,255,0.8)]'
-    }`}>
-      {/* Sliding Active Indicator */}
-      <motion.div
-        className={`absolute top-1 bottom-1 w-[calc(50%-2px)] rounded-full z-0 ${
-          darkMode 
-            ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]' 
-            : 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.1),0_1px_2px_rgba(0,0,0,0.06)]'
-        }`}
-        initial={false}
-        animate={{ x: darkMode ? 'calc(100% + 4px)' : 0 }}
-        style={{ left: 4 }}
-        transition={{ type: "spring", stiffness: 400, damping: 30 }}
-      />
-      
-      {/* Light Option */}
-      <button 
-        onClick={() => setDarkMode(false)}
-        className={`relative z-10 h-full px-5 rounded-full text-[11px] font-bold flex items-center justify-center gap-2 transition-colors duration-200 ${
-          !darkMode ? 'text-slate-800' : 'text-slate-400'
-        }`}
-      >
-        {!darkMode && (
-          <motion.div 
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.1 }}
-            className="w-1.5 h-1.5 rounded-full bg-rose-400 shadow-[0_0_6px_#fb7185]" 
-          />
-        )}
-        <Sun size={14} strokeWidth={2.5} className={!darkMode ? 'text-amber-500' : 'opacity-50'} />
-        <span className="tracking-wide">Light</span>
-      </button>
-
-      {/* Dark Option */}
-      <button 
-        onClick={() => setDarkMode(true)}
-        className={`relative z-10 h-full px-5 rounded-full text-[11px] font-bold flex items-center justify-center gap-2 transition-colors duration-200 ${
-          darkMode 
-            ? 'text-white' 
-            : 'text-slate-400'
-        }`}
-      >
-        {darkMode && (
-          <motion.div 
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.1 }}
-            className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee]" 
-          />
-        )}
-        <Moon size={14} strokeWidth={2.5} className={darkMode ? 'text-cyan-400' : 'opacity-50'} />
-        <span className="tracking-wide">Dark</span>
-      </button>
-    </div>
+    <motion.button
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      onClick={() => setDarkMode(!darkMode)}
+      aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+      className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 ${
+        darkMode 
+          ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] text-amber-400 shadow-[0_4px_12px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.1)] hover:from-[#323d5e] hover:to-[#252f4e]' 
+          : 'bg-white text-cyan-600 shadow-[0_4px_12px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] hover:shadow-[0_6px_16px_rgba(0,0,0,0.12)]'
+      }`}
+    >
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={darkMode ? 'dark' : 'light'}
+          initial={{ y: -20, opacity: 0, rotate: -90 }}
+          animate={{ y: 0, opacity: 1, rotate: 0 }}
+          exit={{ y: 20, opacity: 0, rotate: 90 }}
+          transition={{ duration: 0.2 }}
+        >
+          {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+        </motion.div>
+      </AnimatePresence>
+    </motion.button>
   );
 };
 
@@ -326,12 +341,12 @@ const SoundToggle = ({ soundEnabled, setSoundEnabled, darkMode }) => {
 // --- LOADING SCREEN ---
 const LoadingScreen = ({ darkMode }) => (
   <div className={`fixed inset-0 z-50 flex flex-col items-center justify-center transition-colors duration-300 ${
-    darkMode ? 'bg-[#0a1628]' : 'bg-[#e4e4e7]'
+    darkMode ? 'bg-[#0f1219]' : 'bg-[#e4e4e7]'
   }`}>
     {/* Multi-orb background for loading screen to match main app */}
     <div className={`absolute inset-0 ${
       darkMode 
-        ? 'bg-[#0a1628]' 
+        ? 'bg-[#0f1219]' 
         : 'bg-gradient-to-br from-[#e4e4e7] via-[#f1f5f9] to-[#e2e8f0]'
     }`}>
       <div className="absolute inset-0 overflow-hidden">
@@ -434,6 +449,7 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [darkMode, setDarkMode] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [showMap, setShowMap] = useState(false);
 
   useEffect(() => {
     loadPotholes();
@@ -477,10 +493,22 @@ const App = () => {
           const localOnly = prev.filter(p => !serverIds.has(p.id) && p.isLocal);
           
           const localVotes = new Map(prev.map(p => [p.id, p.votes]));
-          const mergedServerData = data.map(serverItem => ({
-            ...serverItem,
-            votes: Math.max(serverItem.votes, localVotes.get(serverItem.id) || 0)
-          }));
+          const mergedServerData = data.map(serverItem => {
+            let loc = serverItem.location;
+            try {
+              // Parse JSON location if stored as string in DB
+              if (typeof loc === 'string' && loc.startsWith('{')) {
+                loc = JSON.parse(loc);
+              }
+            } catch (e) {
+              console.warn('Failed to parse location', e);
+            }
+            return {
+              ...serverItem,
+              location: loc,
+              votes: Math.max(serverItem.votes, localVotes.get(serverItem.id) || 0)
+            };
+          });
 
           return [...localOnly, ...mergedServerData];
         });
@@ -499,7 +527,7 @@ const App = () => {
     const newVotes = report.votes + 1;
     
     // Celebrate milestones with dynamically loaded confetti
-    if (newVotes % 10 === 0 && newVotes > 0) {
+    if (newVotes % 100 === 0 && newVotes > 0) {
       loadConfetti().then(confettiFn => {
         confettiFn({
           particleCount: 200,
@@ -607,8 +635,8 @@ const App = () => {
 
       <header className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
         darkMode 
-          ? 'bg-[#0f1219]/80 backdrop-blur-xl border-b border-white/5' 
-          : 'bg-[#e4e4e7]/90 backdrop-blur-xl border-b border-black/5'
+          ? 'bg-gradient-to-r from-[#0f1219]/90 via-[#131a28]/80 to-[#0f1219]/90 backdrop-blur-xl border-b border-white/5' 
+          : 'bg-white/10 backdrop-blur-xl border-b border-white/20'
       }`}>
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           {/* LOGO */}
@@ -622,21 +650,15 @@ const App = () => {
             </div>
             <div className="hidden sm:block">
               <h1 className={`font-bold text-lg tracking-tight leading-none ${darkMode ? 'text-white' : 'text-slate-600'}`}>
-                Mark<span className={darkMode ? 'text-cyan-400' : 'text-cyan-600'}>My</span>Report
+                Mark<span className={darkMode ? 'text-cyan-400' : 'text-cyan-600'}>My</span>Pothole
               </h1>
+              <p className={`text-[10px] font-medium tracking-wide ${darkMode ? 'text-zinc-400' : 'text-slate-400'}`}>
+                They ignore it, <span className="text-cyan-400 font-bold">we expose it</span>.
+              </p>
             </div>
           </div>
 
-          {/* INLINE STATS - Center */}
-          <div className={`hidden md:flex items-center gap-1 px-3 py-1.5 rounded-full backdrop-blur-md ${
-            darkMode ? 'bg-white/5 border border-white/10' : 'bg-white/80 shadow-md'
-          }`}>
-            <span className={`text-sm font-bold ${darkMode ? 'text-white' : 'text-slate-700'}`}>{reports.length}</span>
-            <span className={`text-[10px] font-medium ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>Reports</span>
-            <span className={`mx-2 text-xs ${darkMode ? 'text-zinc-600' : 'text-slate-300'}`}>•</span>
-            <span className={`text-sm font-bold ${darkMode ? 'text-cyan-400' : 'text-cyan-600'}`}>{reports.reduce((s, r) => s + r.votes, 0).toLocaleString()}</span>
-            <span className={`text-[10px] font-medium ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>Votes</span>
-          </div>
+
           
           {/* RIGHT CONTROLS */}
           <div className="flex items-center gap-2">
@@ -644,14 +666,26 @@ const App = () => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setShowUpload(true)}
-              className={`h-10 px-4 rounded-full font-bold text-sm flex items-center gap-2 transition-all duration-200 ${
+              className={`h-11 px-6 rounded-full font-bold text-sm flex items-center gap-2 transition-all duration-200 focus-ring ${
                 darkMode 
-                  ? 'bg-gradient-to-b from-cyan-500 to-cyan-600 text-white shadow-[0_4px_12px_rgba(6,182,212,0.4)]' 
-                  : 'bg-gradient-to-b from-cyan-500 to-cyan-600 text-white shadow-[0_4px_12px_rgba(6,182,212,0.3)]'
+                  ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] text-cyan-400 shadow-[0_4px_12px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.1)] hover:from-[#323d5e] hover:to-[#252f4e]' 
+                  : 'bg-white text-cyan-600 shadow-[0_4px_12px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] hover:shadow-[0_6px_16px_rgba(0,0,0,0.12)]'
               }`}
             >
               <Camera size={16} />
               <span className="hidden sm:inline">Report</span>
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowMap(true)}
+              className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 ${
+                darkMode 
+                  ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] text-cyan-400 shadow-[0_4px_12px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.1)] hover:from-[#323d5e] hover:to-[#252f4e]' 
+                  : 'bg-white/80 border border-white/60 text-cyan-600 shadow-[0_4px_12px_rgba(0,0,0,0.06)]'
+              }`}
+            >
+              <MapIcon size={20} />
             </motion.button>
             <SoundToggle soundEnabled={soundEnabled} setSoundEnabled={setSoundEnabled} darkMode={darkMode} />
             <ModeToggle darkMode={darkMode} setDarkMode={setDarkMode} />
@@ -662,44 +696,36 @@ const App = () => {
       {/* MAIN CONTENT */}
       <main className="pt-24 pb-20 relative z-10">
         {/* LEGENDARY POTHOLES - Vertical title layout */}
-        <section className="mb-16 max-w-7xl mx-auto px-4">
-          <div className="flex items-stretch gap-6">
-            {/* Vertical Title on Left */}
-            <div className="hidden md:flex flex-col items-center justify-center py-4">
-              <div className={`p-2.5 rounded-2xl mb-4 ${
-                darkMode 
-                  ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] shadow-[0_4px_12px_rgba(0,0,0,0.3)]' 
-                  : 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06)]'
-              }`}>
-                <Trophy size={20} className={darkMode ? 'text-amber-400' : 'text-amber-500'} />
-              </div>
-              <div className="writing-vertical transform -rotate-180" style={{ writingMode: 'vertical-rl' }}>
-                <h2 className={`text-lg font-bold tracking-tight whitespace-nowrap ${darkMode ? 'text-white' : 'text-slate-700'}`}>
+        <section className="mb-16 max-w-6xl mx-auto px-4">
+          <div className={`p-6 rounded-[2.5rem] border backdrop-blur-md transition-all duration-300 ${
+            darkMode 
+              ? 'bg-white/5 border-white/10 shadow-[inner_0_0_40px_rgba(0,0,0,0.2)]' 
+              : 'bg-white/60 border-white/50 shadow-xl ring-1 ring-white/50'
+          }`}>
+            {/* Header Content - Compact & Centered */}
+            <div className="flex flex-col items-center justify-center mb-6 text-center">
+              <div className="flex items-center gap-3 mb-2">
+                <div className={`p-2 rounded-xl backdrop-blur-md ${
+                  darkMode 
+                    ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] shadow-[0_4px_12px_rgba(0,0,0,0.3)]' 
+                    : 'bg-white/80 border border-white/60 shadow-[0_4px_12px_rgba(0,0,0,0.06)]'
+                }`}>
+                  <Award size={22} className={darkMode ? 'text-cyan-400' : 'text-cyan-500'} />
+                </div>
+                <h2 className={`text-2xl md:text-3xl font-black tracking-tight ${darkMode ? 'text-white' : 'text-slate-800'}`}>
                   Legendary Potholes
                 </h2>
-                <p className={`text-[10px] font-semibold tracking-wider mt-2 ${darkMode ? 'text-amber-400/70' : 'text-amber-600'}`}>
-                  🏆 HALL OF INFAMY
-                </p>
+              </div>
+              
+              <div className={`flex items-center gap-3 text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase ${darkMode ? 'text-cyan-400/90' : 'text-cyan-600'}`}>
+                <span className="w-6 h-px bg-current opacity-50"></span>
+                <span>Hall of Shame</span>
+                <span className="w-6 h-px bg-current opacity-50"></span>
               </div>
             </div>
 
-            {/* Mobile Title (horizontal) */}
-            <div className="md:hidden flex items-center gap-3 mb-4 w-full">
-              <div className={`p-2.5 rounded-2xl ${
-                darkMode 
-                  ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] shadow-[0_4px_12px_rgba(0,0,0,0.3)]' 
-                  : 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06)]'
-              }`}>
-                <Trophy size={20} className={darkMode ? 'text-amber-400' : 'text-amber-500'} />
-              </div>
-              <div>
-                <h2 className={`text-xl font-bold tracking-tight ${darkMode ? 'text-white' : 'text-slate-700'}`}>Legendary Potholes</h2>
-                <p className={`text-xs font-semibold tracking-wider ${darkMode ? 'text-amber-400/70' : 'text-amber-600'}`}>🏆 HALL OF INFAMY</p>
-              </div>
-            </div>
-
-            {/* Smaller 3-card grid */}
-            <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               {top3.map((p, i) => {
                 const sizeInfo = getSizeFromSeverity(p.severity);
                 const rank = i + 1;
@@ -766,68 +792,50 @@ const App = () => {
               })}
             </div>
 
-            {/* Vertical Stats Pill on Right */}
-            <div className={`hidden md:flex flex-col items-center justify-center px-4 py-6 rounded-full backdrop-blur-xl ${
-              darkMode 
-                ? 'bg-white/5 border border-white/10' 
-                : 'bg-white/10 border border-white/20'
-            }`}>
-              {/* Total Reports */}
-              <div className="flex flex-col items-center">
-                <span className={`text-[9px] font-medium tracking-wider ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>
-                  REPORTS
-                </span>
-                <span className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-slate-700'}`}>
-                  {reports.length}
-                </span>
-              </div>
-              
-              {/* Divider */}
-              <div className={`w-6 h-px my-4 ${darkMode ? 'bg-white/10' : 'bg-black/10'}`} />
-              
-              {/* Total Votes */}
-              <div className="flex flex-col items-center">
-                <span className={`text-[9px] font-medium tracking-wider ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>
-                  VOTES
-                </span>
-                <span className={`text-lg font-bold ${darkMode ? 'text-cyan-400' : 'text-cyan-600'}`}>
-                  {reports.reduce((s, r) => s + r.votes, 0).toLocaleString()}
-                </span>
-              </div>
-            </div>
+
           </div>
         </section>
 
         {/* LIVE FEED */}
-        <section className="max-w-7xl mx-auto px-4">
+        <section className="max-w-6xl mx-auto px-4">
           <div className="flex items-center gap-3 mb-8">
             <div className={`p-2.5 rounded-2xl ${
               darkMode 
                 ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] shadow-[0_4px_12px_rgba(0,0,0,0.3)]' 
                 : 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06)]'
             }`}>
-              <Flame size={20} className={darkMode ? 'text-orange-400' : 'text-orange-500'} />
+              <Flame size={20} className={darkMode ? 'text-cyan-400' : 'text-cyan-500'} />
             </div>
             <div>
               <h2 className={`text-xl font-bold tracking-tight ${darkMode ? 'text-white' : 'text-slate-700'}`}>Live Feed</h2>
-              <p className={`text-xs font-semibold tracking-wider ${darkMode ? 'text-orange-400/70' : 'text-orange-600'}`}>🔥 FRESH FROM THE STREETS</p>
+              <p className={`text-xs font-semibold tracking-wider ${darkMode ? 'text-cyan-400/70' : 'text-cyan-600'}`}>FRESH FROM THE STREETS</p>
             </div>
           </div>
           
           {loading ? (
-            <div className={`text-center py-16 rounded-3xl ${
-              darkMode ? 'bg-white/5' : 'bg-white/10'
-            }`}>
-              <div className="flex flex-col items-center">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-                  className={`w-12 h-12 rounded-full border-2 border-transparent mb-4 ${
-                    darkMode ? 'border-t-cyan-400 border-r-purple-500' : 'border-t-purple-500 border-r-pink-400'
+            /* Skeleton Loading Grid */
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              {[...Array(10)].map((_, i) => (
+                <div 
+                  key={i}
+                  className={`rounded-3xl overflow-hidden backdrop-blur-xl border animate-pulse ${
+                    darkMode 
+                      ? 'bg-white/5 border-white/10' 
+                      : 'bg-white/10 border-white/20'
                   }`}
-                />
-                <p className={`font-medium ${darkMode ? 'text-zinc-400' : 'text-slate-500'}`}>Loading reports...</p>
-              </div>
+                >
+                  {/* Image skeleton */}
+                  <div className={`aspect-square ${darkMode ? 'bg-white/5' : 'bg-black/5'}`} />
+                  {/* Info skeleton */}
+                  <div className={`p-4 ${darkMode ? 'bg-black/10' : 'bg-white/10'}`}>
+                    <div className={`h-4 rounded-full mb-3 w-3/4 ${darkMode ? 'bg-white/10' : 'bg-black/10'}`} />
+                    <div className="flex items-center justify-between">
+                      <div className={`h-3 rounded-full w-16 ${darkMode ? 'bg-white/5' : 'bg-black/5'}`} />
+                      <div className={`h-7 rounded-full w-14 ${darkMode ? 'bg-white/10' : 'bg-black/10'}`} />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : reports.length === 0 ? (
             <div className={`text-center py-16 rounded-3xl ${
@@ -844,7 +852,7 @@ const App = () => {
               <p className={`text-sm mt-1 ${darkMode ? 'text-zinc-600' : 'text-slate-400'}`}>Be the first to report a pothole!</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
               <AnimatePresence>
                 {reports.map((p, i) => (
                   <ReportCard key={p.id} data={p} index={i} onVote={() => handleVote(p.id)} onSelect={setSelectedPothole} darkMode={darkMode} soundEnabled={soundEnabled} />
@@ -855,22 +863,46 @@ const App = () => {
         </section>
       </main>
 
-      <footer className={`relative z-10 py-12 text-center border-t ${
+      <footer className={`relative z-10 py-10 text-center ${
         darkMode 
-          ? 'border-white/5' 
-          : 'border-black/5'
+          ? 'bg-gradient-to-t from-black/20 to-transparent' 
+          : 'bg-gradient-to-t from-white/30 to-transparent'
       }`}>
-        <p className={`text-sm font-medium ${darkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
-          Built with 💙 using <span className={darkMode ? 'text-cyan-400' : 'text-cyan-600'}>React</span> & <span className={darkMode ? 'text-sky-400' : 'text-sky-600'}>Tailwind</span> by <span className={darkMode ? 'text-indigo-400' : 'text-indigo-600'}>d.veloper</span>
-        </p>
-        <p className={`text-[10px] mt-4 max-w-sm mx-auto leading-relaxed font-bold ${darkMode ? 'text-white' : 'text-black'}`}>
-          Disclaimer: This platform displays user-generated content. We do not assume responsibility for the accuracy or authenticity of reports submitted by the community.
-        </p>
+        <div className={`max-w-4xl mx-auto px-6 py-6 rounded-2xl backdrop-blur-xl ${
+          darkMode 
+            ? 'bg-white/5 border border-white/10' 
+            : 'bg-white/30 border border-white/50'
+        }`}>
+          <p className={`text-sm font-medium flex items-center justify-center gap-1.5 whitespace-nowrap ${darkMode ? 'text-zinc-400' : 'text-slate-600'}`}>
+            Made with <span className="text-red-500 font-bold cursor-help flex items-center gap-1" title="Lots of it">
+              frustration  </span> 
+              <div 
+                className="h-[24px] w-[24px] inline-block relative -top-0.5 bg-current transition-colors"
+                style={{
+                  maskImage: 'url(/assets/angry-anger-svgrepo-com.svg)',
+                  maskSize: 'contain',
+                  maskRepeat: 'no-repeat',
+                  maskPosition: 'center',
+                  WebkitMaskImage: 'url(/assets/angry-anger-svgrepo-com.svg)',
+                  WebkitMaskSize: 'contain',
+                  WebkitMaskRepeat: 'no-repeat',
+                  WebkitMaskPosition: 'center'
+                }}
+              />
+           using <a href="https://react.dev" target="_blank" rel="noopener noreferrer" className={`hover:underline decoration-2 underline-offset-2 transition-all ${darkMode ? 'text-cyan-400 decoration-cyan-400/30' : 'text-cyan-600 decoration-cyan-600/30'}`}>React</a>, <a href="https://tailwindcss.com" target="_blank" rel="noopener noreferrer" className={`hover:underline decoration-2 underline-offset-2 transition-all ${darkMode ? 'text-sky-400 decoration-sky-400/30' : 'text-sky-600 decoration-sky-600/30'}`}>Tailwind</a> & <a href="https://supabase.com" target="_blank" rel="noopener noreferrer" className={`hover:underline decoration-2 underline-offset-2 transition-all ${darkMode ? 'text-emerald-400 decoration-emerald-400/30' : 'text-emerald-600 decoration-emerald-600/30'}`}>Supabase</a>
+          </p>
+      
+          <div className={`mt-4 pt-4 border-t w-full max-w-[200px] mx-auto ${darkMode ? 'border-zinc-400/20' : 'border-slate-500/20'}`}></div>
+          <p className={`text-xs leading-relaxed max-w-4xl mx-auto opacity-80 whitespace-nowrap ${darkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
+            All content is crowdsourced. I take no responsibility for image accuracy, authenticity, or ownership. This is just a fun project.
+          </p>
+        </div>
       </footer>
 
       {/* MODALS */}
       <AnimatePresence>
         {showUpload && <UploadModal onClose={() => setShowUpload(false)} onCreate={handleCreate} darkMode={darkMode} />}
+        {showMap && <MapView reports={reports} onClose={() => setShowMap(false)} darkMode={darkMode} />}
         {selectedPothole && (
           <PotholeDetailModal 
             data={selectedPothole} 
@@ -899,16 +931,18 @@ const ReportCard = ({ data, index, onVote, onSelect, darkMode, soundEnabled }) =
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className={`rounded-3xl overflow-hidden backdrop-blur-xl border ${frameClass} ${
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ delay: index * 0.05, duration: 0.3 }}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      className={`rounded-3xl overflow-hidden backdrop-blur-xl border cursor-pointer transition-shadow duration-300 ${frameClass} ${
         darkMode 
-          ? 'bg-white/5 border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.3)]' 
-          : 'bg-white/10 border-white/20 shadow-[0_8px_24px_rgba(0,0,0,0.05)]'
+          ? 'bg-white/5 border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.3)] hover:shadow-[0_12px_40px_rgba(6,182,212,0.15)]' 
+          : 'bg-white/10 border-white/20 shadow-[0_8px_24px_rgba(0,0,0,0.05)] hover:shadow-[0_12px_40px_rgba(6,182,212,0.1)]'
       }`}
     >
       {/* Image with fallback */}
-      <div className="aspect-square relative overflow-hidden cursor-pointer group" onClick={() => onSelect(data)}>
+      <div className="aspect-square relative overflow-hidden group" onClick={() => onSelect(data)}>
         <img 
           src={data.image_url} 
           alt={getDisplayLocation(data.location)} 
@@ -928,9 +962,77 @@ const ReportCard = ({ data, index, onVote, onSelect, darkMode, soundEnabled }) =
       <div className={`p-4 ${darkMode ? 'bg-black/10' : 'bg-white/10'}`}>
         <h4 className={`text-sm font-bold truncate mb-2 ${darkMode ? 'text-white' : 'text-slate-800'}`}>{getDisplayLocation(data.location)}</h4>
         <div className="flex items-center justify-between gap-2">
-          <span className={`text-xs font-medium ${darkMode ? 'text-zinc-300' : 'text-slate-600'}`}>{formatDate(data.created_at)}</span>
+          <span className={`text-xs font-medium ${darkMode ? 'text-zinc-400' : 'text-slate-500'}`}>{formatDate(data.created_at)}</span>
           <UpvoteButton onVote={onVote} votes={data.votes} size="sm" darkMode={darkMode} soundEnabled={soundEnabled} />
         </div>
+      </div>
+    </motion.div>
+  );
+};
+
+/* MAP VIEW COMPONENT */
+const MapView = ({ reports, onClose, darkMode }) => {
+  // Helper to validate location object
+  const isValidLoc = (loc) => loc && typeof loc.lat === 'number' && typeof loc.lng === 'number';
+
+  // Helper to generate deterministic scatter offset for markers at same location
+  const getOffset = (id) => {
+    let hash = 0;
+    const str = String(id || '0');
+    for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    // Approx 20-30m scatter
+    return [
+      ((hash % 1000) / 1000 - 0.5) * 0.0006,
+      (((hash >> 8) % 1000) / 1000 - 0.5) * 0.0006
+    ];
+  };
+
+  // Find first valid location for center, or default to India
+  const validReport = reports.find(r => isValidLoc(r.location));
+  const initialCenter = validReport 
+    ? [validReport.location.lat, validReport.location.lng] 
+    : [20.5937, 78.9629];
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4 md:p-8 bg-black/80 backdrop-blur-md"
+    >
+      <div className={`relative w-full h-full rounded-3xl overflow-hidden shadow-2xl border ${darkMode ? 'border-white/10' : 'border-white/40'}`}>
+        <button 
+            onClick={onClose}
+            className="absolute top-4 right-4 z-[500] p-3 bg-white rounded-full shadow-lg hover:bg-slate-100 text-slate-900 transition-colors"
+        >
+            <X size={24} />
+        </button>
+        <MapContainer center={initialCenter} zoom={validReport ? 13 : 5} style={{ height: '100%', width: '100%' }}>
+          <TileLayer
+            attribution='&copy; OpenStreetMap contributors'
+            url={darkMode 
+                ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' 
+                : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+            }
+          />
+          {reports.map((r) => {
+            if (!isValidLoc(r.location)) return null;
+            const [offLat, offLng] = getOffset(r.id);
+            return (
+                <Marker key={r.id} position={[r.location.lat + offLat, r.location.lng + offLng]}>
+                <Popup>
+                    <div className="text-sm font-sans">
+                        <strong>{getDisplayLocation(r.location)}</strong>
+                        <div className="mt-1 flex items-center gap-2">
+                            <span className="font-bold">{getSizeFromSeverity(r.severity).label}</span>
+                            <span>• {r.votes} votes</span>
+                        </div>
+                    </div>
+                </Popup>
+                </Marker>
+            );
+          })}
+        </MapContainer>
       </div>
     </motion.div>
   );
@@ -1099,6 +1201,7 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
   const [preview, setPreview] = useState(null);
   const [severity, setSeverity] = useState(1);
   const [location, setLocation] = useState('');
+  const [gpsCoords, setGpsCoords] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [aiStatus, setAiStatus] = useState('');
   const [model, setModel] = useState(null);
@@ -1136,20 +1239,16 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
         const data = await res.json();
         
-        // Extract the most relevant name (road, suburb, or city)
-        const name = data.address.road || data.address.suburb || data.address.city || data.address.neighborhood;
-        const coords = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+        // Extract exact address
+        const exactAddress = data.display_name || data.address.road || data.address.suburb || data.address.city || 'Unknown Address';
         
-        if (name) {
-          setLocation(name);
-        } else {
-          // Fallback to city/town/village name if street is missing
-          const fallbackName = data.address.city || data.address.town || data.address.village || data.address.state || 'Somewhere on Earth';
-          setLocation(fallbackName);
-        }
+        setLocation(exactAddress);
+        setGpsCoords({ lat, lng });
+        
       } catch (err) {
         console.warn("Reverse geocoding failed, falling back to raw GPS", err);
-        setLocation(`GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+        setLocation(`GPS: ${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+        setGpsCoords({ lat, lng });
       } finally {
         setIsLocating(false);
         playPopSound(true);
@@ -1226,10 +1325,12 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
         reader.readAsDataURL(file);
       });
       const base64Image = await base64Promise;
+      // Use object locally, stringify for DB text column
+      const locObj = gpsCoords ? { lat: gpsCoords.lat, lng: gpsCoords.lng, name: location } : location;
 
       const reportData = {
         image_url: base64Image,
-        location,
+        location: typeof locObj === 'object' ? JSON.stringify(locObj) : locObj,
         severity,
         votes: 0,
         created_at: new Date().toISOString()
@@ -1246,20 +1347,39 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
         body: JSON.stringify(reportData)
       });
 
-      if (!response.ok) throw new Error('Failed to save to database');
-      const savedData = await response.json();
-      const finalReport = savedData[0] || { ...reportData, id: Math.random().toString(), isLocal: true };
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Server responded with ${response.status}: ${errorText.slice(0, 100)}`);
+      }
+
+      let savedData = [];
+      try {
+        savedData = await response.json();
+      } catch (e) {
+        // Response might be empty if RLS policies restrict return
+        console.warn('No JSON response from create', e);
+      }
+
+      // Ensure local state uses the Object format, not the DB string
+      const serverRecord = (Array.isArray(savedData) ? savedData[0] : savedData) || {};
+      const finalReport = { 
+        ...reportData, 
+        ...serverRecord, 
+        location: locObj, // Use the local object, not the stringified DB value
+        id: serverRecord.id || Math.random().toString(), 
+        isLocal: !serverRecord.id 
+      };
 
       setUploadSuccess(true);
       setUploading(false);
       
-      confetti({
+      loadConfetti().then((fire) => fire({
         particleCount: 100,
         spread: 70,
         origin: { y: 0.6 },
         zIndex: 10001,
         colors: ['#06b6d4', '#22d3ee', '#ffffff']
-      });
+      }));
 
       setTimeout(() => {
         onCreate(finalReport);
@@ -1268,7 +1388,7 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
       console.error('Upload failed:', err);
       setAiStatus('UPLOAD FAILED ❌');
       setUploading(false);
-      alert('Failed to save report to database. Please check your connection.');
+      alert(`Upload Error: ${err.message}`);
     }
   };
 

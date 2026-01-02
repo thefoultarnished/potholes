@@ -755,17 +755,8 @@ const App = () => {
         ? 'bg-[#02040a] text-white' 
         : 'bg-[#e4e4e7] text-slate-700'
     }`}>
-      {/* Animated Blob Background for dark mode, static gradients for light mode */}
-      {darkMode ? (
-        <BlobBackground />
-      ) : (
-        <div className="fixed inset-0 pointer-events-none">
-          <div className="absolute inset-0 bg-slate-50" />
-          <div className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] rounded-full blur-[120px] bg-cyan-400/20" />
-          <div className="absolute -bottom-[20%] -right-[10%] w-[50%] h-[50%] rounded-full blur-[100px] bg-cyan-500/15" />
-          <div className="absolute top-[30%] left-[40%] w-[40%] h-[40%] rounded-full blur-[100px] bg-blue-400/10" />
-        </div>
-      )}
+      {/* Animated Blob Background for both modes */}
+      <BlobBackground />
       
       {/* Noise overlay */}
       <div className={`fixed inset-0 pointer-events-none ${darkMode ? 'opacity-[0.03]' : 'opacity-[0.02]'}`} 
@@ -834,7 +825,7 @@ const App = () => {
               }`}
             >
               <Camera size={16} />
-              <span>Report</span>
+              <span>Mark</span>
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -926,7 +917,7 @@ const App = () => {
           <div className={`p-6 rounded-[2.5rem] border backdrop-blur-md transition-all duration-300 ${
             darkMode 
               ? 'bg-white/5 border-white/10 shadow-[inner_0_0_40px_rgba(0,0,0,0.2)]' 
-              : 'bg-white/60 border-white/50 shadow-xl ring-1 ring-white/50'
+              : 'bg-white/10 border-white/50 shadow-xl ring-1 ring-white/50'
           }`}>
 
             <div className="flex flex-col items-center justify-center mb-6 text-center">
@@ -1143,15 +1134,14 @@ const App = () => {
           ? 'bg-gradient-to-t from-black/20 to-transparent' 
           : 'bg-gradient-to-t from-white/30 to-transparent'
       }`}>
-        <div className={`max-w-4xl mx-auto px-8 py-6 rounded-2xl backdrop-blur-xl ${
-          darkMode 
+        <div className={`max-w-4xl mx-auto px-8 py-6 rounded-2xl backdrop-blur-xl ${ darkMode 
             ? 'bg-white/5 border border-white/10' 
-            : 'bg-white/30 border border-white/50'
+            : 'bg-white/50 border border-white/80 shadow-[0_8px_32px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.8)]'
         }`}>
           <p className={`text-sm font-medium flex flex-wrap items-center justify-center gap-1.5 ${darkMode ? 'text-zinc-400' : 'text-slate-600'}`}>
             Made with <span className="text-red-500 font-bold cursor-help flex items-center gap-1" title="Lots of it">
               frustration  </span> 
-              <div 
+              <span 
                 className="h-[24px] w-[24px] inline-block relative -top-0.5 bg-current transition-colors"
                 style={{
                   maskImage: 'url(/assets/angry-anger-svgrepo-com.svg)',
@@ -1164,7 +1154,7 @@ const App = () => {
                   WebkitMaskPosition: 'center'
                 }}
               />
-           using <a href="https://react.dev" target="_blank" rel="noopener noreferrer" className={`hover:underline decoration-2 underline-offset-2 transition-all ${darkMode ? 'text-cyan-400 decoration-cyan-400/30' : 'text-cyan-600 decoration-cyan-600/30'}`}>React</a>, <a href="https://tailwindcss.com" target="_blank" rel="noopener noreferrer" className={`hover:underline decoration-2 underline-offset-2 transition-all ${darkMode ? 'text-sky-400 decoration-sky-400/30' : 'text-sky-600 decoration-sky-600/30'}`}>Tailwind</a> & <a href="https://supabase.com" target="_blank" rel="noopener noreferrer" className={`hover:underline decoration-2 underline-offset-2 transition-all ${darkMode ? 'text-emerald-400 decoration-emerald-400/30' : 'text-emerald-600 decoration-emerald-600/30'}`}>Supabase</a>
+           using <a href="https://react.dev" target="_blank" rel="noopener noreferrer" className={`hover:underline decoration-2 underline-offset-2 transition-all ${darkMode ? 'text-cyan-400 decoration-cyan-400/30' : 'text-cyan-600 decoration-cyan-600/30'}`}>React</a>, <a href="https://tailwindcss.com" target="_blank" rel="noopener noreferrer" className={`hover:underline decoration-2 underline-offset-2 transition-all ${darkMode ? 'text-sky-400 decoration-sky-400/30' : 'text-sky-600 decoration-sky-600/30'}`}>Tailwind</a>, <a href="https://supabase.com" target="_blank" rel="noopener noreferrer" className={`hover:underline decoration-2 underline-offset-2 transition-all ${darkMode ? 'text-emerald-400 decoration-emerald-400/30' : 'text-emerald-600 decoration-emerald-600/30'}`}>Supabase</a> & <a href="https://cloudinary.com" target="_blank" rel="noopener noreferrer" className={`hover:underline decoration-2 underline-offset-2 transition-all ${darkMode ? 'text-violet-400 decoration-violet-400/30' : 'text-violet-600 decoration-violet-600/30'}`}>Cloudinary</a>
           </p>
       
           <div className={`mt-4 pt-4 border-t w-full max-w-[200px] mx-auto ${darkMode ? 'border-zinc-400/20' : 'border-slate-500/20'}`}></div>
@@ -1587,6 +1577,50 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
     });
   };
 
+  // Compress image to reduce file size before upload
+  const compressImage = async (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          // Resize to max 1920x1080 while maintaining aspect ratio
+          const maxWidth = 1920;
+          const maxHeight = 1080;
+          
+          if (width > height) {
+            if (width > maxWidth) {
+              height = (height * maxWidth) / width;
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = (width * maxHeight) / height;
+              height = maxHeight;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Convert to blob with 0.7 quality (reduces file size significantly)
+          canvas.toBlob((blob) => {
+            resolve(blob);
+          }, 'image/jpeg', 0.7);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   // Processes the selected image and runs AI pothole detection
   const handleFileChange = async (e) => {
     const f = e.target.files[0];
@@ -1642,21 +1676,41 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
   const handleUpload = async () => {
     if (!file || !location || !isPothole) return;
     setUploading(true);
-    setAiStatus('UPLOADING TO SUPABASE...');
+    setAiStatus('COMPRESSING IMAGE...');
     
     try {
+      // Compress the image first
+      const compressedBlob = await compressImage(file);
+      
+      setAiStatus('UPLOADING TO CLOUDINARY...');
+      
+      // Upload to Cloudinary
+      const formData = new FormData();
+      formData.append('file', compressedBlob);
+      formData.append('upload_preset', process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET);
+      formData.append('folder', 'potholes');
+      
+      const cloudinaryResponse = await fetch(
+        `https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME}/image/upload`,
+        {
+          method: 'POST',
+          body: formData
+        }
+      );
 
-      const reader = new FileReader();
-      const base64Promise = new Promise((resolve) => {
-        reader.onloadend = () => resolve(reader.result);
-        reader.readAsDataURL(file);
-      });
-      const base64Image = await base64Promise;
+      if (!cloudinaryResponse.ok) {
+        throw new Error('Cloudinary upload failed');
+      }
+
+      const cloudinaryData = await cloudinaryResponse.json();
+      const imageUrl = cloudinaryData.secure_url;
+
+      setAiStatus('SAVING TO DATABASE...');
 
       const locObj = gpsCoords ? { lat: gpsCoords.lat, lng: gpsCoords.lng, name: location } : location;
 
       const reportData = {
-        image_url: base64Image,
+        image_url: imageUrl,  // Store Cloudinary URL
         location: typeof locObj === 'object' ? JSON.stringify(locObj) : locObj,
         severity,
         votes: 0,
@@ -1683,16 +1737,14 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
       try {
         savedData = await response.json();
       } catch (e) {
-
         console.warn('No JSON response from create', e);
       }
-
 
       const serverRecord = (Array.isArray(savedData) ? savedData[0] : savedData) || {};
       const finalReport = { 
         ...reportData, 
         ...serverRecord, 
-        location: locObj, // Use the local object, not the stringified DB value
+        location: locObj,
         id: serverRecord.id || Math.random().toString(), 
         isLocal: !serverRecord.id 
       };
@@ -1738,7 +1790,7 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
         }`}
       >
         {/* Header Section */}
-        <div className="flex justify-between items-center mb-3">
+        <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-3">
             <div className={`p-2.5 rounded-2xl ${
               darkMode 
@@ -1761,7 +1813,7 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
           </button>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           <AnimatePresence mode="wait">
             {uploadSuccess ? (
               <motion.div 
@@ -1789,15 +1841,11 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
                 </div>
               </motion.div>
             ) : (
-              <motion.div key="form" className="space-y-3" exit={{ opacity: 0, x: -20 }}>
-                {/* Image Analysis Area */}
-                <div className="space-y-3">
-                  <label className={`text-[10px] font-bold tracking-[0.2em] uppercase pl-1 ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>
-                    Visual Evidence
-                  </label>
+              <motion.div key="form" className="space-y-2.5" exit={{ opacity: 0, x: -20 }}>
+                <div>
                   <div 
                     onClick={() => !scanning && !uploading && document.getElementById('pothole-file').click()}
-                    className={`cursor-pointer aspect-video md:aspect-[21/9] rounded-[2rem] flex flex-col items-center justify-center relative overflow-hidden transition-all duration-500 group backdrop-blur-md border-2 border-dashed ${
+                    className={`cursor-pointer aspect-[2/1] rounded-[2rem] flex flex-col items-center justify-center relative overflow-hidden transition-all duration-500 group backdrop-blur-md border-2 border-dashed ${
                       darkMode 
                         ? 'bg-white/5 border-white/10 hover:border-cyan-400/50 hover:bg-white/[0.07]' 
                         : 'bg-black/5 border-black/5 hover:border-cyan-500/50 hover:bg-black/[0.07]'
@@ -1845,12 +1893,12 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
                 </div>
 
                 {/* Metadata Fields */}
-                <div className="grid md:grid-cols-2 gap-6 pb-2">
-                  <div className="space-y-2">
+                <div className="space-y-1.5 pb-3">
+                  <div className="space-y-1.5">
                     <label className={`text-[10px] font-bold tracking-[0.2em] uppercase pl-1 ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>
                       Geographic Location
                     </label>
-                    <div className={`relative flex items-center p-1 rounded-2xl transition-all duration-300 backdrop-blur-md border ${
+                    <div className={`relative flex items-center p-1.5 rounded-2xl transition-all duration-300 backdrop-blur-md border ${
                       darkMode 
                         ? 'bg-white/5 border-white/10 shadow-[inner_0_2px_12px_rgba(0,0,0,0.3)]' 
                         : 'bg-white/40 border-black/5'
@@ -1859,7 +1907,7 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
                         type="text" 
                         value={location}
                         onChange={e => setLocation(e.target.value)}
-                        placeholder="Coordinates or Address"
+                        placeholder="Automated GPS or Manual Address"
                         className={`flex-1 bg-transparent p-2.5 font-bold outline-none text-[13px] ${
                           darkMode ? 'text-white placeholder-zinc-700' : 'text-slate-700 placeholder-slate-300'
                         }`}
@@ -1876,40 +1924,39 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
                         } ${isLocating ? 'opacity-50' : ''}`}
                       >
                         {isLocating ? <Loader2 size={12} className="animate-spin" /> : <LocateFixed size={12} />}
-                        {isLocating ? 'Loc' : 'Locate'}
+                        {isLocating ? 'Locating...' : 'Locate'}
                       </motion.button>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <label className={`text-[10px] font-bold tracking-[0.2em] uppercase pl-1 ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>
                       Threat Evaluation
                     </label>
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                       {SIZES.map(s => (
                         <button 
                           key={s.level}
                           onClick={() => setSeverity(s.level)}
-                          className={`py-2 rounded-xl transition-all duration-300 font-black text-[9px] px-1 h-auto min-h-[40px] leading-tight backdrop-blur-md border uppercase tracking-wider ${
+                          className={`py-2 rounded-2xl transition-all duration-300 font-black text-[9px] px-1.5 h-auto min-h-[38px] leading-tight backdrop-blur-md border uppercase tracking-wider ${
                             severity === s.level 
-                              ? `${s.color} text-white shadow-[0_4px_12px_-2px_rgba(0,0,0,0.3)] border-transparent scale-[1.05] z-10` 
+                              ? `${s.color} text-white shadow-[0_8px_20px_-4px_rgba(0,0,0,0.3)] border-transparent scale-[1.05] z-10` 
                               : darkMode 
                                 ? 'bg-white/5 border-white/10 text-zinc-500 hover:bg-white/10' 
                                 : 'bg-white/40 border-black/5 text-slate-500 hover:bg-white/60'
                           }`}
-                          title={s.title}
                         >
-                          <div className="flex flex-col items-center gap-0.5">
+                          <div className="flex flex-col items-center gap-1">
                             {React.createElement(s.icon, { 
                               size: 14, 
                               className: `flex-shrink-0 ${severity === s.level ? 'text-white' : (darkMode ? 'text-cyan-400/70' : 'text-cyan-600')}` 
                             })}
-                            <span className="truncate w-full">{s.title}</span>
+                            <span>{s.title}</span>
                           </div>
                         </button>
                       ))}
                     </div>
-                  </div>
+                </div>
                 </div>
 
                 <motion.button 
@@ -1917,7 +1964,7 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
                   whileTap={!uploading && !scanning && file && location && isPothole && severity ? { scale: 0.99 } : {}}
                   onClick={handleUpload}
                   disabled={uploading || scanning || !file || !location || !isPothole || !severity}
-                  className={`w-full py-5 rounded-[2rem] font-black text-xs tracking-[0.2em] uppercase transition-all duration-300 disabled:opacity-30 disabled:grayscale ${
+                  className={`w-full py-4 rounded-[2rem] font-black text-xs tracking-[0.2em] uppercase transition-all duration-300 disabled:opacity-30 disabled:grayscale mt-6 ${
                     darkMode 
                       ? 'bg-gradient-to-br from-cyan-400 to-blue-600 text-white shadow-[0_20px_40px_-10px_rgba(34,211,238,0.3)]' 
                       : 'bg-slate-900 text-white shadow-[0_20px_40px_-10px_rgba(15,23,42,0.3)]'
@@ -1926,9 +1973,9 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
                   {uploading ? (
                     <div className="flex items-center justify-center gap-3">
                       <Loader2 size={16} className="animate-spin" />
-                      <span>Encrypting Uplink...</span>
+                      <span>Marking...</span>
                     </div>
-                  ) : 'Confirm Deployment'}
+                  ) : 'Mark'}
                 </motion.button>
               </motion.div>
             )}

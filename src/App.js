@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// Fix Leaflet marker icons
+// Fix Leaflet marker icon issues by resetting the default icon paths
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
@@ -12,10 +12,10 @@ L.Icon.Default.mergeOptions({
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
 });
 
-// Tiny pop sound (~1KB) - much smaller than original 88KB
+// A short audio clip for the vote action
 const VOTE_SOUND_B64 = "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACA";
 
-// Dynamic confetti import to reduce initial bundle size
+// Load confetti library dynamically to improve performance
 let confetti = null;
 const loadConfetti = async () => {
   if (!confetti) {
@@ -47,7 +47,7 @@ import {
   Map as MapIcon
 } from 'lucide-react';
 
-// --- CONFIG & UTILS ---
+
 const SUPABASE_URL = process.env.REACT_APP_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
 
@@ -58,25 +58,160 @@ const SIZES = [
   { level: 4, label: 'Mega', title: 'Chassis Challenger', color: 'bg-fuchsia-600', textColor: 'text-fuchsia-600' }
 ];
 
+// Returns the size and color configuration for a given severity level
 const getSizeFromSeverity = (sev) => SIZES.find(s => s.level === (sev || 1)) || SIZES[0];
 
+// Returns the aura configuration based on rank (top 3 only)
+const getAuraByRank = (rank) => {
+  if (rank === 1) return { label: 'Pyro Aura', className: 'element-label-fire', frameClass: 'fire-frame' };
+  if (rank === 2) return { label: 'Electro Aura', className: 'element-label-electric', frameClass: 'electric-frame' };
+  if (rank === 3) return { label: 'Hydro Aura', className: 'element-label-water', frameClass: 'water-frame' };
+  return null;
+};
+
+// Animated blob background for dark mode
+const BlobBackground = () => {
+  const canvasRef = useRef(null);
+  const blobsRef = useRef([]);
+  const animationRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+
+    // Deep, rich colors - mostly blues/teals/navys, very little purple, no bright whites
+    const COLORS = [
+      '#0f172a', // Slate 900
+      '#1e3a8a', // Blue 900
+      '#172554', // Blue 950
+      '#0e7490', // Cyan 700
+      '#155e75', // Cyan 800
+      '#1e40af', // Blue 800
+      '#312e81', // Indigo 900 (subtle purple)
+    ];
+
+    class BlobParticle {
+      constructor() {
+        // Spawn anywhere on screen
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        // Consistent slow drift
+        this.vx = (Math.random() - 0.5) * 0.8; 
+        this.vy = (Math.random() - 0.5) * 0.8;
+        
+        // Large, overlapping shapes to fill space
+        const baseSize = Math.max(width, height) * 0.4;
+        this.rx = Math.random() * baseSize + 100;
+        this.ry = Math.random() * baseSize + 100;
+        
+        this.angle = Math.random() * Math.PI * 2;
+        this.va = (Math.random() - 0.5) * 0.001;
+        
+        this.colorHex = COLORS[Math.floor(Math.random() * COLORS.length)];
+        // Lower opacity to ensure text remains readable
+        this.alpha = Math.random() * 0.3 + 0.1;
+        
+        this.pulseSpeed = Math.random() * 0.001 + 0.0005;
+        this.pulseOffset = Math.random() * Math.PI * 2;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.angle += this.va;
+        
+        // Wrap around edges for infinite flow instead of bouncing/centering
+        const margin = Math.max(this.rx, this.ry);
+        if (this.x < -margin) this.x = width + margin;
+        if (this.x > width + margin) this.x = -margin;
+        if (this.y < -margin) this.y = height + margin;
+        if (this.y > height + margin) this.y = -margin;
+        
+        const pulse = Math.sin(Date.now() * this.pulseSpeed + this.pulseOffset);
+        this.currentRx = this.rx * (1 + pulse * 0.1);
+        this.currentRy = this.ry * (1 + pulse * 0.1);
+      }
+
+      draw(ctx) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+        const maxR = Math.max(this.currentRx, this.currentRy);
+        // Soft diffuse gradient
+        const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, maxR);
+        gradient.addColorStop(0, this.colorHex);
+        gradient.addColorStop(0.5, this.colorHex); // Extend core a bit
+        gradient.addColorStop(1, 'rgba(0,0,0,0)');
+        
+        ctx.globalAlpha = this.alpha;
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, this.currentRx, this.currentRy, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // Increased count to fill the "black space"
+    blobsRef.current = Array.from({ length: 20 }, () => new BlobParticle());
+
+    const animate = () => {
+      ctx.clearRect(0, 0, width, height);
+      ctx.globalCompositeOperation = 'screen';
+      blobsRef.current.forEach(blob => { blob.update(); blob.draw(ctx); });
+      ctx.globalCompositeOperation = 'source-over';
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
+    const handleResize = () => {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+    };
+
+    window.addEventListener('resize', handleResize);
+    animate();
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(animationRef.current);
+    };
+  }, []);
+
+  return (
+    <>
+      <canvas ref={canvasRef} className="fixed inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }} />
+      {/* Vignette overlay for depth */}
+      <div className="fixed inset-0 pointer-events-none" style={{ 
+        zIndex: 1,
+        background: 'radial-gradient(ellipse at center, transparent 0%, transparent 40%, rgba(0,0,0,0.4) 100%)'
+      }} />
+    </>
+  );
+};
+
+// Formats the location object or string into a user-friendly display string
 const getDisplayLocation = (loc) => {
   if (!loc) return 'Somewhere on Earth';
   
-  // Handle modern object format
-  if (typeof loc === 'object' && !Array.isArray(loc)) {
-    // If it's a raw object with address components, try to form a short display
-    // But usually we save 'name' as the full address or road
+
+    if (typeof loc === 'object' && !Array.isArray(loc)) {
     return loc.name || loc.address || 'Unknown Location';
   }
 
   if (loc === 'Unknown Location' || loc.startsWith('GPS:')) return 'Somewhere on Earth';
-  // If it's "Name (GPS: ...)", show only the name
   if (loc.includes(' (GPS:')) return loc.split(' (GPS:')[0];
   return loc.split(',')[0].trim();
 };
 
-// Relative time formatting (e.g., "2h ago", "Yesterday")
+// Converts a date string into a relative time string (e.g. "2h ago")
 const formatDate = (dateStr) => {
   if (!dateStr) return 'Unknown';
   try {
@@ -98,7 +233,6 @@ const formatDate = (dateStr) => {
   }
 };
 
-// SeverityIcon removed - was unused
 
 const ShameIcon = ({ size = 24, className = '' }) => (
   <svg viewBox="0 0 1800 1800" fill="currentColor" width={size} height={size} className={className}>
@@ -108,8 +242,7 @@ const ShameIcon = ({ size = 24, className = '' }) => (
   </svg>
 );
 
-// Cached audio instance to prevent memory leaks
-let cachedAudio = null;
+// Plays a sound effect if enabled, reusing the audio object
 const playPopSound = (enabled) => {
   if (!enabled) return;
   try {
@@ -124,7 +257,7 @@ const playPopSound = (enabled) => {
   }
 };
 
-// --- ERROR BOUNDARY ---
+
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -161,8 +294,9 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-// --- COMPONENTS ---
 
+
+// Button component that handles upvoting with animations
 const UpvoteButton = ({ onVote, votes = 0, size = "md", darkMode = true, soundEnabled = true }) => {
   const sizes = {
     sm: { height: "h-8", padding: "px-3", icon: 12, text: "text-[11px]" },
@@ -210,7 +344,7 @@ const UpvoteButton = ({ onVote, votes = 0, size = "md", darkMode = true, soundEn
               : 'bg-white text-cyan-600 shadow-[0_2px_8px_rgba(0,0,0,0.1),0_1px_2px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]'
       }`}
     >
-      {/* Upvote Icon */}
+
       <motion.svg 
         viewBox="0 0 24 24" 
         fill="currentColor" 
@@ -227,7 +361,7 @@ const UpvoteButton = ({ onVote, votes = 0, size = "md", darkMode = true, soundEn
         <path d="M4 14h4v7a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-7h4a1.001 1.001 0 0 0 .781-1.625l-8-10c-.381-.475-1.181-.475-1.562 0l-8 10A1.001 1.001 0 0 0 4 14z"/>
       </motion.svg>
       
-      {/* Vote Count */}
+
       <div className="relative h-[1.2em] flex items-center min-w-[1.2em]">
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.span
@@ -243,7 +377,7 @@ const UpvoteButton = ({ onVote, votes = 0, size = "md", darkMode = true, soundEn
         </AnimatePresence>
       </div>
 
-      {/* Enhanced Particle Burst */}
+
       <div className="absolute inset-0 pointer-events-none">
         <AnimatePresence>
           <motion.div
@@ -281,6 +415,7 @@ const UpvoteButton = ({ onVote, votes = 0, size = "md", darkMode = true, soundEn
 };
 
 
+// Component to toggle between light and dark themes
 const ModeToggle = ({ darkMode, setDarkMode }) => {
   return (
     <motion.button
@@ -309,6 +444,7 @@ const ModeToggle = ({ darkMode, setDarkMode }) => {
   );
 };
 
+// Component to toggle sound effects
 const SoundToggle = ({ soundEnabled, setSoundEnabled, darkMode }) => {
   return (
     <motion.button
@@ -338,12 +474,13 @@ const SoundToggle = ({ soundEnabled, setSoundEnabled, darkMode }) => {
   );
 };
 
-// --- LOADING SCREEN ---
+
+// Full screen loading indicator with animations
 const LoadingScreen = ({ darkMode }) => (
   <div className={`fixed inset-0 z-50 flex flex-col items-center justify-center transition-colors duration-300 ${
     darkMode ? 'bg-[#0f1219]' : 'bg-[#e4e4e7]'
   }`}>
-    {/* Multi-orb background for loading screen to match main app */}
+
     <div className={`absolute inset-0 ${
       darkMode 
         ? 'bg-[#0f1219]' 
@@ -356,27 +493,27 @@ const LoadingScreen = ({ darkMode }) => (
       </div>
     </div>
     
-    {/* Loading content */}
+
     <div className="relative z-10 flex flex-col items-center">
-      {/* Animated logo/icon */}
+
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
         className="relative mb-8"
       >
-        {/* Outer ring */}
+
         <div className={`absolute inset-0 rounded-full animate-ping opacity-20 ${
           darkMode ? 'bg-cyan-400' : 'bg-purple-500'
         }`} style={{ animationDuration: '2s' }} />
         
-        {/* Main loader container */}
+
         <div className={`relative w-24 h-24 rounded-full flex items-center justify-center backdrop-blur-xl ${
           darkMode 
             ? 'bg-white/5 border border-white/10 shadow-[0_0_60px_rgba(6,182,212,0.3)]' 
             : 'bg-white/70 border border-white/50 shadow-[0_0_60px_rgba(168,85,247,0.2)]'
         }`}>
-          {/* Rotating ring */}
+
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
@@ -387,12 +524,12 @@ const LoadingScreen = ({ darkMode }) => (
             }`} />
           </motion.div>
           
-          {/* Center icon */}
+
           <MapPin size={32} className={darkMode ? 'text-cyan-400' : 'text-purple-500'} />
         </div>
       </motion.div>
       
-      {/* Loading text */}
+
       <motion.div
         initial={{ y: 10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -440,8 +577,9 @@ const LoadingScreen = ({ darkMode }) => (
   </div>
 );
 
-// --- MAIN APP ---
 
+
+// Main application component containing state and routing logic
 const App = () => {
   const [reports, setReports] = useState([]);
   const [showUpload, setShowUpload] = useState(false);
@@ -457,7 +595,7 @@ const App = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Handle scroll locking with proper cleanup
+
   useEffect(() => {
     if (showUpload || selectedPothole) {
       document.body.style.overflow = 'hidden';
@@ -470,6 +608,7 @@ const App = () => {
     };
   }, [showUpload, selectedPothole]);
 
+  // Fetches pothole reports from the database and merges them with local data
   const loadPotholes = async () => {
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       setLoading(false);
@@ -496,7 +635,7 @@ const App = () => {
           const mergedServerData = data.map(serverItem => {
             let loc = serverItem.location;
             try {
-              // Parse JSON location if stored as string in DB
+
               if (typeof loc === 'string' && loc.startsWith('{')) {
                 loc = JSON.parse(loc);
               }
@@ -520,13 +659,14 @@ const App = () => {
     }
   };
 
+  // Handles the vote action, updates local state, and syncs with server
   const handleVote = async (id) => {
     const report = reports.find(p => p.id === id);
     if (!report) return;
     
     const newVotes = report.votes + 1;
     
-    // Celebrate milestones with dynamically loaded confetti
+    // Trigger confetti if milestone reached
     if (newVotes % 100 === 0 && newVotes > 0) {
       loadConfetti().then(confettiFn => {
         confettiFn({
@@ -539,13 +679,13 @@ const App = () => {
       });
     }
 
-    // Optimistic update
+
     setReports(prev => prev.map(p => p.id === id ? { ...p, votes: newVotes } : p));
     if (selectedPothole && selectedPothole.id === id) {
       setSelectedPothole(prev => ({ ...prev, votes: newVotes }));
     }
 
-    // Sync to server using the pre-calculated newVotes (not stale)
+    // Sync to server using the pre-calculated newVotes
     try {
       await fetch(`${SUPABASE_URL}/rest/v1/potholes?id=eq.${id}`, {
         method: 'PATCH',
@@ -562,6 +702,7 @@ const App = () => {
     }
   };
 
+  // Adds a new report to the local list
   const handleCreate = (newReport) => {
     setReports([newReport, ...reports]);
     setShowUpload(false);
@@ -573,54 +714,29 @@ const App = () => {
   return (
     <div className={`min-h-screen transition-colors duration-300 noise-overlay ${
       darkMode 
-        ? 'bg-[#0f1219] text-white' 
+        ? 'bg-[#02040a] text-white' 
         : 'bg-[#e4e4e7] text-slate-700'
     }`}>
-      {/* PROFESSIONAL GRADIENT BACKGROUND - Fixed for glass scroll effect */}
-      <div className="fixed inset-0 pointer-events-none">
-        {/* Base dark gradient */}
-        <div className={`absolute inset-0 ${
-          darkMode 
-            ? 'bg-[#070b14]' 
-            : 'bg-slate-50'
-        }`} />
-        
-        {/* Primary cyan glow - top left */}
-        <div 
-          className={`absolute -top-[20%] -left-[10%] w-[60%] h-[60%] rounded-full blur-[120px] ${
-            darkMode 
-              ? 'bg-cyan-500/30' 
-              : 'bg-cyan-400/20'
-          }`}
-        />
-        
-        {/* Secondary cyan glow - bottom right */}
-        <div 
-          className={`absolute -bottom-[20%] -right-[10%] w-[50%] h-[50%] rounded-full blur-[100px] ${
-            darkMode 
-              ? 'bg-cyan-600/25' 
-              : 'bg-cyan-500/15'
-          }`}
-        />
-        
-        {/* Subtle blue accent - center */}
-        <div 
-          className={`absolute top-[30%] left-[40%] w-[40%] h-[40%] rounded-full blur-[100px] ${
-            darkMode 
-              ? 'bg-blue-600/20' 
-              : 'bg-blue-400/10'
-          }`}
-        />
-        
-        {/* Subtle noise texture */}
-        <div className={`absolute inset-0 ${darkMode ? 'opacity-[0.03]' : 'opacity-[0.02]'}`} 
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`
-          }}
-        />
-      </div>
+      {/* Animated Blob Background for dark mode, static gradients for light mode */}
+      {darkMode ? (
+        <BlobBackground />
+      ) : (
+        <div className="fixed inset-0 pointer-events-none">
+          <div className="absolute inset-0 bg-slate-50" />
+          <div className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] rounded-full blur-[120px] bg-cyan-400/20" />
+          <div className="absolute -bottom-[20%] -right-[10%] w-[50%] h-[50%] rounded-full blur-[100px] bg-cyan-500/15" />
+          <div className="absolute top-[30%] left-[40%] w-[40%] h-[40%] rounded-full blur-[100px] bg-blue-400/10" />
+        </div>
+      )}
+      
+      {/* Noise overlay */}
+      <div className={`fixed inset-0 pointer-events-none ${darkMode ? 'opacity-[0.03]' : 'opacity-[0.02]'}`} 
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`
+        }}
+      />
 
-      {/* LOADING SCREEN OVERLAY */}
+
       <AnimatePresence>
         {loading && (
           <motion.div
@@ -639,16 +755,22 @@ const App = () => {
           : 'bg-white/10 backdrop-blur-xl border-b border-white/20'
       }`}>
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          {/* LOGO */}
+
           <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-xl ${
-              darkMode 
-                ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] shadow-[0_2px_8px_rgba(0,0,0,0.4)]' 
-                : 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.08)]'
-            }`}>
-              <Megaphone className={darkMode ? 'text-cyan-400' : 'text-cyan-600'} size={18} />
-            </div>
-            <div className="hidden sm:block">
+            <div 
+              className={`w-8 h-8 ${darkMode ? 'bg-cyan-400' : 'bg-cyan-600'}`}
+              style={{
+                maskImage: 'url(/assets/hole-emoji-smiley-svgrepo-com.svg)',
+                maskSize: 'contain',
+                maskRepeat: 'no-repeat',
+                maskPosition: 'center',
+                WebkitMaskImage: 'url(/assets/hole-emoji-smiley-svgrepo-com.svg)',
+                WebkitMaskSize: 'contain',
+                WebkitMaskRepeat: 'no-repeat',
+                WebkitMaskPosition: 'center'
+              }}
+            />
+            <div>
               <h1 className={`font-bold text-lg tracking-tight leading-none ${darkMode ? 'text-white' : 'text-slate-600'}`}>
                 Mark<span className={darkMode ? 'text-cyan-400' : 'text-cyan-600'}>My</span>Pothole
               </h1>
@@ -660,13 +782,13 @@ const App = () => {
 
 
           
-          {/* RIGHT CONTROLS */}
+
           <div className="flex items-center gap-2">
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setShowUpload(true)}
-              className={`h-11 px-6 rounded-full font-bold text-sm flex items-center gap-2 transition-all duration-200 focus-ring ${
+              className={`h-11 w-11 sm:w-auto sm:px-6 rounded-full font-bold text-sm flex items-center justify-center gap-2 transition-all duration-200 focus-ring ${
                 darkMode 
                   ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] text-cyan-400 shadow-[0_4px_12px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.1)] hover:from-[#323d5e] hover:to-[#252f4e]' 
                   : 'bg-white text-cyan-600 shadow-[0_4px_12px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] hover:shadow-[0_6px_16px_rgba(0,0,0,0.12)]'
@@ -693,16 +815,16 @@ const App = () => {
         </div>
       </header>
 
-      {/* MAIN CONTENT */}
+
       <main className="pt-24 pb-20 relative z-10">
-        {/* LEGENDARY POTHOLES - Vertical title layout */}
+
         <section className="mb-16 max-w-6xl mx-auto px-4">
           <div className={`p-6 rounded-[2.5rem] border backdrop-blur-md transition-all duration-300 ${
             darkMode 
               ? 'bg-white/5 border-white/10 shadow-[inner_0_0_40px_rgba(0,0,0,0.2)]' 
               : 'bg-white/60 border-white/50 shadow-xl ring-1 ring-white/50'
           }`}>
-            {/* Header Content - Compact & Centered */}
+
             <div className="flex flex-col items-center justify-center mb-6 text-center">
               <div className="flex items-center gap-3 mb-2">
                 <div className={`p-2 rounded-xl backdrop-blur-md ${
@@ -724,60 +846,96 @@ const App = () => {
               </div>
             </div>
 
-            {/* Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              {top3.map((p, i) => {
+            <p className={`text-center text-[11px] sm:text-xs mb-6 px-4 ${darkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
+              Earned their <span className={darkMode ? 'text-cyan-400' : 'text-cyan-600'}>elemental aura</span> through pure destruction
+            </p>
+
+            {/* Podium Layout - #1 in center, larger */}
+            <div className="flex flex-row items-end justify-center gap-2 sm:gap-6">
+              {/* Reorder: show #2, #1, #3 for podium effect */}
+              {[top3[1], top3[0], top3[2]].filter(Boolean).map((p, idx) => {
+                if (!p) return null;
+                const actualRank = idx === 1 ? 1 : idx === 0 ? 2 : 3;
                 const sizeInfo = getSizeFromSeverity(p.severity);
-                const rank = i + 1;
-                
-                // Element Frame Logic
-                let frameClass = '';
-                if (p.votes >= 700) frameClass = 'electric-frame';
-                else if (p.votes >= 600) frameClass = 'water-frame';
-                else if (p.votes >= 500) frameClass = 'fire-frame';
+                const aura = getAuraByRank(actualRank);
+                const isChampion = actualRank === 1;
                 
                 return (
                   <motion.div
                     key={p.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.1 }}
+                    initial={{ opacity: 0, y: 30, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ delay: isChampion ? 0.2 : idx * 0.1, type: 'spring', damping: 20 }}
                     onClick={() => setSelectedPothole(p)}
-                    className={`relative rounded-2xl overflow-hidden cursor-pointer backdrop-blur-xl border transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 ${frameClass} ${
+                    className={`relative rounded-2xl cursor-pointer backdrop-blur-sm border transition-all duration-300 hover:scale-[1.03] ${aura?.frameClass || ''} ${
+                      isChampion 
+                        ? 'w-[38%] sm:w-[33%] order-2 z-10 overflow-visible scale-105' 
+                        : 'w-[31%] sm:w-[33%] overflow-hidden ' + (actualRank === 2 ? 'order-1' : 'order-3')
+                    } ${
                       darkMode 
-                        ? 'bg-white/5 border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.3)]' 
-                        : 'bg-white/10 border-white/20 shadow-[0_8px_24px_rgba(0,0,0,0.05)]'
+                        ? 'bg-white/[0.03] border-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)]' 
+                        : 'bg-white/20 border-white/30 shadow-[0_8px_32px_rgba(0,0,0,0.08)]'
                     }`}
                   >
-                    {/* Rank Badge - smaller */}
+                    {/* Rank Badge */}
                     <div className="absolute top-3 left-3 z-20">
-                      <div className={`font-bold w-8 h-8 rounded-lg flex items-center justify-center text-xs backdrop-blur-md ${
-                        rank === 1 
-                          ? 'bg-gradient-to-b from-amber-400 to-amber-500 text-black shadow-[0_4px_12px_rgba(251,191,36,0.4)]' 
-                          : rank === 2
-                            ? 'bg-gradient-to-b from-slate-300 to-slate-400 text-slate-700'
-                            : 'bg-gradient-to-b from-amber-600 to-amber-700 text-amber-100'
+                      <div className={`font-black rounded-xl flex items-center justify-center backdrop-blur-md ${
+                        isChampion 
+                          ? `w-10 h-10 text-sm shadow-[0_4px_16px_rgba(6,182,212,0.4)] ${darkMode ? 'bg-gradient-to-b from-cyan-400 to-cyan-500 text-cyan-950' : 'bg-gradient-to-b from-cyan-500 to-cyan-600 text-white'}` 
+                          : actualRank === 2
+                            ? `w-8 h-8 text-xs ${darkMode ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] text-zinc-300 shadow-[0_2px_8px_rgba(0,0,0,0.3)]' : 'bg-white/80 text-slate-600 shadow-[0_2px_8px_rgba(0,0,0,0.1)]'}`
+                            : `w-8 h-8 text-xs ${darkMode ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] text-zinc-400 shadow-[0_2px_8px_rgba(0,0,0,0.3)]' : 'bg-white/80 text-slate-500 shadow-[0_2px_8px_rgba(0,0,0,0.1)]'}`
                       }`}>
-                        #{rank}
+                        #{actualRank}
                       </div>
                     </div>
                     
-                    {/* Image - smaller aspect ratio */}
-                    <div className="aspect-[4/3] relative overflow-hidden cursor-pointer">
+
+                    <div className={`relative overflow-hidden cursor-pointer ${isChampion ? 'h-52 sm:h-52 rounded-t-2xl' : 'h-48 sm:h-48'}`}>
                       <img src={p.image_url} alt={p.location} className="w-full h-full object-cover" />
-                      {/* Severity badge */}
-                      <div className={`absolute top-2 right-2 text-white text-[8px] font-bold px-2 py-0.5 rounded-full backdrop-blur-md ${
-                        darkMode ? 'bg-white/10' : 'bg-black/20'
-                      }`}>
+                      
+                      {/* Gradient overlay for champion */}
+                      {isChampion && (
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                      )}
+
+                      <div className={`absolute top-2 right-2 text-white font-bold px-2 py-0.5 rounded-full backdrop-blur-md ${
+                        isChampion ? 'text-[9px]' : 'text-[8px]'
+                      } ${darkMode ? 'bg-white/10' : 'bg-black/20'}`}>
                         {sizeInfo.label}
                       </div>
+
+                      {aura && (
+                        <div className={`absolute bottom-2 left-2 text-white text-[8px] font-bold px-2.5 py-1 rounded-full shadow-lg backdrop-blur-md ${aura.className}`}>
+                          {aura.label}
+                        </div>
+                      )}
                     </div>
                     
-                    {/* Info section - compact */}
-                    <div className={`p-3 ${darkMode ? 'bg-black/10' : 'bg-white/10'}`}>
-                      <h4 className={`text-xs font-bold truncate mb-1.5 ${darkMode ? 'text-white' : 'text-slate-800'}`}>{getDisplayLocation(p.location)}</h4>
+
+                    <div className={`${isChampion ? 'p-4' : 'p-3'} ${darkMode ? 'bg-black/10' : 'bg-white/10'}`}>
+                      <h4 className={`font-bold mb-1.5 leading-tight ${isChampion ? 'text-sm' : 'text-xs'} ${darkMode ? 'text-white' : 'text-slate-800'}`}>
+                        {getDisplayLocation(p.location)}
+                      </h4>
+                      {isChampion && (
+                        <p className={`text-[10px] italic mb-2 ${darkMode ? 'text-orange-400/80' : 'text-orange-500/80'}`}>
+                          "Congrats! You've ruined more tires than a Formula 1 pit stop."
+                        </p>
+                      )}
+                      {actualRank === 2 && (
+                        <p className={`text-[9px] italic mb-1.5 ${darkMode ? 'text-violet-400/70' : 'text-violet-500/70'}`}>
+                          "Almost the worst. Try harder next time."
+                        </p>
+                      )}
+                      {actualRank === 3 && (
+                        <p className={`text-[9px] italic mb-1.5 ${darkMode ? 'text-sky-300/70' : 'text-sky-500/70'}`}>
+                          "Bronze in destruction. Still impressive."
+                        </p>
+                      )}
                       <div className="flex items-center justify-between gap-2">
-                        <span className={`text-[10px] font-medium ${darkMode ? 'text-zinc-300' : 'text-slate-600'}`}>{formatDate(p.created_at)}</span>
+                        <span className={`font-medium ${isChampion ? 'text-xs' : 'text-[10px]'} ${darkMode ? 'text-zinc-300' : 'text-slate-600'}`}>
+                          {formatDate(p.created_at)}
+                        </span>
                         <UpvoteButton 
                           onVote={() => handleVote(p.id)} 
                           votes={p.votes} 
@@ -796,7 +954,7 @@ const App = () => {
           </div>
         </section>
 
-        {/* LIVE FEED */}
+
         <section className="max-w-6xl mx-auto px-4">
           <div className="flex items-center gap-3 mb-8">
             <div className={`p-2.5 rounded-2xl ${
@@ -804,7 +962,19 @@ const App = () => {
                 ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] shadow-[0_4px_12px_rgba(0,0,0,0.3)]' 
                 : 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06)]'
             }`}>
-              <Flame size={20} className={darkMode ? 'text-cyan-400' : 'text-cyan-500'} />
+              <div 
+                className={`w-[20px] h-[20px] ${darkMode ? 'bg-cyan-400' : 'bg-cyan-500'}`}
+                style={{
+                  maskImage: 'url(/assets/play-stream-svgrepo-com.svg)',
+                  maskSize: 'contain',
+                  maskRepeat: 'no-repeat',
+                  maskPosition: 'center',
+                  WebkitMaskImage: 'url(/assets/play-stream-svgrepo-com.svg)',
+                  WebkitMaskSize: 'contain',
+                  WebkitMaskRepeat: 'no-repeat',
+                  WebkitMaskPosition: 'center'
+                }}
+              />
             </div>
             <div>
               <h2 className={`text-xl font-bold tracking-tight ${darkMode ? 'text-white' : 'text-slate-700'}`}>Live Feed</h2>
@@ -814,7 +984,7 @@ const App = () => {
           
           {loading ? (
             /* Skeleton Loading Grid */
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
               {[...Array(10)].map((_, i) => (
                 <div 
                   key={i}
@@ -824,9 +994,9 @@ const App = () => {
                       : 'bg-white/10 border-white/20'
                   }`}
                 >
-                  {/* Image skeleton */}
+
                   <div className={`aspect-square ${darkMode ? 'bg-white/5' : 'bg-black/5'}`} />
-                  {/* Info skeleton */}
+
                   <div className={`p-4 ${darkMode ? 'bg-black/10' : 'bg-white/10'}`}>
                     <div className={`h-4 rounded-full mb-3 w-3/4 ${darkMode ? 'bg-white/10' : 'bg-black/10'}`} />
                     <div className="flex items-center justify-between">
@@ -852,7 +1022,7 @@ const App = () => {
               <p className={`text-sm mt-1 ${darkMode ? 'text-zinc-600' : 'text-slate-400'}`}>Be the first to report a pothole!</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+            <div className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
               <AnimatePresence>
                 {reports.map((p, i) => (
                   <ReportCard key={p.id} data={p} index={i} onVote={() => handleVote(p.id)} onSelect={setSelectedPothole} darkMode={darkMode} soundEnabled={soundEnabled} />
@@ -899,7 +1069,7 @@ const App = () => {
         </div>
       </footer>
 
-      {/* MODALS */}
+
       <AnimatePresence>
         {showUpload && <UploadModal onClose={() => setShowUpload(false)} onCreate={handleCreate} darkMode={darkMode} />}
         {showMap && <MapView reports={reports} onClose={() => setShowMap(false)} darkMode={darkMode} />}
@@ -917,16 +1087,11 @@ const App = () => {
   );
 };
 
-// StatCard component removed - was unused
 
+
+// Card component for displaying a pothole report
 const ReportCard = ({ data, index, onVote, onSelect, darkMode, soundEnabled }) => {
   const sizeInfo = getSizeFromSeverity(data.severity);
-
-  // Element Tier Logic (Mini Version for Feed)
-  let frameClass = '';
-  if (data.votes >= 700) frameClass = 'electric-frame';
-  else if (data.votes >= 600) frameClass = 'water-frame';
-  else if (data.votes >= 500) frameClass = 'fire-frame';
 
   return (
     <motion.div
@@ -935,13 +1100,13 @@ const ReportCard = ({ data, index, onVote, onSelect, darkMode, soundEnabled }) =
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ delay: index * 0.05, duration: 0.3 }}
       whileHover={{ y: -4, transition: { duration: 0.2 } }}
-      className={`rounded-3xl overflow-hidden backdrop-blur-xl border cursor-pointer transition-shadow duration-300 ${frameClass} ${
+      className={`rounded-3xl overflow-hidden backdrop-blur-sm border cursor-pointer transition-shadow duration-300 ${
         darkMode 
-          ? 'bg-white/5 border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.3)] hover:shadow-[0_12px_40px_rgba(6,182,212,0.15)]' 
-          : 'bg-white/10 border-white/20 shadow-[0_8px_24px_rgba(0,0,0,0.05)] hover:shadow-[0_12px_40px_rgba(6,182,212,0.1)]'
+          ? 'bg-white/[0.03] border-white/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] hover:shadow-[0_12px_40px_rgba(6,182,212,0.2)]' 
+          : 'bg-white/20 border-white/30 shadow-[0_8px_24px_rgba(0,0,0,0.05)] hover:shadow-[0_12px_40px_rgba(6,182,212,0.1)]'
       }`}
     >
-      {/* Image with fallback */}
+
       <div className="aspect-square relative overflow-hidden group" onClick={() => onSelect(data)}>
         <img 
           src={data.image_url} 
@@ -958,9 +1123,9 @@ const ReportCard = ({ data, index, onVote, onSelect, darkMode, soundEnabled }) =
           {sizeInfo.label}
         </div>
       </div>
-      {/* Info section - semi-transparent */}
+
       <div className={`p-4 ${darkMode ? 'bg-black/10' : 'bg-white/10'}`}>
-        <h4 className={`text-sm font-bold truncate mb-2 ${darkMode ? 'text-white' : 'text-slate-800'}`}>{getDisplayLocation(data.location)}</h4>
+        <h4 className={`text-sm font-bold mb-2 leading-tight line-clamp-2 ${darkMode ? 'text-white' : 'text-slate-800'}`}>{getDisplayLocation(data.location)}</h4>
         <div className="flex items-center justify-between gap-2">
           <span className={`text-xs font-medium ${darkMode ? 'text-zinc-400' : 'text-slate-500'}`}>{formatDate(data.created_at)}</span>
           <UpvoteButton onVote={onVote} votes={data.votes} size="sm" darkMode={darkMode} soundEnabled={soundEnabled} />
@@ -970,12 +1135,12 @@ const ReportCard = ({ data, index, onVote, onSelect, darkMode, soundEnabled }) =
   );
 };
 
-/* MAP VIEW COMPONENT */
+// Map component to visualize pothole locations
 const MapView = ({ reports, onClose, darkMode }) => {
-  // Helper to validate location object
+
   const isValidLoc = (loc) => loc && typeof loc.lat === 'number' && typeof loc.lng === 'number';
 
-  // Helper to generate deterministic scatter offset for markers at same location
+
   const getOffset = (id) => {
     let hash = 0;
     const str = String(id || '0');
@@ -987,7 +1152,7 @@ const MapView = ({ reports, onClose, darkMode }) => {
     ];
   };
 
-  // Find first valid location for center, or default to India
+
   const validReport = reports.find(r => isValidLoc(r.location));
   const initialCenter = validReport 
     ? [validReport.location.lat, validReport.location.lng] 
@@ -1038,6 +1203,7 @@ const MapView = ({ reports, onClose, darkMode }) => {
   );
 };
 
+// Modal component for viewing detailed pothole information
 const PotholeDetailModal = ({ data, onClose, onVote, darkMode, soundEnabled }) => {
   const sizeInfo = getSizeFromSeverity(data.severity);
   const [zoom, setZoom] = useState(1);
@@ -1087,7 +1253,7 @@ const PotholeDetailModal = ({ data, onClose, onVote, darkMode, soundEnabled }) =
             : 'bg-[#e8e8ec] shadow-[12px_12px_40px_#c8c8cc,-12px_-12px_40px_#ffffff,inset_0_1px_0_rgba(255,255,255,0.7)]'
         } ${fullScreen ? 'fixed inset-0 max-w-none rounded-none h-screen' : ''}`}
       >
-        {/* IMAGE INSPECTOR */}
+
         <div ref={containerRef} className={`relative flex-1 overflow-hidden group cursor-crosshair ${darkMode ? 'bg-black/30' : 'bg-slate-300/50'} ${fullScreen ? 'h-full' : 'aspect-square md:aspect-auto'}`}>
           <motion.div 
             className="w-full h-full flex items-center justify-center"
@@ -1111,7 +1277,7 @@ const PotholeDetailModal = ({ data, onClose, onVote, darkMode, soundEnabled }) =
             />
           </motion.div>
 
-          {/* HUD CONTROLS */}
+
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 p-1.5 rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 shadow-2xl z-50">
             <button onClick={() => handleZoom(0.5)} className="p-3 rounded-xl hover:bg-white/10 text-white transition-colors" title="Zoom In"><ZoomIn size={18} /></button>
             <div className="w-px h-6 bg-white/10" />
@@ -1196,6 +1362,7 @@ const PotholeDetailModal = ({ data, onClose, onVote, darkMode, soundEnabled }) =
   );
 };
 
+// Modal component for capturing and uploading new pothole reports
 const UploadModal = ({ onClose, onCreate, darkMode }) => {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -1224,6 +1391,7 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
     initAI();
   }, []);
 
+  // Gets the user's current location and attempts to find the address
   const detectLocation = () => {
     if (!navigator.geolocation) {
       alert("Geolocation is not supported by your browser");
@@ -1235,11 +1403,10 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
       const { latitude: lat, longitude: lng } = position.coords;
       
       try {
-        // Use free Nominatim API (OpenStreetMap) for reverse geocoding
         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
         const data = await res.json();
         
-        // Extract exact address
+
         const exactAddress = data.display_name || data.address.road || data.address.suburb || data.address.city || 'Unknown Address';
         
         setLocation(exactAddress);
@@ -1263,6 +1430,7 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
     });
   };
 
+  // Processes the selected image and runs AI pothole detection
   const handleFileChange = async (e) => {
     const f = e.target.files[0];
     if (!f) return;
@@ -1278,10 +1446,10 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
     setAiStatus('AI SCANNING...');
     
     try {
-      // 1. Visual Delay for scanning feel
+
       await new Promise(r => setTimeout(r, 1200));
 
-      // 2. Real AI Prediction with error handling
+
       const img = new Image();
       img.src = previewUrl;
       await new Promise((resolve, reject) => {
@@ -1312,20 +1480,21 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
     }
   };
 
+  // Uploads the report data and image to the server
   const handleUpload = async () => {
     if (!file || !location || !isPothole) return;
     setUploading(true);
     setAiStatus('UPLOADING TO SUPABASE...');
     
     try {
-      // Convert image to base64 for persistence
+
       const reader = new FileReader();
       const base64Promise = new Promise((resolve) => {
         reader.onloadend = () => resolve(reader.result);
         reader.readAsDataURL(file);
       });
       const base64Image = await base64Promise;
-      // Use object locally, stringify for DB text column
+
       const locObj = gpsCoords ? { lat: gpsCoords.lat, lng: gpsCoords.lng, name: location } : location;
 
       const reportData = {
@@ -1356,11 +1525,11 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
       try {
         savedData = await response.json();
       } catch (e) {
-        // Response might be empty if RLS policies restrict return
+
         console.warn('No JSON response from create', e);
       }
 
-      // Ensure local state uses the Object format, not the DB string
+
       const serverRecord = (Array.isArray(savedData) ? savedData[0] : savedData) || {};
       const finalReport = { 
         ...reportData, 
@@ -1459,7 +1628,7 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
               </motion.div>
             ) : (
               <motion.div key="form" className="space-y-5" exit={{ opacity: 0, x: -20 }}>
-                {/* Image Upload Area */}
+
                 <div 
                   onClick={() => !scanning && !uploading && document.getElementById('pothole-file').click()}
                   className={`cursor-pointer aspect-video rounded-2xl flex flex-col items-center justify-center relative overflow-hidden transition-all group ${

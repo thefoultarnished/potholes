@@ -45,7 +45,15 @@ import {
   Trophy,
   Award,
   Map as MapIcon,
-  Menu
+  Menu,
+  Coffee,
+  Activity,
+  Zap,
+  Cog,
+  Skull,
+  Waves,
+  AlertTriangle,
+  Circle
 } from 'lucide-react';
 
 
@@ -53,14 +61,14 @@ const SUPABASE_URL = process.env.REACT_APP_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
 
 const SIZES = [
-  { level: 1, label: 'Mild', title: 'Coffee Spiller', color: 'bg-cyan-400', textColor: 'text-cyan-400' },
-  { level: 2, label: 'Moderate', title: 'Ankle Breaker', color: 'bg-sky-500', textColor: 'text-sky-500' },
-  { level: 3, label: 'Serious', title: 'Spine Adjuster', color: 'bg-blue-500', textColor: 'text-blue-500' },
-  { level: 4, label: 'Severe', title: 'Rim Reaper', color: 'bg-indigo-500', textColor: 'text-indigo-500' },
-  { level: 5, label: 'Critical', title: 'Suspension Assassin', color: 'bg-violet-500', textColor: 'text-violet-500' },
-  { level: 6, label: 'Extreme', title: 'Swimming Pool', color: 'bg-fuchsia-500', textColor: 'text-fuchsia-500' },
-  { level: 7, label: 'Catastrophic', title: 'Pedestrian Abyss', color: 'bg-rose-500', textColor: 'text-rose-500' },
-  { level: 8, label: 'Apocalyptic', title: 'Black Hole', color: 'bg-red-600', textColor: 'text-red-600' }
+  { level: 1, label: 'Mild', title: 'Coffee Spiller', color: 'bg-cyan-400', textColor: 'text-cyan-400', icon: Coffee },
+  { level: 2, label: 'Moderate', title: 'Ankle Breaker', color: 'bg-sky-500', textColor: 'text-sky-500', icon: Activity },
+  { level: 3, label: 'Serious', title: 'Spine Adjuster', color: 'bg-blue-500', textColor: 'text-blue-500', icon: Zap },
+  { level: 4, label: 'Severe', title: 'Rim Reaper', color: 'bg-indigo-500', textColor: 'text-indigo-500', icon: Cog },
+  { level: 5, label: 'Critical', title: 'Suspension Assassin', color: 'bg-violet-500', textColor: 'text-violet-500', icon: Skull },
+  { level: 6, label: 'Extreme', title: 'Swimming Pool', color: 'bg-fuchsia-500', textColor: 'text-fuchsia-500', icon: Waves },
+  { level: 7, label: 'Catastrophic', title: 'Pedestrian Abyss', color: 'bg-rose-500', textColor: 'text-rose-500', icon: AlertTriangle },
+  { level: 8, label: 'Apocalyptic', title: 'Black Hole', color: 'bg-red-600', textColor: 'text-red-600', icon: Circle }
 ];
 
 // Returns the size and color configuration for a given severity level
@@ -322,8 +330,8 @@ const UpvoteButton = ({ onVote, votes = 0, size = "md", darkMode = true, soundEn
     
     controls.stop();
     controls.start({
-      scale: [1, 1.25, 0.95, 1.05, 1],
-      transition: { duration: 0.4, ease: "easeOut" }
+      scale: [1, 1.45, 0.9, 1.1, 1],
+      transition: { duration: 0.45, ease: "easeOut" }
     });
     
     setBurstKey(prev => prev + 1);
@@ -1014,17 +1022,17 @@ const App = () => {
                         {getDisplayLocation(p.location)}
                       </h4>
                       {isChampion && (
-                        <p className={`text-[10px] italic mb-2 ${darkMode ? 'text-orange-400/80' : 'text-orange-500/80'}`}>
+                        <p className={`text-[13px] italic mb-2 ${darkMode ? 'text-orange-400/80' : 'text-orange-500/80'}`}>
                           "Congrats! You've ruined more tires than a Formula 1 pit stop."
                         </p>
                       )}
                       {actualRank === 2 && (
-                        <p className={`hidden sm:block text-[9px] italic mb-1.5 ${darkMode ? 'text-violet-400/70' : 'text-violet-500/70'}`}>
+                        <p className={`text-[12px] italic mb-1.5 ${darkMode ? 'text-violet-400/70' : 'text-violet-500/70'}`}>
                           "Almost the worst. Try harder next time."
                         </p>
                       )}
                       {actualRank === 3 && (
-                        <p className={`hidden sm:block text-[9px] italic mb-1.5 ${darkMode ? 'text-sky-300/70' : 'text-sky-500/70'}`}>
+                        <p className={`text-[12px] italic mb-1.5 ${darkMode ? 'text-sky-300/70' : 'text-sky-500/70'}`}>
                           "Bronze in destruction. Still impressive."
                         </p>
                       )}
@@ -1161,7 +1169,7 @@ const App = () => {
       
           <div className={`mt-4 pt-4 border-t w-full max-w-[200px] mx-auto ${darkMode ? 'border-zinc-400/20' : 'border-slate-500/20'}`}></div>
           <p className={`text-xs leading-relaxed max-w-4xl mx-auto opacity-80 ${darkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
-            All content is crowdsourced. I take no responsibility for image accuracy, authenticity, or ownership. This is just a fun project.
+            All content is crowdsourced. I take no responsibility for image accuracy, authenticity, or ownership.
           </p>
         </div>
       </footer>
@@ -1335,23 +1343,25 @@ const PotholeDetailModal = ({ data, onClose, onVote, darkMode, soundEnabled }) =
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm ${fullScreen ? 'z-[60]' : ''} ${
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md ${fullScreen ? 'z-[60]' : ''} ${
         darkMode ? 'bg-black/30' : 'bg-black/5'
       }`}
     >
       <motion.div 
-        layout
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
         onClick={e => e.stopPropagation()}
-        className={`w-full max-w-5xl rounded-[2rem] overflow-hidden flex flex-col md:flex-row transition-all duration-300 backdrop-blur-[75px] border ${
+        className={`${fullScreen 
+          ? 'fixed inset-0 w-screen h-screen max-w-none rounded-none z-[70] flex flex-col' 
+          : 'w-full max-w-xl md:max-w-4xl max-h-[92vh] md:max-h-none overflow-y-auto md:overflow-visible custom-scrollbar rounded-[2rem] flex flex-col md:flex-row'
+        } overflow-hidden transition-all duration-300 backdrop-blur-[75px] border ${
           darkMode 
             ? 'bg-[#0f172a]/60 border-white/10 shadow-[0_24px_60px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)]' 
             : 'bg-white/70 border-white/60 shadow-[0_20px_40px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.8)]'
-        } ${fullScreen ? 'fixed inset-0 max-w-none rounded-none h-screen' : ''}`}
+        }`}
       >
 
-        <div ref={containerRef} className={`relative flex-1 overflow-hidden group cursor-crosshair ${darkMode ? 'bg-black/30' : 'bg-slate-300/50'} ${fullScreen ? 'h-full' : 'aspect-square md:aspect-auto'}`}>
+        <div ref={containerRef} className={`relative overflow-hidden group cursor-crosshair ${fullScreen ? 'flex-1 w-full h-full' : 'flex-1 aspect-video md:aspect-auto rounded-t-[2rem] md:rounded-l-[2rem] md:rounded-tr-none'} ${darkMode ? 'bg-black' : 'bg-slate-300/50'}`}>
           <motion.div 
             className="w-full h-full flex items-center justify-center"
             animate={controls}
@@ -1369,7 +1379,7 @@ const PotholeDetailModal = ({ data, onClose, onVote, darkMode, soundEnabled }) =
           >
             <img 
               src={data.image_url} 
-              className={`w-full h-full object-contain select-none pointer-events-none transition-transform duration-200 ${isDragging ? 'scale-[1.01]' : ''}`} 
+              className={`w-full h-full ${fullScreen ? 'object-contain' : 'object-cover'} select-none pointer-events-none transition-transform duration-200 ${isDragging ? 'scale-[1.01]' : ''}`} 
               alt="Pothole Inspection" 
             />
           </motion.div>
@@ -1411,7 +1421,7 @@ const PotholeDetailModal = ({ data, onClose, onVote, darkMode, soundEnabled }) =
         </div>
         
         {!fullScreen && (
-          <div className="w-full md:w-[400px] p-8 flex flex-col h-full max-h-[90vh] overflow-y-auto custom-scrollbar">
+          <div className="w-full md:w-[400px] p-6 md:p-8 flex flex-col md:h-full md:max-h-[90vh] md:overflow-y-auto custom-scrollbar">
             {/* Header Section */}
             <div className="flex justify-between items-start mb-8">
               <div className="space-y-1">
@@ -1441,44 +1451,46 @@ const PotholeDetailModal = ({ data, onClose, onVote, darkMode, soundEnabled }) =
             {/* Info Cards Container */}
             <div className="space-y-4">
               {/* Threat Level Display */}
-              <div className={`p-6 rounded-[2rem] border transition-all duration-300 ${
+              <div className={`p-5 rounded-[2rem] border transition-all duration-300 ${
                 darkMode 
                   ? 'bg-white/[0.03] border-white/10 shadow-[inner_0_0_20px_rgba(0,0,0,0.2)]' 
                   : 'bg-white/40 border-white/60 shadow-sm'
               }`}>
-                <div className={`text-[9px] font-bold tracking-widest uppercase mb-2 ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>
-                  Hazard Class
+                <div className={`text-[9px] font-bold tracking-widest uppercase mb-2 text-center ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>
+                  Threat Level
                 </div>
-                <div className="flex items-end justify-between">
-                  <div className={`text-xl font-black tracking-tight ${sizeInfo.textColor}`}>
+                <div className="flex flex-col items-center gap-2">
+                  {React.createElement(sizeInfo.icon, { size: 40, className: sizeInfo.textColor, strokeWidth: 2.5 })}
+                  <div className={`text-2xl font-black tracking-tight ${sizeInfo.textColor}`}>
                     {sizeInfo.title}
                   </div>
-                  <div className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${darkMode ? 'bg-white/5 text-zinc-400' : 'bg-black/5 text-slate-500'}`}>
+                  <div className={`text-[10px] font-bold px-3 py-1 rounded-full ${darkMode ? 'bg-white/10 text-cyan-400' : 'bg-cyan-50 text-cyan-700'}`}>
                     {sizeInfo.label}
                   </div>
                 </div>
               </div>
 
               {/* Interaction Card */}
-              <div className={`p-6 rounded-[2rem] border transition-all duration-300 ${
+              <div className={`p-5 rounded-[2rem] border transition-all duration-300 ${
                 darkMode 
                   ? 'bg-white/[0.03] border-white/10 shadow-[inner_0_0_20px_rgba(0,0,0,0.2)]' 
                   : 'bg-white/40 border-white/60 shadow-sm'
               }`}>
-                <div className={`text-[9px] font-bold tracking-widest uppercase mb-4 ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>
-                  Public Outrage
+                <div className="flex flex-col items-center text-center">
+                  <div className={`text-[9px] font-bold tracking-widest uppercase mb-4 ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>
+                    Public Outrage
+                  </div>
+                  <UpvoteButton 
+                    onVote={onVote} 
+                    votes={data.votes} 
+                    size="md" 
+                    darkMode={darkMode} 
+                    soundEnabled={soundEnabled} 
+                  />
+                  <p className={`text-[10px] mt-4 leading-relaxed font-medium max-w-[220px] ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>
+                    High interaction levels escalate this hazard into the <span className={darkMode ? 'text-cyan-400' : 'text-cyan-600'}>Hall of Shame</span>.
+                  </p>
                 </div>
-                <UpvoteButton 
-                  onVote={onVote} 
-                  votes={data.votes} 
-                  size="md" 
-                  darkMode={darkMode} 
-                  soundEnabled={soundEnabled} 
-                  className="w-full"
-                />
-                <p className={`text-[10px] mt-4 leading-relaxed font-medium ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>
-                  High interaction levels escalate this hazard into the <span className={darkMode ? 'text-cyan-400' : 'text-cyan-600'}>Hall of Shame</span>.
-                </p>
               </div>
             </div>
             
@@ -1604,9 +1616,9 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
       });
       
       const predictions = await model.predict(img);
-      const potholeScore = predictions.find(p => p.className === 'Pothole')?.probability || 0;
+      const potholeScore = predictions.find(p => p.className.toLowerCase().includes('pothole'))?.probability || 0;
 
-      if (potholeScore < 0.5) {
+      if (potholeScore < 0.98) {
         setAiStatus('NO POTHOLE DETECTED');
         setIsPothole(false);
         await new Promise(r => setTimeout(r, 2500));
@@ -1712,20 +1724,21 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm ${
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md ${
         darkMode ? 'bg-black/30' : 'bg-black/5'
       }`}
     >
       <motion.div 
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className={`w-full max-w-2xl rounded-[2rem] p-8 transition-all duration-300 backdrop-blur-[75px] border ${
+        className={`w-full max-w-2xl rounded-[2rem] p-4 md:p-6 transition-all duration-300 backdrop-blur-[75px] border ${
           darkMode 
             ? 'bg-[#0f172a]/60 border-white/10 shadow-[0_24px_60px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)]' 
             : 'bg-white/70 border-white/60 shadow-[0_20px_40px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.8)]'
         }`}
       >
-        <div className="flex justify-between items-center mb-8">
+        {/* Header Section */}
+        <div className="flex justify-between items-center mb-3">
           <div className="flex items-center gap-3">
             <div className={`p-2.5 rounded-2xl ${
               darkMode 
@@ -1736,165 +1749,186 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
             </div>
             <h2 className={`text-xl font-bold tracking-tight ${darkMode ? 'text-white' : 'text-slate-700'}`}>Mark My Pothole</h2>
           </div>
-          <button onClick={onClose} className={`p-2.5 rounded-full transition-all ${
-            darkMode 
-              ? 'bg-white/5 hover:bg-white/10 text-zinc-400' 
-              : 'bg-black/5 hover:bg-black/10 text-slate-500'
-          }`}>
+          <button 
+            onClick={onClose} 
+            className={`p-2.5 rounded-full transition-all flex-shrink-0 hover:rotate-90 duration-300 ${
+              darkMode 
+                ? 'bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white' 
+                : 'bg-black/5 hover:bg-black/10 text-slate-500 hover:text-slate-800'
+            }`}
+          >
             <X size={18} />
           </button>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-3">
           <AnimatePresence mode="wait">
             {uploadSuccess ? (
               <motion.div 
                 key="success"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="py-12 flex flex-col items-center justify-center text-center space-y-4"
+                className="py-16 flex flex-col items-center justify-center text-center space-y-6"
               >
-                <div className={`w-20 h-20 rounded-full flex items-center justify-center ${
+                <div className={`w-24 h-24 rounded-[2rem] border-2 flex items-center justify-center ${
                   darkMode 
-                    ? 'bg-green-500/20 text-green-400' 
-                    : 'bg-green-500/10 text-green-600'
+                    ? 'bg-green-500/10 border-green-500/20 text-green-400 shadow-[0_0_30px_rgba(34,197,94,0.1)]' 
+                    : 'bg-green-500/5 border-green-500/10 text-green-600'
                 }`}>
                   <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", damping: 12 }}
+                    initial={{ scale: 0, rotate: -45 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: "spring", damping: 10, stiffness: 100 }}
                   >
-                    <Trophy size={40} />
+                    <Trophy size={48} />
                   </motion.div>
                 </div>
-                <div>
-                  <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-slate-700'}`}>Report Submitted!</h3>
-                  <p className={`text-xs font-medium mt-1 ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>You just earned +10 respect</p>
+                <div className="space-y-2">
+                  <h3 className={`text-2xl font-black ${darkMode ? 'text-white' : 'text-slate-800'}`}>Transmission Successful</h3>
+                  <p className={`text-sm font-medium ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>Pothole coordinates logged into global database.</p>
                 </div>
               </motion.div>
             ) : (
-              <motion.div key="form" className="space-y-5" exit={{ opacity: 0, x: -20 }}>
-
-                <div 
-                  onClick={() => !scanning && !uploading && document.getElementById('pothole-file').click()}
-                  className={`cursor-pointer aspect-video rounded-2xl flex flex-col items-center justify-center relative overflow-hidden transition-all group ${
-                    darkMode 
-                      ? 'bg-[#0c0e14] shadow-inner hover:bg-[#131620]' 
-                      : 'bg-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.04)] hover:bg-slate-50'
-                  } ${scanning || uploading ? 'cursor-wait opacity-80' : ''}`}
-                >
-                  {preview ? (
-                    <div className="relative w-full h-full">
-                      <img src={preview} className="w-full h-full object-cover rounded-xl" alt="Preview" />
-                      {scanning && (
-                        <>
-                          <motion.div 
-                            initial={{ top: '-10%' }}
-                            animate={{ top: '110%' }}
-                            transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                            className="absolute left-0 right-0 h-0.5 bg-cyan-400 shadow-[0_0_12px_#22d3ee] z-10"
-                          />
-                          <div className="absolute inset-0 bg-cyan-500/5" />
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className={`backdrop-blur-md px-4 py-2 rounded-full ${
-                              darkMode ? 'bg-black/50 border border-white/10' : 'bg-white/80 border border-black/5'
-                            }`}>
-                              <span className={`font-bold text-xs tracking-wide ${darkMode ? 'text-cyan-400' : 'text-cyan-600'}`}>{aiStatus}</span>
+              <motion.div key="form" className="space-y-3" exit={{ opacity: 0, x: -20 }}>
+                {/* Image Analysis Area */}
+                <div className="space-y-3">
+                  <label className={`text-[10px] font-bold tracking-[0.2em] uppercase pl-1 ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>
+                    Visual Evidence
+                  </label>
+                  <div 
+                    onClick={() => !scanning && !uploading && document.getElementById('pothole-file').click()}
+                    className={`cursor-pointer aspect-video md:aspect-[21/9] rounded-[2rem] flex flex-col items-center justify-center relative overflow-hidden transition-all duration-500 group backdrop-blur-md border-2 border-dashed ${
+                      darkMode 
+                        ? 'bg-white/5 border-white/10 hover:border-cyan-400/50 hover:bg-white/[0.07]' 
+                        : 'bg-black/5 border-black/5 hover:border-cyan-500/50 hover:bg-black/[0.07]'
+                    } ${scanning || uploading ? 'cursor-wait opacity-80' : ''}`}
+                  >
+                    {preview ? (
+                      <div className="relative w-full h-full">
+                        <img src={preview} className="w-full h-full object-cover" alt="Preview" />
+                        {scanning && (
+                          <>
+                            <motion.div 
+                              initial={{ top: '-5%' }}
+                              animate={{ top: '105%' }}
+                              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                              className="absolute left-0 right-0 h-1 bg-cyan-400 shadow-[0_0_20px_#22d3ee] z-10"
+                            />
+                            <div className="absolute inset-0 bg-cyan-500/10 backdrop-blur-[2px]" />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="bg-black/60 backdrop-blur-xl border border-white/10 px-6 py-3 rounded-2xl shadow-2xl">
+                                <div className="flex items-center gap-3">
+                                  <Loader2 size={16} className="text-cyan-400 animate-spin" />
+                                  <span className="font-bold text-xs tracking-widest text-white uppercase">{aiStatus}</span>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </>
-                      )}
-                      {!scanning && isPothole && (
-                         <div className={`absolute top-3 right-3 p-1.5 rounded-full ${
-                           darkMode ? 'bg-green-500/20 text-green-400' : 'bg-green-500/10 text-green-600'
-                         }`}>
-                            <Trophy size={12} />
-                         </div>
-                      )}
-                    </div>
-                  ) : (
-                    <>
-                      <div className={`p-4 rounded-2xl mb-3 transition-all ${
-                        darkMode 
-                          ? 'bg-white/5 group-hover:bg-cyan-500/10' 
-                          : 'bg-black/5 group-hover:bg-cyan-500/5'
-                      }`}>
-                        <Upload size={24} className={`transition-colors ${darkMode ? 'text-zinc-500 group-hover:text-cyan-400' : 'text-slate-400 group-hover:text-cyan-600'}`} />
+                          </>
+                        )}
+                        {/* Removed Valid Target tag */}
                       </div>
-                      <span className={`text-sm font-medium transition-colors ${darkMode ? 'text-zinc-500 group-hover:text-cyan-400' : 'text-slate-400 group-hover:text-cyan-600'}`}>Click to upload photo</span>
-                      <span className={`text-[10px] mt-1 ${darkMode ? 'text-zinc-600' : 'text-slate-300'}`}>JPG, PNG up to 10MB</span>
-                    </>
-                  )}
-                  <input id="pothole-file" type="file" accept="image/*" className="hidden" onChange={handleFileChange} disabled={scanning || uploading} />
-                </div>
-
-                <div>
-                  <label className={`text-[10px] font-medium tracking-wider block mb-2 ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>LOCATION</label>
-                  <div className={`relative flex items-center p-1.5 rounded-2xl transition-all ${
-                    darkMode 
-                      ? 'bg-[#0c0e14] shadow-inner' 
-                      : 'bg-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.04)]'
-                  } focus-within:ring-2 focus-within:ring-cyan-400/30`}>
-                    <input 
-                      type="text" 
-                      value={location}
-                      onChange={e => setLocation(e.target.value)}
-                      placeholder="e.g. Baker Street Park"
-                      className={`flex-1 bg-transparent p-3 font-medium outline-none text-sm ${
-                        darkMode ? 'text-white placeholder-zinc-600' : 'text-slate-700 placeholder-slate-300'
-                      }`}
-                    />
-                    <motion.button 
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={detectLocation}
-                      disabled={isLocating}
-                      className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                        darkMode 
-                          ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] text-cyan-400 shadow-[0_2px_8px_rgba(0,0,0,0.3)]' 
-                          : 'bg-white text-cyan-600 shadow-[0_2px_8px_rgba(0,0,0,0.08)]'
-                      } ${isLocating ? 'opacity-50 cursor-wait' : ''}`}
-                    >
-                      {isLocating ? <Loader2 size={14} className="animate-spin" /> : <LocateFixed size={14} />}
-                      <span>{isLocating ? 'Finding...' : 'Detect'}</span>
-                    </motion.button>
+                    ) : (
+                      <div className="flex flex-col items-center p-8 text-center space-y-4">
+                        <div className={`p-5 rounded-[2rem] transition-all group-hover:scale-110 duration-300 ${
+                          darkMode ? 'bg-white/5 text-zinc-500' : 'bg-black/5 text-slate-400'
+                        }`}>
+                          <Upload size={32} />
+                        </div>
+                        <div className="space-y-1">
+                          <p className={`text-sm font-bold ${darkMode ? 'text-zinc-300' : 'text-slate-600'}`}>Upload Investigation Data</p>
+                          <p className={`text-[10px] font-medium ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>Supported formats: RAW, JPG, PNG (Max 10MB)</p>
+                        </div>
+                      </div>
+                    )}
+                    <input id="pothole-file" type="file" accept="image/*" className="hidden" onChange={handleFileChange} disabled={scanning || uploading} />
                   </div>
                 </div>
 
-                <div>
-                  <label className={`text-[10px] font-medium tracking-wider block mb-2 ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>THREAT LEVEL</label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    {SIZES.map(s => (
-                      <button 
-                        key={s.level}
-                        onClick={() => setSeverity(s.level)}
-                        className={`py-3 rounded-xl transition-all font-bold text-xs px-2 h-auto min-h-[44px] leading-tight ${
-                          severity === s.level 
-                            ? `${s.color} text-white shadow-lg` 
-                            : darkMode 
-                              ? 'bg-[#0c0e14] text-zinc-400 hover:bg-[#131620] shadow-inner' 
-                              : 'bg-white text-slate-500 hover:bg-slate-50 shadow-[inset_0_2px_4px_rgba(0,0,0,0.04)]'
+                {/* Metadata Fields */}
+                <div className="grid md:grid-cols-2 gap-6 pb-2">
+                  <div className="space-y-2">
+                    <label className={`text-[10px] font-bold tracking-[0.2em] uppercase pl-1 ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>
+                      Geographic Location
+                    </label>
+                    <div className={`relative flex items-center p-1 rounded-2xl transition-all duration-300 backdrop-blur-md border ${
+                      darkMode 
+                        ? 'bg-white/5 border-white/10 shadow-[inner_0_2px_12px_rgba(0,0,0,0.3)]' 
+                        : 'bg-white/40 border-black/5'
+                    } focus-within:ring-2 focus-within:ring-cyan-500/30`}>
+                      <input 
+                        type="text" 
+                        value={location}
+                        onChange={e => setLocation(e.target.value)}
+                        placeholder="Coordinates or Address"
+                        className={`flex-1 bg-transparent p-2.5 font-bold outline-none text-[13px] ${
+                          darkMode ? 'text-white placeholder-zinc-700' : 'text-slate-700 placeholder-slate-300'
                         }`}
-                        title={s.title}
+                      />
+                      <motion.button 
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={detectLocation}
+                        disabled={isLocating}
+                        className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-[9px] font-black tracking-widest uppercase transition-all ${
+                          darkMode 
+                            ? 'bg-white/5 text-cyan-400 border border-white/10 hover:bg-white/10' 
+                            : 'bg-black/5 text-cyan-600 border border-black/5 hover:bg-black/10'
+                        } ${isLocating ? 'opacity-50' : ''}`}
                       >
-                        {s.title}
-                      </button>
-                    ))}
+                        {isLocating ? <Loader2 size={12} className="animate-spin" /> : <LocateFixed size={12} />}
+                        {isLocating ? 'Loc' : 'Locate'}
+                      </motion.button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className={`text-[10px] font-bold tracking-[0.2em] uppercase pl-1 ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>
+                      Threat Evaluation
+                    </label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {SIZES.map(s => (
+                        <button 
+                          key={s.level}
+                          onClick={() => setSeverity(s.level)}
+                          className={`py-2 rounded-xl transition-all duration-300 font-black text-[9px] px-1 h-auto min-h-[40px] leading-tight backdrop-blur-md border uppercase tracking-wider ${
+                            severity === s.level 
+                              ? `${s.color} text-white shadow-[0_4px_12px_-2px_rgba(0,0,0,0.3)] border-transparent scale-[1.05] z-10` 
+                              : darkMode 
+                                ? 'bg-white/5 border-white/10 text-zinc-500 hover:bg-white/10' 
+                                : 'bg-white/40 border-black/5 text-slate-500 hover:bg-white/60'
+                          }`}
+                          title={s.title}
+                        >
+                          <div className="flex flex-col items-center gap-0.5">
+                            {React.createElement(s.icon, { 
+                              size: 14, 
+                              className: `flex-shrink-0 ${severity === s.level ? 'text-white' : (darkMode ? 'text-cyan-400/70' : 'text-cyan-600')}` 
+                            })}
+                            <span className="truncate w-full">{s.title}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
                 <motion.button 
-                  whileHover={{ scale: 1.01, y: -1 }}
-                  whileTap={{ scale: 0.99 }}
+                  whileHover={!uploading && !scanning && file && location && isPothole && severity ? { scale: 1.01, y: -2 } : {}}
+                  whileTap={!uploading && !scanning && file && location && isPothole && severity ? { scale: 0.99 } : {}}
                   onClick={handleUpload}
                   disabled={uploading || scanning || !file || !location || !isPothole || !severity}
-                  className={`w-full py-4 rounded-2xl font-bold text-sm tracking-wide transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed ${
+                  className={`w-full py-5 rounded-[2rem] font-black text-xs tracking-[0.2em] uppercase transition-all duration-300 disabled:opacity-30 disabled:grayscale ${
                     darkMode 
-                      ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] text-cyan-400 shadow-[0_4px_12px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.1)] hover:from-[#323d5e] hover:to-[#252f4e]' 
-                      : 'bg-white text-cyan-600 shadow-[0_4px_12px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] hover:shadow-[0_6px_16px_rgba(0,0,0,0.12)]'
+                      ? 'bg-gradient-to-br from-cyan-400 to-blue-600 text-white shadow-[0_20px_40px_-10px_rgba(34,211,238,0.3)]' 
+                      : 'bg-slate-900 text-white shadow-[0_20px_40px_-10px_rgba(15,23,42,0.3)]'
                   }`}
                 >
-                  {uploading ? 'Analyzing Metadata...' : 'Submit Report'}
+                  {uploading ? (
+                    <div className="flex items-center justify-center gap-3">
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>Encrypting Uplink...</span>
+                    </div>
+                  ) : 'Confirm Deployment'}
                 </motion.button>
               </motion.div>
             )}

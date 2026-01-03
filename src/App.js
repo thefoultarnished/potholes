@@ -167,12 +167,22 @@ const BlobBackground = () => {
     // Increased count to fill the "black space"
     blobsRef.current = Array.from({ length: 20 }, () => new BlobParticle());
 
-    const animate = () => {
+    // Throttle to 24fps to save CPU/battery
+    const targetFps = 24;
+    const frameInterval = 1000 / targetFps;
+    let lastFrameTime = 0;
+
+    const animate = (currentTime) => {
+      animationRef.current = requestAnimationFrame(animate);
+      
+      const elapsed = currentTime - lastFrameTime;
+      if (elapsed < frameInterval) return;
+      lastFrameTime = currentTime - (elapsed % frameInterval);
+
       ctx.clearRect(0, 0, width, height);
       ctx.globalCompositeOperation = 'screen';
       blobsRef.current.forEach(blob => { blob.update(); blob.draw(ctx); });
       ctx.globalCompositeOperation = 'source-over';
-      animationRef.current = requestAnimationFrame(animate);
     };
 
     const handleResize = () => {
@@ -249,6 +259,7 @@ const ShameIcon = ({ size = 24, className = '' }) => (
 );
 
 // Plays a sound effect if enabled, reusing the audio object
+let cachedAudio = null;
 const playPopSound = (enabled) => {
   if (!enabled) return;
   try {
@@ -906,14 +917,14 @@ const App = () => {
 
       <main className="pt-24 pb-20 relative z-10">
 
-        <section className="mb-16 max-w-6xl mx-auto px-4">
+        <section className="mb-8 max-w-6xl mx-auto px-4">
           <div className={`p-6 rounded-[2.5rem] border backdrop-blur-md transition-all duration-300 ${
             darkMode 
               ? 'bg-white/5 border-white/10 shadow-[inner_0_0_40px_rgba(0,0,0,0.2)]' 
               : 'bg-white/10 border-white/50 shadow-xl ring-1 ring-white/50'
           }`}>
 
-            <div className="flex flex-col items-center justify-center mb-6 text-center">
+            <div className="flex flex-col items-center justify-center mb-2 text-center">
               <div className="flex items-center gap-3 mb-2">
                 <div className={`p-2 rounded-xl backdrop-blur-md ${
                   darkMode 
@@ -935,7 +946,7 @@ const App = () => {
             </div>
 
             <p className={`text-center text-[11px] sm:text-xs mb-6 px-4 ${darkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
-              Earned their <span className={darkMode ? 'text-cyan-400' : 'text-cyan-600'}>elemental aura</span> through pure destruction
+              Earned their <span className={darkMode ? 'text-cyan-400' : 'text-cyan-600'}>elemental aura</span> through pure destructive power
             </p>
 
             {/* Podium Layout - #1 in center/top, others side-by-side below on mobile */}
@@ -953,6 +964,7 @@ const App = () => {
                     key={p.id}
                     initial={{ opacity: 0, y: 30, scale: 0.9 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
+                    whileHover={{ y: -4, transition: { duration: 0 } }}
                     transition={{ delay: isChampion ? 0.2 : idx * 0.1, type: 'spring', damping: 20 }}
                     onClick={() => setSelectedPothole(p)}
                     className={`relative rounded-2xl cursor-pointer backdrop-blur-sm border transition-all duration-300 hover:scale-[1.03] ${aura?.frameClass || ''} ${
@@ -1002,7 +1014,7 @@ const App = () => {
                     
 
                     <div className={`${isChampion ? 'p-4' : 'p-3'} ${darkMode ? 'bg-black/10' : 'bg-white/10'}`}>
-                      <h4 className={`font-bold mb-1.5 leading-tight ${isChampion ? 'text-sm' : 'text-xs'} ${darkMode ? 'text-white' : 'text-slate-800'}`}>
+                      <h4 className={`font-bold mb-1.5 leading-tight line-clamp-2 ${isChampion ? 'text-sm' : 'text-xs min-h-[2.5em]'} ${darkMode ? 'text-white' : 'text-slate-800'}`}>
                         {getDisplayLocation(p.location)}
                       </h4>
                       {isChampion && (
@@ -1011,12 +1023,12 @@ const App = () => {
                         </p>
                       )}
                       {actualRank === 2 && (
-                        <p className={`text-[12px] italic mb-1.5 ${darkMode ? 'text-violet-400/70' : 'text-violet-500/70'}`}>
+                        <p className={`hidden sm:block text-[12px] italic mb-1.5 ${darkMode ? 'text-violet-400/70' : 'text-violet-500/70'}`}>
                           "Almost the worst. Try harder next time."
                         </p>
                       )}
                       {actualRank === 3 && (
-                        <p className={`text-[12px] italic mb-1.5 ${darkMode ? 'text-sky-300/70' : 'text-sky-500/70'}`}>
+                        <p className={`hidden sm:block text-[12px] italic mb-1.5 ${darkMode ? 'text-sky-300/70' : 'text-sky-500/70'}`}>
                           "Bronze in destruction. Still impressive."
                         </p>
                       )}
@@ -1220,8 +1232,8 @@ const ReportCard = ({ data, index, onVote, onSelect, darkMode, soundEnabled }) =
         </div>
       </div>
 
-      <div className={`p-4 ${darkMode ? 'bg-black/10' : 'bg-white/10'}`}>
-        <h4 className={`text-sm font-bold mb-2 leading-tight line-clamp-2 ${darkMode ? 'text-white' : 'text-slate-800'}`}>{getDisplayLocation(data.location)}</h4>
+      <div className="p-4">
+        <h4 className={`text-sm font-bold mb-2 leading-tight line-clamp-2 min-h-[2.8em] ${darkMode ? 'text-white' : 'text-slate-800'}`}>{getDisplayLocation(data.location)}</h4>
         <div className="flex items-center justify-between gap-2">
           <span className={`text-xs font-medium ${darkMode ? 'text-zinc-400' : 'text-slate-500'}`}>{formatDate(data.created_at)}</span>
           <UpvoteButton onVote={onVote} votes={data.votes} size="sm" darkMode={darkMode} soundEnabled={soundEnabled} />
@@ -1840,7 +1852,7 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
                           <Upload size={32} />
                         </div>
                         <div className="space-y-1">
-                          <p className={`text-sm font-bold ${darkMode ? 'text-zinc-300' : 'text-slate-600'}`}>Upload Investigation Data</p>
+                          <p className={`text-sm font-bold ${darkMode ? 'text-zinc-300' : 'text-slate-600'}`}>Select an Image</p>
                           <p className={`text-[10px] font-medium ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>Supported formats: RAW, JPG, PNG (Max 10MB)</p>
                         </div>
                       </div>
@@ -1932,7 +1944,7 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
                       <Loader2 size={16} className="animate-spin" />
                       <span>Marking...</span>
                     </div>
-                  ) : 'Mark'}
+                  ) : 'Mark It'}
                 </motion.button>
               </motion.div>
             )}

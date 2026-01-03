@@ -43,7 +43,7 @@
   </div>
 
   <div class="relative overflow-hidden cursor-pointer {isChampion ? 'h-52 sm:h-52 rounded-t-2xl' : 'h-48 sm:h-48'}">
-    <img src={data.image_url} alt={getDisplayLocation(data.location)} class="w-full h-full object-cover" loading="lazy" />
+    <img src={data.image_url.includes('cloudinary') ? data.image_url.replace('/upload/', '/upload/w_500,h_500,c_fill,f_auto,q_auto/') : data.image_url} alt={getDisplayLocation(data.location)} class="w-full h-full object-cover" loading="lazy" />
     
     {#if isChampion}
       <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>

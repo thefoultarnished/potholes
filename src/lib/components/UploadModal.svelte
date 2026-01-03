@@ -20,7 +20,11 @@
   let isLocating = false;
   let uploadSuccess = false;
   
-  onMount(async () => {
+  async function ensureAIModelLoaded() {
+    if (model) return;
+    
+    aiStatus = 'LOADING AI MODEL...';
+    
     const loadScript = (src: string) => new Promise<void>((resolve, reject) => {
       if (document.querySelector(`script[src="${src}"]`)) return resolve();
       const s = document.createElement('script');
@@ -31,16 +35,21 @@
     });
 
     try {
-      await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js');
-      await loadScript('https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js');
+      if (!(window as any).tf) {
+        await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js');
+      }
+      if (!(window as any).tmImage) {
+        await loadScript('https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js');
+      }
       
-      if ((window as any).tmImage) {
+      if ((window as any).tmImage && !model) {
         model = await (window as any).tmImage.load('/pothole_model/model.json', '/pothole_model/metadata.json');
       }
     } catch (e) {
       console.error("AI Model Load Failed", e);
+      throw new Error("Failed to load AI model");
     }
-  });
+  }
   
   async function detectLocation() {
     if (!navigator.geolocation) {
@@ -110,9 +119,20 @@
     file = f;
     preview = URL.createObjectURL(f);
     
+    scanning = true;
+    try {
+      if (!model) {
+        await ensureAIModelLoaded();
+      }
+    } catch (e) {
+      console.error("Model load failed", e);
+      aiStatus = 'AI LOAD FAILED';
+      scanning = false;
+      return;
+    }
+    
     if (!model) return;
     
-    scanning = true;
     isPothole = false;
     aiStatus = 'DETECTING POTHOLES...';
     

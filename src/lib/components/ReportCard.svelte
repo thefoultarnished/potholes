@@ -22,7 +22,7 @@
 >
   <div class="aspect-square relative overflow-hidden group" on:click={() => onSelect(data)} on:keypress={() => onSelect(data)} role="button" tabindex="0">
     <img 
-      src={data.image_url} 
+      src={data.image_url.includes('cloudinary') ? data.image_url.replace('/upload/', '/upload/w_500,h_500,c_fill,f_auto,q_auto/') : data.image_url} 
       alt={getDisplayLocation(data.location)} 
       class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
       loading="lazy"

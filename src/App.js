@@ -1643,9 +1643,17 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
 
 
       const img = new Image();
+      img.crossOrigin = 'anonymous';
       img.src = previewUrl;
       await new Promise((resolve, reject) => {
-        img.onload = resolve;
+        img.onload = () => {
+          // Ensure dimensions are available for TensorFlow
+          if (img.width === 0 || img.height === 0) {
+            img.width = img.naturalWidth;
+            img.height = img.naturalHeight;
+          }
+          resolve();
+        };
         img.onerror = () => reject(new Error('Failed to load image'));
       });
       
@@ -1699,7 +1707,9 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
       );
 
       if (!cloudinaryResponse.ok) {
-        throw new Error('Cloudinary upload failed');
+        const errData = await cloudinaryResponse.json().catch(() => ({}));
+        console.error('Cloudinary Error:', errData);
+        throw new Error(errData.error?.message || 'Cloudinary upload failed');
       }
 
       const cloudinaryData = await cloudinaryResponse.json();
@@ -1836,7 +1846,7 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
                   </motion.div>
                 </div>
                 <div className="space-y-2">
-                  <h3 className={`text-2xl font-black ${darkMode ? 'text-white' : 'text-slate-800'}`}>Transmission Successful</h3>
+                  <h3 className={`text-2xl font-black ${darkMode ? 'text-white' : 'text-slate-800'}`}>Marked Successfully</h3>
                   <p className={`text-sm font-medium ${darkMode ? 'text-zinc-500' : 'text-slate-400'}`}>Pothole coordinates logged into global database.</p>
                 </div>
               </motion.div>

@@ -37,29 +37,36 @@
     }
 
     try {
-      const response = await fetch(`${SUPABASE_URL}/rest/v1/potholes?select=*&order=created_at.desc`, {
-        headers: {
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-        }
-      });
+      const [recentRes, topRes] = await Promise.all([
+        fetch(`${SUPABASE_URL}/rest/v1/potholes?select=id,location,votes,image_url,created_at,severity&order=created_at.desc&limit=50`, {
+          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        }),
+        fetch(`${SUPABASE_URL}/rest/v1/potholes?select=id,location,votes,image_url,created_at,severity&order=votes.desc&limit=3`, {
+          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        })
+      ]);
       
-      if (response.ok) {
-        const data = await response.json();
-        localReports = data.map((serverItem: any) => {
-          let loc = serverItem.location;
-          try {
-            if (typeof loc === 'string' && loc.startsWith('{')) {
-              loc = JSON.parse(loc);
-            }
-          } catch (e) {
-            console.warn('Failed to parse location', e);
-          }
-          return { ...serverItem, location: loc };
-        });
+      if (recentRes.ok && topRes.ok) {
+        const recentData = await recentRes.json();
+        const topData = await topRes.json();
         
-        // Deduplicate reports by ID
-        localReports = Array.from(new Map(localReports.map(item => [item.id, item])).values());
+        // Merge and remove duplicates using Map
+        const merged = [...recentData, ...topData];
+        const uniqueMap = new Map();
+        
+        merged.forEach((item: any) => {
+          let loc = item.location;
+          try {
+            if (typeof loc === 'string' && loc.startsWith('{')) loc = JSON.parse(loc);
+          } catch (e) {}
+          if (!uniqueMap.has(item.id)) {
+            uniqueMap.set(item.id, { ...item, location: loc });
+          }
+        });
+
+        localReports = Array.from(uniqueMap.values()).sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
       }
     } catch (err) {
       console.error('Error loading potholes:', err);
@@ -127,8 +134,8 @@
   {/if}
 
   <!-- Header -->
-  <header class="fixed top-0 inset-x-0 z-30 py-3 px-4 sm:px-6 transition-all duration-300 {localDarkMode ? 'bg-[#0f1219]/60' : 'bg-white/40'} backdrop-blur-xl border-b {localDarkMode ? 'border-white/5' : 'border-black/5'}">
-    <div class="max-w-6xl mx-auto flex items-center justify-between">
+  <header class="fixed top-0 inset-x-0 z-30 py-3 transition-all duration-300 {localDarkMode ? 'bg-[#0f1219]/60' : 'bg-white/40'} backdrop-blur-xl border-b {localDarkMode ? 'border-white/5' : 'border-black/5'}">
+    <div class="max-w-6xl mx-auto w-full px-4 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <img 
           src="/assets/hole-emoji-smiley-svgrepo-com.svg"
@@ -325,9 +332,10 @@
   </main>
 
   <!-- Footer -->
-  <footer class="relative z-10 py-8 px-4 text-center {localDarkMode ? 'bg-gradient-to-t from-black/20 to-transparent' : 'bg-gradient-to-t from-white/30 to-transparent'}">
-    <div class="max-w-6xl mx-auto px-6 py-5 rounded-3xl backdrop-blur-xl {localDarkMode ? 'bg-white/5 border border-white/10' : 'bg-white/60 border border-white/60 shadow-xl'}">
-      <div class="flex flex-col items-center gap-4">
+  <footer class="relative z-10 py-8 text-center {localDarkMode ? 'bg-gradient-to-t from-black/20 to-transparent' : 'bg-gradient-to-t from-white/30 to-transparent'}">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="px-6 py-5 rounded-3xl backdrop-blur-xl {localDarkMode ? 'bg-white/5 border border-white/10' : 'bg-white/60 border border-white/60 shadow-xl'}">
+        <div class="flex flex-col items-center gap-4">
         <div class="flex items-center gap-2 text-sm font-medium {localDarkMode ? 'text-zinc-400' : 'text-slate-600'}">
           Made with <span class="text-red-500 font-bold">frustration</span>
           <span 

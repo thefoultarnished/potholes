@@ -1525,14 +1525,27 @@ const UploadModal = ({ onClose, onCreate, darkMode }) => {
   const [uploadSuccess, setUploadSuccess] = useState(false);
 
   useEffect(() => {
+    const loadScript = (src) => new Promise((resolve, reject) => {
+      if (document.querySelector(`script[src="${src}"]`)) return resolve();
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = reject;
+      document.body.appendChild(s);
+    });
+
     const initAI = async () => {
-      if (window.tmImage) {
-        try {
+      try {
+        // Dynamically load TensorFlow and Teachable Machine only when modal opens
+        await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js');
+        await loadScript('https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js');
+        
+        if (window.tmImage) {
           const m = await window.tmImage.load('/pothole_model/model.json', '/pothole_model/metadata.json');
           setModel(m);
-        } catch (e) {
-          console.error("AI Model Load Failed", e);
         }
+      } catch (e) {
+        console.error("AI Model Load Failed", e);
       }
     };
     initAI();

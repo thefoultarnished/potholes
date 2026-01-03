@@ -16,7 +16,15 @@
     <link rel="icon" type="image/svg+xml" href="/assets/hole-emoji-smiley-svgrepo-com.svg" />
     <title>MarkMyPothole - Community Pothole Reporter</title>
     
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Preload fonts for faster LCP -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap" />
+    
+    <!-- Preconnect to API endpoints -->
+    <link rel="preconnect" href="https://wqqkrjukegrqpnpulcit.supabase.co" />
+    <link rel="preconnect" href="https://res.cloudinary.com" />
     
   </head>
   <body>

@@ -2,8 +2,6 @@
   "name": "pothole-app",
   "version": "1.0.0",
   "dependencies": {
-    "@tsparticles/react": "^3.0.0",
-    "@tsparticles/slim": "^3.9.1",
     "canvas-confetti": "^1.9.4",
     "framer-motion": "^12.23.26",
     "leaflet": "^1.9.4",

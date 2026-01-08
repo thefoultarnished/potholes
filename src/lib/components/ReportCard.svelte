@@ -13,10 +13,10 @@
 </script>
 
 <div
-  class="rounded-3xl overflow-hidden backdrop-blur-sm border cursor-pointer transition-all duration-300 hover:-translate-y-1
+  class="rounded-3xl overflow-hidden backdrop-blur-xl border cursor-pointer transition-all duration-300 hover:-translate-y-1
     {darkMode 
-      ? 'bg-white/[0.03] border-white/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.4)] hover:shadow-[0_12px_40px_rgba(6,182,212,0.2)]' 
-      : 'bg-white/20 border-white/30 shadow-[0_8px_24px_rgba(0,0,0,0.05)] hover:shadow-[0_12px_40px_rgba(6,182,212,0.1)]'
+      ? 'bg-white/[0.02] border-white/15 shadow-2xl shadow-black/20 ring-1 ring-white/5 hover:shadow-[0_12px_40px_rgba(6,182,212,0.2)]' 
+      : 'bg-white/20 border-white/40 shadow-xl ring-1 ring-white/40 hover:shadow-[0_12px_40px_rgba(6,182,212,0.1)]'
     }"
   style="animation-delay: {index * 50}ms"
 >

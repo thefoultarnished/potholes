@@ -71,7 +71,11 @@
   <div class="relative w-full h-full rounded-3xl overflow-hidden shadow-2xl border {darkMode ? 'border-white/10' : 'border-white/40'}">
     <button 
       on:click={onClose}
-      class="absolute top-4 right-4 z-[500] p-3 bg-white rounded-full shadow-lg hover:bg-slate-100 text-slate-900 transition-colors"
+      class="absolute top-4 right-4 z-[500] p-3 rounded-full transition-colors border ring-1 backdrop-blur-md
+        {darkMode 
+          ? 'bg-white/[0.05] border-white/10 ring-white/5 text-white hover:bg-white/10' 
+          : 'bg-white/40 border-white/40 ring-white/40 text-slate-700 hover:bg-white/60 shadow-sm'
+        }"
     >
       <X size={24} />
     </button>

@@ -19,14 +19,14 @@
   on:keypress={() => onSelect(data)}
   role="button"
   tabindex="0"
-  class="relative rounded-2xl cursor-pointer backdrop-blur-sm border transition-all duration-300 hover:-translate-y-1 {aura?.frameClass || ''}
+  class="relative rounded-2xl cursor-pointer backdrop-blur-xl border transition-all duration-300 hover:-translate-y-1 {aura?.frameClass || ''}
     {isChampion 
       ? 'w-full sm:w-[33%] order-1 sm:order-2 z-10 overflow-visible scale-[1.02] sm:scale-105 mb-2 sm:mb-0' 
       : 'w-[48%] sm:w-[33%] overflow-hidden ' + (rank === 2 ? 'order-2 sm:order-1' : 'order-3 sm:order-3')
     }
     {darkMode 
-      ? 'bg-white/[0.03] border-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.5)]' 
-      : 'bg-white/20 border-white/30 shadow-[0_8px_32px_rgba(0,0,0,0.08)]'
+      ? 'bg-white/[0.02] border-white/15 shadow-2xl shadow-black/20 ring-1 ring-white/5' 
+      : 'bg-white/20 border-white/40 shadow-xl ring-1 ring-white/40'
     }"
 >
   <!-- Rank Badge -->

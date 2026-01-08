@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { X, ZoomIn, ZoomOut, RotateCcw, Maximize, Minimize, MapPin, Calendar, Activity, Zap, Skull, AlertTriangle, Crosshair } from 'lucide-svelte';
+  import { X, ZoomIn, ZoomOut, RotateCcw, Maximize, Minimize, MapPin, Calendar, Activity, Zap, Skull, AlertTriangle, Crosshair, Share2 } from 'lucide-svelte';
   import UpvoteButton from './UpvoteButton.svelte';
   import { getSizeFromSeverity, getDisplayLocation, formatDate, playPopSound, type Report } from '$lib/stores';
   import { spring } from 'svelte/motion';
@@ -18,6 +18,7 @@
   let startMousePos = { x: 0, y: 0 };
   let startImagePos = { x: 0, y: 0 };
   let dragDistance = 0;
+  let shareStatus = '';
 
   // Spring animations for smooth movement/zooming like Framer Motion
   const zoom = spring(1, { stiffness: 0.1, damping: 0.8 });
@@ -76,11 +77,47 @@
     }
   }
 
+  // Share functionality
+  async function handleShare() {
+    const shareUrl = `${window.location.origin}?pothole=${data.id}`;
+    const shareText = `Check out this pothole at ${getDisplayLocation(data.location)}! ${sizeInfo.label} damage with ${data.votes} votes.`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'MarkMyPothole Report',
+          text: shareText,
+          url: shareUrl
+        });
+        shareStatus = 'Shared!';
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+          await copyToClipboard(shareUrl);
+        }
+      }
+    } else {
+      await copyToClipboard(shareUrl);
+    }
+    
+    setTimeout(() => shareStatus = '', 2000);
+  }
+  
+  async function copyToClipboard(text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      shareStatus = 'Link copied!';
+      playPopSound(soundEnabled);
+    } catch {
+      shareStatus = 'Copy failed';
+    }
+  }
+
   // Handle keyboard events for accessibility
   function handleKeyDown(e: KeyboardEvent) {
     if (e.key === 'Escape') onClose();
   }
 </script>
+
 
 <svelte:window on:keydown={handleKeyDown} />
 
@@ -92,28 +129,66 @@
   tabindex="0"
   transition:fade={{ duration: 200 }}
 >
+  <!-- Outer wrapper for clipping rounded corners + border/shadow -->
   <div 
     class="{fullScreen 
-      ? 'fixed inset-0 w-screen h-screen max-w-none rounded-none z-[70] flex flex-col' 
-      : 'w-full max-w-xl md:max-w-4xl max-h-[92vh] md:max-h-none overflow-y-auto md:overflow-visible rounded-[2rem] flex flex-col md:flex-row'
-    } overflow-hidden transition-all duration-300 backdrop-blur-[75px] border {
+      ? 'fixed inset-0 w-screen h-screen max-w-none z-[70]' 
+      : 'w-full max-w-xl md:max-w-4xl max-h-[92vh] md:max-h-none rounded-[2rem]'
+    } overflow-hidden transition-all duration-300 border {
       darkMode 
-        ? 'bg-[#0f172a]/60 border-white/10 shadow-[0_24px_60px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)]' 
-        : 'bg-white/70 border-white/60 shadow-[0_20px_40px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.8)]'
+        ? 'border-white/10 shadow-[0_24px_60px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)]' 
+        : 'border-white/60 shadow-[0_20px_40px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.8)]'
     }"
-    on:click|stopPropagation
-    on:keydown|stopPropagation
-    role="dialog"
-    tabindex="-1"
-    transition:scale={{ duration: 300, start: 0.95 }}
   >
-    <!-- Image Section -->
     <div 
-      class="relative overflow-hidden group {$zoom > 1 ? 'cursor-grab' : 'cursor-zoom-in'} {isDragging ? 'cursor-grabbing' : ''} {fullScreen ? 'flex-1 w-full h-full' : 'flex-1 aspect-video md:aspect-auto rounded-t-[2rem] md:rounded-l-[2rem] md:rounded-tr-none'} {darkMode ? 'bg-black' : 'bg-slate-300/50'}"
+      class="w-full h-full flex {fullScreen ? 'flex-col' : 'flex-col md:flex-row'} {fullScreen ? '' : 'overflow-y-auto md:overflow-visible'} backdrop-blur-[75px] {
+        darkMode 
+          ? 'bg-[#0f172a]/60' 
+          : 'bg-white/70'
+      }"
+      on:click|stopPropagation
+      on:keydown|stopPropagation
+      role="dialog"
+      tabindex="-1"
+    >
+    <!-- MOBILE: Header with title/location at TOP (hidden on desktop) -->
+    {#if !fullScreen}
+      <div class="md:hidden p-4 pb-2 flex justify-between items-start">
+        <div class="space-y-1 flex-1 min-w-0">
+          <div class="flex items-center gap-1.5">
+            <div class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse flex-shrink-0"></div>
+            <span class="text-[10px] font-bold {darkMode ? 'text-cyan-400' : 'text-cyan-600'}">{sizeInfo.label} Damage</span>
+          </div>
+          <h2 class="text-lg font-black tracking-tight leading-tight truncate {darkMode ? 'text-white' : 'text-slate-800'}">
+            {sizeInfo.title}
+          </h2>
+          <div class="flex items-center gap-1 text-xs font-medium {darkMode ? 'text-zinc-400' : 'text-slate-500'}">
+            <MapPin size={12} class={darkMode ? 'text-cyan-400' : 'text-cyan-600'} />
+            <span class="line-clamp-1">{getDisplayLocation(data.location)}</span>
+          </div>
+        </div>
+        <button 
+          on:click={onClose} 
+          class="p-2 rounded-full transition-all flex-shrink-0 border ring-1 backdrop-blur-md ml-2 {
+            darkMode 
+              ? 'bg-white/[0.05] border-white/10 ring-white/5 text-zinc-400 hover:text-white' 
+              : 'bg-white/40 border-white/40 ring-white/40 text-slate-500 hover:text-slate-800'
+          }"
+        >
+          <X size={18} />
+        </button>
+      </div>
+    {/if}
+
+    <!-- Image Section -->
+    <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+    <div 
+      class="relative overflow-hidden group {$zoom > 1 ? 'cursor-grab' : 'cursor-zoom-in'} {isDragging ? 'cursor-grabbing' : ''} {fullScreen ? 'flex-1 w-full h-full' : 'flex-1 aspect-square md:aspect-auto'} {darkMode ? 'bg-black' : 'bg-slate-300/50'}"
       on:mousemove={handleMouseMove}
       on:mouseup={handleMouseUp}
       on:mouseleave={handleMouseUp}
       role="application"
+      aria-label="Image viewer - drag to pan when zoomed"
     >
       <div 
         class="w-full h-full flex items-center justify-center"
@@ -167,22 +242,22 @@
       {#if fullScreen}
         <button 
           on:click={toggleFullScreen}
-          class="absolute top-6 right-6 p-4 rounded-full backdrop-blur-md transition-all z-50 {
+          class="absolute top-6 right-6 p-2 rounded-full transition-all z-50 border ring-1 backdrop-blur-md {
             darkMode 
-              ? 'bg-white/10 hover:bg-white/20 text-white' 
-              : 'bg-black/10 hover:bg-black/20 text-slate-700'
+              ? 'bg-white/10 border-white/10 ring-white/5 text-white hover:bg-white/20' 
+              : 'bg-black/10 border-white/40 ring-white/40 text-slate-700 hover:bg-black/20'
           }"
         >
-          <X size={24} />
+          <X size={16} />
         </button>
       {/if}
     </div>
 
     <!-- Details Section -->
     {#if !fullScreen}
-      <div class="w-full md:w-[400px] p-6 md:p-8 flex flex-col md:h-full md:max-h-[90vh] md:overflow-y-auto">
-        <!-- Details Header -->
-        <div class="flex justify-between items-start mb-8">
+      <div class="w-full md:w-[400px] p-4 md:p-8 flex flex-col md:h-full md:max-h-[90vh] md:overflow-y-auto">
+        <!-- Details Header - Desktop only (mobile header is at top) -->
+        <div class="hidden md:flex justify-between items-start mb-8">
           <div class="space-y-1">
             <div class="text-[10px] font-bold tracking-[0.2em] uppercase {darkMode ? 'text-cyan-400/70' : 'text-cyan-600'}">
               Subject Inspection
@@ -192,15 +267,15 @@
             </h2>
             <div class="flex items-center gap-1.5 text-sm font-medium {darkMode ? 'text-zinc-400' : 'text-slate-500'}">
               <MapPin size={14} class={darkMode ? 'text-cyan-400' : 'text-cyan-600'} />
-              {getDisplayLocation(data.location)}
+              <span class="line-clamp-1">{getDisplayLocation(data.location)}</span>
             </div>
           </div>
           <button 
             on:click={onClose} 
-            class="p-2.5 rounded-full transition-all flex-shrink-0 hover:rotate-90 duration-300 {
+            class="p-2.5 rounded-full transition-all flex-shrink-0 hover:rotate-90 duration-300 border ring-1 backdrop-blur-md {
               darkMode 
-                ? 'bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white' 
-                : 'bg-black/5 hover:bg-black/10 text-slate-500 hover:text-slate-800'
+                ? 'bg-white/[0.05] border-white/10 ring-white/5 text-zinc-400 hover:text-white hover:bg-white/10' 
+                : 'bg-white/40 border-white/40 ring-white/40 text-slate-500 hover:text-slate-800 hover:bg-white/60 shadow-sm'
             }"
           >
             <X size={20} />
@@ -208,65 +283,90 @@
         </div>
 
         <!-- Info Cards -->
-        <div class="space-y-4">
+        <!-- Cards in horizontal layout on mobile, vertical on desktop -->
+        <div class="flex flex-row md:flex-col gap-3 md:gap-4">
           <!-- Threat Level Card -->
-          <div class="p-5 rounded-[2rem] border transition-all duration-300 {
+          <div class="flex-1 p-4 md:p-5 rounded-2xl md:rounded-[2rem] border transition-all duration-300 {
             darkMode 
               ? 'bg-white/[0.03] border-white/10 shadow-[inner_0_0_20px_rgba(0,0,0,0.2)]' 
               : 'bg-white/40 border-white/60 shadow-sm'
           }">
-            <div class="text-[9px] font-bold tracking-widest uppercase mb-2 text-center {darkMode ? 'text-zinc-500' : 'text-slate-400'}">
+            <div class="text-[8px] md:text-[9px] font-bold tracking-widest uppercase mb-1 md:mb-2 text-center {darkMode ? 'text-zinc-500' : 'text-slate-400'}">
               Threat Level
             </div>
-            <div class="flex flex-col items-center gap-2">
-              <div class="text-4xl {sizeInfo.textColor}">
+            <div class="flex flex-col items-center gap-1 md:gap-2">
+              <div class="{sizeInfo.textColor}">
                 {#if sizeInfo.icon === 'Coffee'}
-                  <svelte:component this={Activity} size={40} strokeWidth={2.5} />
+                  <svelte:component this={Activity} size={24} class="md:hidden" strokeWidth={2.5} />
+                  <svelte:component this={Activity} size={40} class="hidden md:block" strokeWidth={2.5} />
                 {:else if sizeInfo.icon === 'Activity'}
-                  <svelte:component this={Activity} size={40} strokeWidth={2.5} />
+                  <svelte:component this={Activity} size={24} class="md:hidden" strokeWidth={2.5} />
+                  <svelte:component this={Activity} size={40} class="hidden md:block" strokeWidth={2.5} />
                 {:else if sizeInfo.icon === 'Zap'}
-                  <svelte:component this={Zap} size={40} strokeWidth={2.5} />
+                  <svelte:component this={Zap} size={24} class="md:hidden" strokeWidth={2.5} />
+                  <svelte:component this={Zap} size={40} class="hidden md:block" strokeWidth={2.5} />
                 {:else if sizeInfo.icon === 'Cog'}
-                  <Activity size={40} strokeWidth={2.5} /> 
+                  <Activity size={24} class="md:hidden" strokeWidth={2.5} />
+                  <Activity size={40} class="hidden md:block" strokeWidth={2.5} />
                 {:else if sizeInfo.icon === 'Skull'}
-                  <Skull size={40} strokeWidth={2.5} />
+                  <Skull size={24} class="md:hidden" strokeWidth={2.5} />
+                  <Skull size={40} class="hidden md:block" strokeWidth={2.5} />
                 {:else if sizeInfo.icon === 'Waves'}
-                  <Activity size={40} strokeWidth={2.5} />
+                  <Activity size={24} class="md:hidden" strokeWidth={2.5} />
+                  <Activity size={40} class="hidden md:block" strokeWidth={2.5} />
                 {:else if sizeInfo.icon === 'AlertTriangle'}
-                  <AlertTriangle size={40} strokeWidth={2.5} />
+                  <AlertTriangle size={24} class="md:hidden" strokeWidth={2.5} />
+                  <AlertTriangle size={40} class="hidden md:block" strokeWidth={2.5} />
                 {:else}
-                  <Activity size={40} strokeWidth={2.5} />
+                  <Activity size={24} class="md:hidden" strokeWidth={2.5} />
+                  <Activity size={40} class="hidden md:block" strokeWidth={2.5} />
                 {/if}
               </div>
-              <div class="text-2xl font-black tracking-tight {sizeInfo.textColor}">
+              <div class="text-sm md:text-2xl font-black tracking-tight text-center {sizeInfo.textColor}">
                 {sizeInfo.title}
               </div>
-              <div class="text-[10px] font-bold px-3 py-1 rounded-full {darkMode ? 'bg-white/10 text-cyan-400' : 'bg-cyan-50 text-cyan-700'}">
+              <div class="text-[8px] md:text-[10px] font-bold px-2 md:px-3 py-0.5 md:py-1 rounded-full {darkMode ? 'bg-white/10 text-cyan-400' : 'bg-cyan-50 text-cyan-700'}">
                 {sizeInfo.label}
               </div>
             </div>
           </div>
 
           <!-- Public Outrage Card -->
-          <div class="p-5 rounded-[2rem] border transition-all duration-300 {
+          <div class="flex-1 p-4 md:p-5 rounded-2xl md:rounded-[2rem] border transition-all duration-300 {
             darkMode 
               ? 'bg-white/[0.03] border-white/10 shadow-[inner_0_0_20px_rgba(0,0,0,0.2)]' 
               : 'bg-white/40 border-white/60 shadow-sm'
           }">
             <div class="flex flex-col items-center text-center">
-              <div class="text-[9px] font-bold tracking-widest uppercase mb-4 {darkMode ? 'text-zinc-500' : 'text-slate-400'}">
+              <div class="text-[8px] md:text-[9px] font-bold tracking-widest uppercase mb-2 md:mb-4 {darkMode ? 'text-zinc-500' : 'text-slate-400'}">
                 Public Outrage
               </div>
-              <UpvoteButton onVote={onVote} votes={data.votes} size="md" {darkMode} {soundEnabled} />
-              <p class="text-[10px] mt-4 leading-relaxed font-medium max-w-[220px] {darkMode ? 'text-zinc-500' : 'text-slate-400'}">
+              <UpvoteButton onVote={onVote} votes={data.votes} size="sm" {darkMode} {soundEnabled} />
+              <p class="hidden md:block text-[10px] mt-4 leading-relaxed font-medium max-w-[220px] {darkMode ? 'text-zinc-500' : 'text-slate-400'}">
                 High interaction levels escalate this hazard into the <span class={darkMode ? 'text-cyan-400' : 'text-cyan-600'}>Hall of Shame</span>.
               </p>
             </div>
           </div>
         </div>
         
-        <!-- Footer Info -->
-        <div class="mt-auto pt-8 flex flex-col gap-4">
+        <!-- Share Button -->
+        <div class="mt-3 md:mt-4">
+          <button 
+            on:click={handleShare}
+            class="w-full py-2 md:py-3 rounded-xl md:rounded-2xl font-bold text-[10px] md:text-xs tracking-wide transition-all flex items-center justify-center gap-2 border ring-1 backdrop-blur-md
+              {darkMode 
+                ? 'bg-white/[0.05] border-white/10 ring-white/5 text-cyan-400 hover:bg-white/10' 
+                : 'bg-white/40 border-white/40 ring-white/40 text-cyan-600 hover:bg-white/60'
+              }"
+          >
+            <Share2 size={14} class="md:hidden" />
+            <Share2 size={16} class="hidden md:block" />
+            {shareStatus || 'Share'}
+          </button>
+        </div>
+        
+        <!-- Footer Info - Hidden on mobile -->
+        <div class="hidden md:flex mt-auto pt-8 flex-col gap-4">
           <div class="flex items-center gap-3 p-4 rounded-2xl border {darkMode ? 'bg-black/20 border-white/5' : 'bg-white/30 border-black/5'}">
             <div class="p-2 rounded-xl {darkMode ? 'bg-white/5' : 'bg-black/5'}">
               <Calendar size={14} class={darkMode ? 'text-cyan-400' : 'text-cyan-600'} />
@@ -275,13 +375,14 @@
               <span class="text-[9px] font-bold tracking-widest uppercase {darkMode ? 'text-zinc-600' : 'text-slate-400'}">DISCOVERED ON</span>
               <span class="text-xs font-bold {darkMode ? 'text-zinc-400' : 'text-slate-600'}">{formatDate(data.created_at)}</span>
             </div>
-          </div>
+        </div>
           <div class="text-[9px] text-center font-bold tracking-tight {darkMode ? 'text-zinc-700' : 'text-slate-300'}">
             ID: {data.id.toString().toUpperCase().slice(0, 16)} • REPORT_AUTH_SECURED
           </div>
         </div>
       </div>
     {/if}
+  </div>
   </div>
 </div>
 

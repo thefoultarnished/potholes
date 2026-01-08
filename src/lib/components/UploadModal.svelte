@@ -290,8 +290,8 @@
       </div>
       <button 
         on:click={onClose} 
-        class="p-2.5 rounded-full transition-all flex-shrink-0 hover:rotate-90 duration-300
-          {darkMode ? 'bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white' : 'bg-black/5 hover:bg-black/10 text-slate-500 hover:text-slate-800'}"
+        class="p-2.5 rounded-full transition-all flex-shrink-0 hover:rotate-90 duration-300 border ring-1 backdrop-blur-md
+          {darkMode ? 'bg-white/[0.05] border-white/10 ring-white/5 text-zinc-400 hover:text-white hover:bg-white/10' : 'bg-white/40 border-white/40 ring-white/40 text-slate-500 hover:text-slate-800 hover:bg-white/60 shadow-sm'}"
       >
         <X size={18} />
       </button>
@@ -370,8 +370,8 @@
                 <button 
                   on:click={detectLocation}
                   disabled={isLocating}
-                  class="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-[9px] font-black tracking-widest uppercase transition-all
-                    {darkMode ? 'bg-white/5 text-cyan-400 border border-white/10 hover:bg-white/10' : 'bg-black/5 text-cyan-600 border border-black/5 hover:bg-black/10'}
+                  class="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-[9px] font-black tracking-widest uppercase transition-all border ring-1 backdrop-blur-md
+                    {darkMode ? 'bg-white/[0.05] border-white/10 ring-white/5 text-cyan-400 hover:bg-white/10' : 'bg-white/40 border-white/40 ring-white/40 text-cyan-600 hover:bg-white/60 shadow-sm'}
                     {isLocating ? 'opacity-50' : ''}"
                 >
                   {#if isLocating}
@@ -394,12 +394,12 @@
                 {#each SIZES as s}
                   <button 
                     on:click={() => severity = s.level}
-                    class="py-2 rounded-2xl transition-all duration-300 font-black text-[9px] px-1.5 h-auto min-h-[38px] leading-tight backdrop-blur-md border uppercase tracking-wider
+                    class="py-2 rounded-2xl transition-all duration-300 font-black text-[9px] px-1.5 h-auto min-h-[38px] leading-tight backdrop-blur-md border uppercase tracking-wider ring-1
                       {severity === s.level 
                         ? s.color + ' text-white shadow-[0_8px_20px_-4px_rgba(0,0,0,0.3)] border-transparent scale-[1.05] z-10' 
                         : darkMode 
-                          ? 'bg-white/5 border-white/10 text-zinc-500 hover:bg-white/10' 
-                          : 'bg-white/40 border-black/5 text-slate-500 hover:bg-white/60'
+                          ? 'bg-white/[0.05] border-white/10 ring-white/5 text-zinc-500 hover:bg-white/10' 
+                          : 'bg-white/40 border-white/40 ring-white/40 text-slate-500 hover:bg-white/60'
                       }"
                   >
                     <div class="flex flex-col items-center gap-1">
@@ -415,10 +415,10 @@
           <button 
             on:click={handleUpload}
             disabled={uploading || scanning || !file || !location || !isPothole || !severity}
-            class="w-full py-4 rounded-[2rem] font-black text-xs tracking-[0.2em] uppercase transition-all duration-300 disabled:opacity-30 disabled:grayscale mt-6
+            class="w-full py-4 rounded-[2rem] font-black text-xs tracking-[0.2em] uppercase transition-all duration-300 disabled:opacity-30 disabled:grayscale mt-6 border ring-1 backdrop-blur-md
               {darkMode 
-                ? 'bg-gradient-to-br from-cyan-400 to-blue-600 text-white shadow-[0_20px_40px_-10px_rgba(34,211,238,0.3)]' 
-                : 'bg-slate-900 text-white shadow-[0_20px_40px_-10px_rgba(15,23,42,0.3)]'
+                ? 'bg-white/[0.05] border-white/10 ring-white/5 text-white hover:bg-white/10 shadow-[0_20px_40px_-10px_rgba(34,211,238,0.1)]' 
+                : 'bg-white/40 border-white/40 ring-white/40 text-slate-700 hover:bg-white/60 shadow-[0_20px_40px_-10px_rgba(15,23,42,0.1)]'
               }"
           >
             {#if uploading}

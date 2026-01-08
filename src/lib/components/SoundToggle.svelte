@@ -7,10 +7,10 @@
 <button
   on:click={() => setSoundEnabled(!soundEnabled)}
   aria-label={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'}
-  class="w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-102 active:scale-98
+  class="w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-102 active:scale-98 border ring-1 backdrop-blur-md
     {darkMode 
-      ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] text-cyan-400 shadow-[0_4px_12px_rgba(0,0,0,0.4)]' 
-      : 'bg-white text-slate-500 shadow-[0_4px_12px_rgba(0,0,0,0.08)]'
+      ? 'bg-white/[0.05] border-white/10 ring-white/5 text-cyan-400 hover:bg-white/10' 
+      : 'bg-white/40 border-white/40 ring-white/40 text-slate-500 hover:bg-white/60 shadow-sm'
     }"
 >
   {#if soundEnabled}

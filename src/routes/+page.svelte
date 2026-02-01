@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { browser } from '$app/environment';
   import { Camera, X, Menu, Award, Map as MapIcon } from 'lucide-svelte';
   import ModeToggle from '$lib/components/ModeToggle.svelte';
   import SoundToggle from '$lib/components/SoundToggle.svelte';
@@ -111,7 +112,7 @@
   const CACHE_KEY = 'cached_reports';
   
   function cacheReports(reports: Report[]) {
-    if (typeof localStorage !== 'undefined') {
+    if (browser) {
       localStorage.setItem(CACHE_KEY, JSON.stringify({
         data: reports,
         timestamp: Date.now()
@@ -120,7 +121,7 @@
   }
   
   function loadCachedReports(): Report[] | null {
-    if (typeof localStorage === 'undefined') return null;
+    if (!browser) return null;
     const cached = localStorage.getItem(CACHE_KEY);
     if (!cached) return null;
     try {
@@ -133,7 +134,7 @@
   
   onMount(() => {
     // Load preferences from localStorage
-    if (typeof localStorage !== 'undefined') {
+    if (browser) {
       const savedDarkMode = localStorage.getItem('darkMode');
       const savedSound = localStorage.getItem('soundEnabled');
       const savedVotes = localStorage.getItem('votedIds');
@@ -207,13 +208,13 @@
   });
   
   // Persist preferences
-  $: if (typeof localStorage !== 'undefined') {
+  $: if (browser) {
     localStorage.setItem('darkMode', String(localDarkMode));
   }
-  $: if (typeof localStorage !== 'undefined') {
+  $: if (browser) {
     localStorage.setItem('soundEnabled', String(localSoundEnabled));
   }
-  $: if (typeof localStorage !== 'undefined') {
+  $: if (browser) {
     localStorage.setItem('sortBy', sortBy);
   }
   
@@ -276,7 +277,7 @@
     // Mark as voted
     votedIds.add(id);
     votedIds = votedIds; // Trigger reactivity
-    if (typeof localStorage !== 'undefined') {
+    if (browser) {
       localStorage.setItem('votedIds', JSON.stringify([...votedIds]));
     }
     

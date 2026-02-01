@@ -215,13 +215,11 @@
         created_at: new Date().toISOString()
       };
 
-      const response = await fetch(`${SUPABASE_URL}/rest/v1/potholes`, {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/create-pothole`, {
         method: 'POST',
         headers: {
-          'apikey': SUPABASE_ANON_KEY,
           'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=representation'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(reportData)
       });

@@ -31,8 +31,23 @@ Deno.serve(async (req) => {
        throw new Error(`Configuration Error: SERVICE_ROLE_KEY is missing`)
     }
 
+    // Check for duplicate image (prevent spamming the same image)
     // Create Supabase client with service role key (bypasses RLS)
     const dbUrl = `${supabaseUrl}/rest/v1/potholes`
+    
+    const duplicateCheck = await fetch(`${dbUrl}?image_url=eq.${encodeURIComponent(image_url)}&select=id`, {
+        headers: { 'apikey': supabaseServiceKey, 'Authorization': `Bearer ${supabaseServiceKey}` }
+    })
+    
+    if (duplicateCheck.ok) {
+        const dups = await duplicateCheck.json()
+        if (dups && dups.length > 0) {
+             return new Response(
+                JSON.stringify({ error: 'This pothole has already been reported.' }),
+                { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+        }
+    }
     const dbPayload = {
         image_url,
         location: typeof location === 'object' ? JSON.stringify(location) : location,

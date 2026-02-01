@@ -291,26 +291,23 @@
     }
     
     if (SUPABASE_URL && SUPABASE_ANON_KEY) {
-      const report = localReports.find(r => r.id === id);
-      if (report) {
-        try {
-          const res = await fetch(`${SUPABASE_URL}/rest/v1/potholes?id=eq.${id}`, {
-            method: 'PATCH',
-            headers: {
-              'apikey': SUPABASE_ANON_KEY,
-              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-              'Content-Type': 'application/json',
-              'Prefer': 'return=minimal'
-            },
-            body: JSON.stringify({ votes: report.votes })
-          });
-          
-          if (!res.ok) {
-            showToast('Vote sync failed. It will be retried.', 'error');
-          }
-        } catch (err) {
-          showToast('Network error while voting.', 'error');
+      // Use Edge Function for secure voting
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/vote-pothole`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ id })
+        });
+        
+        if (!res.ok) {
+          showToast('Vote failed to sync.', 'error');
+          // Revert optimistic update?
         }
+      } catch (err) {
+        showToast('Network error while voting.', 'error');
       }
     }
   }

@@ -196,13 +196,13 @@
       }
     }
     
-    // Fallback polling (less frequent if realtime works)
-    const interval = setInterval(loadPotholes, 30000);
+    // Fallback polling removed to prevent overwriting optimistic updates
+    // const interval = setInterval(loadPotholes, 30000);
     
     trackEvent('page_view', { darkMode: localDarkMode });
     
     return () => {
-      clearInterval(interval);
+      // clearInterval(interval);
       if (realtimeChannel) realtimeChannel.unsubscribe();
     };
   });

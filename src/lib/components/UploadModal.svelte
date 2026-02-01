@@ -183,12 +183,32 @@
     
     try {
       const compressedBlob = await compressImage(file);
+      aiStatus = 'SECURING CHANNEL...';
+
+      // 1. Get Secure Signature from Backend
+      const signRes = await fetch(`${SUPABASE_URL}/functions/v1/sign-cloudinary-upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!signRes.ok) {
+        const errData = await signRes.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to get secure upload signature');
+      }
+
+      const { signature, timestamp, folder, apiKey } = await signRes.json();
+
       aiStatus = 'UPLOADING TO CLOUDINARY...';
       
       const formData = new FormData();
       formData.append('file', compressedBlob);
-      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-      formData.append('folder', 'potholes');
+      formData.append('api_key', apiKey);
+      formData.append('timestamp', timestamp.toString());
+      formData.append('signature', signature);
+      formData.append('folder', folder);
       
       const cloudinaryResponse = await fetch(
         `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,

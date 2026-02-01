@@ -268,17 +268,24 @@
 
   
   async function handleVote(id: string) {
-    // Prevent double voting
-    if (votedIds.has(id)) {
-      showToast('You have already upvoted this pothole!', 'info');
+    // Get current vote count for this pothole (max 100 per user)
+    let voteCounts: Record<string, number> = {};
+    if (browser) {
+      try {
+        voteCounts = JSON.parse(localStorage.getItem('voteCounts') || '{}');
+      } catch {}
+    }
+    
+    const currentCount = voteCounts[id] || 0;
+    if (currentCount >= 100) {
+      showToast('You have reached 100 votes for this pothole!', 'info');
       return;
     }
     
-    // Mark as voted
-    votedIds.add(id);
-    votedIds = votedIds; // Trigger reactivity
+    // Increment vote count
+    voteCounts[id] = currentCount + 1;
     if (browser) {
-      localStorage.setItem('votedIds', JSON.stringify([...votedIds]));
+      localStorage.setItem('voteCounts', JSON.stringify(voteCounts));
     }
     
     // Optimistic update
@@ -304,7 +311,6 @@
         
         if (!res.ok) {
           showToast('Vote failed to sync.', 'error');
-          // Revert optimistic update?
         }
       } catch (err) {
         showToast('Network error while voting.', 'error');

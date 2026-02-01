@@ -19,28 +19,8 @@ Deno.serve(async (req: Request) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SERVICE_ROLE_KEY')!
-
-    // Rate Limiting (2 seconds)
-    const forwardedFor = req.headers.get('x-forwarded-for') || 'unknown'
-    const pureIp = forwardedFor.split(',')[0].trim()
-    const rateLimitKey = `${pureIp}_vote`
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
-    
-    const { data: rateData } = await supabase
-      .from('rate_limits')
-      .select('last_request_at')
-      .eq('ip_address', rateLimitKey)
-      .single()
-
-    if (rateData) {
-      const lastRequest = new Date(rateData.last_request_at).getTime()
-      if (Date.now() - lastRequest < 2000) {
-        return new Response(JSON.stringify({ error: 'Voting too fast' }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
-      }
-    }
-
-    await supabase.from('rate_limits').upsert({ ip_address: rateLimitKey, last_request_at: new Date().toISOString() })
 
     // Increment votes
     const { data: current } = await supabase.from('potholes').select('votes').eq('id', id).single()

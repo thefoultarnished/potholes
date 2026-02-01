@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { X, Loader2, Upload, LocateFixed, Camera, Trophy } from 'lucide-svelte';
-  import { SIZES, playPopSound, CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET, SUPABASE_URL, SUPABASE_ANON_KEY, type Report } from '$lib/stores';
+  import { SIZES, playPopSound, CLOUDINARY_CLOUD_NAME, SUPABASE_URL, SUPABASE_ANON_KEY, type Report } from '$lib/stores';
   
   export let onClose: () => void;
   export let onCreate: (report: Report) => void;

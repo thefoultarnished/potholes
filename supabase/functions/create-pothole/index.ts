@@ -26,6 +26,7 @@ Deno.serve(async (req) => {
     // Check for IP-based Rate Limiting (1 request per 10 seconds)
     const forwardedFor = req.headers.get('x-forwarded-for') || 'unknown'
     const clientIp = forwardedFor.split(',')[0].trim()
+    console.log(`[RateLimit] Raw: ${forwardedFor} -> Extracted: ${clientIp}`)
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const rawServiceKey = Deno.env.get('SERVICE_ROLE_KEY')!
     const supabaseServiceKey = rawServiceKey ? rawServiceKey.trim() : ''

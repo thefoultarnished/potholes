@@ -27,7 +27,9 @@
 	},
 	"dependencies": {
 		"@supabase/supabase-js": "^2.89.0",
+		"@types/d3-interpolate": "^3.0.4",
 		"canvas-confetti": "^1.9.4",
+		"d3-interpolate": "^3.0.1",
 		"leaflet": "^1.9.4",
 		"lucide-svelte": "^0.468.0",
 		"svelte-motion": "^0.12.2"

@@ -1,7 +1,9 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { browser } from '$app/environment';
   import { Camera, X, Menu, Award, Map as MapIcon, Sparkles, TrendingUp, Zap } from 'lucide-svelte';
+  import { tweened } from 'svelte/motion';
+  import { interpolateRgb } from 'd3-interpolate';
   import ModeToggle from '$lib/components/ModeToggle.svelte';
   import SoundToggle from '$lib/components/SoundToggle.svelte';
   import ReportCard from '$lib/components/ReportCard.svelte';
@@ -243,7 +245,75 @@
     return () => {
       // clearInterval(interval);
       if (realtimeChannel) realtimeChannel.unsubscribe();
+      clearInterval(auroraInterval);
+      if (typeof window !== 'undefined') window.removeEventListener('resize', handleResize);
     };
+  });
+
+  // Aurora Background Logic
+  const AURORA_COLORS = ["#13FFAA", "#1E67C6", "#CE84CF", "#DD335C"];
+  let auroraColorIndex = 0;
+  const auroraColor = tweened(AURORA_COLORS[0], {
+    duration: 5000,
+    interpolate: interpolateRgb
+  });
+
+  let auroraInterval: any;
+  let canvas: HTMLCanvasElement;
+  let ctx: CanvasRenderingContext2D | null;
+  let stars: { x: number; y: number; size: number; opacity: number; speed: number }[] = [];
+
+  function initStars() {
+    if (!canvas) return;
+    stars = Array.from({ length: 200 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      size: Math.random() * 1.5,
+      opacity: Math.random(),
+      speed: Math.random() * 0.05
+    }));
+  }
+
+  function drawStars() {
+    if (!ctx || !canvas) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    stars.forEach(star => {
+      ctx!.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
+      ctx!.beginPath();
+      ctx!.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+      ctx!.fill();
+      
+      star.y -= star.speed;
+      if (star.y < 0) star.y = canvas.height;
+      star.opacity = 0.2 + Math.abs(Math.sin(Date.now() * 0.001 * (star.speed + 0.1) * 10)) * 0.8;
+    });
+    requestAnimationFrame(drawStars);
+  }
+
+  function handleResize() {
+    if (canvas) {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      initStars();
+    }
+  }
+
+  onMount(() => {
+    // Start Aurora Cycle
+    auroraInterval = setInterval(() => {
+      auroraColorIndex = (auroraColorIndex + 1) % AURORA_COLORS.length;
+      auroraColor.set(AURORA_COLORS[auroraColorIndex]);
+    }, 5000);
+
+    // Setup Canvas
+    if (canvas) {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      ctx = canvas.getContext('2d');
+      initStars();
+      drawStars();
+    }
+    window.addEventListener('resize', handleResize);
   });
   
   // Persist preferences
@@ -377,28 +447,26 @@
   
   <div class="fixed inset-0 overflow-hidden pointer-events-none" style="z-index: 0">
     {#if localDarkMode}
-      <!-- Bold Chromatic Night -->
-      <div class="absolute inset-0 bg-[#030712]"></div>
-      
-      <!-- Hot Pink/Magenta Blaze (top-left) -->
-      <div class="absolute -top-[15%] -left-[10%] w-[90vw] h-[90vw] rounded-full opacity-50"
-        style="background: radial-gradient(circle at center, #ec4899 0%, transparent 60%); filter: blur(80px);"></div>
-      
-      <!-- Electric Cyan Burst (top-right) -->
-      <div class="absolute -top-[10%] -right-[15%] w-[80vw] h-[80vw] rounded-full opacity-45"
-        style="background: radial-gradient(circle at center, #06b6d4 0%, transparent 55%); filter: blur(70px);"></div>
-      
-      <!-- Deep Purple Core (center) -->
-      <div class="absolute top-[25%] left-[15%] w-[100vw] h-[70vh] rounded-full opacity-35"
-        style="background: radial-gradient(ellipse at center, #7c3aed 0%, transparent 65%); filter: blur(90px);"></div>
-      
-      <!-- Vibrant Blue Wave (bottom-left) -->
-      <div class="absolute bottom-[-20%] -left-[20%] w-[100vw] h-[100vw] rounded-full opacity-50"
-        style="background: radial-gradient(circle at center, #2563eb 0%, transparent 60%); filter: blur(80px);"></div>
-      
-      <!-- Teal Accent (bottom-right) -->
-      <div class="absolute -bottom-[25%] -right-[10%] w-[85vw] h-[85vw] rounded-full opacity-40"
-        style="background: radial-gradient(circle at center, #14b8a6 0%, transparent 60%); filter: blur(90px);"></div>
+      <!-- Primary Aurora Gradient -->
+      <div 
+        class="absolute inset-0 transition-all duration-[5000ms] ease-in-out"
+        style="background: radial-gradient(125% 125% at 50% 0%, #020617 50%, {$auroraColor});"
+      ></div>
+
+      <!-- Starfield Canvas -->
+      <canvas 
+        bind:this={canvas} 
+        class="absolute inset-0 opacity-40 mix-blend-screen"
+      ></canvas>
+
+      <!-- Atmospheric Depth (Hues) -->
+      <div class="absolute inset-0 overflow-hidden">
+        <div class="absolute top-[10%] right-[10%] w-[60vw] h-[60vw] rounded-full opacity-[0.05] blur-[150px]"
+          style="background: radial-gradient(circle at center, rgb({themeColorRGB}) 0%, transparent 70%);"></div>
+      </div>
+
+      <!-- Glass Texture Mesh -->
+      <div class="absolute inset-0 opacity-[0.03] mix-blend-overlay" style="background-image: url('https://grainy-gradients.vercel.app/noise.svg');"></div>
     {:else}
       <!-- Light Mode Static Background (Soft Pastels) -->
       <div class="absolute top-[-20%] left-[-10%] w-[60vw] h-[60vw] rounded-full bg-rose-200/60 blur-[120px]"></div>
@@ -430,15 +498,22 @@
       <div class="flex items-center gap-1.5 sm:gap-2">
         <button
           on:click={() => localShowUpload = true}
-          class="group relative w-11 h-11 sm:w-auto sm:h-11 sm:px-6 rounded-full font-bold text-[15px] flex items-center justify-center gap-2 transition-all duration-500 active:scale-95 text-white backdrop-blur-2xl border border-white/40 shadow-sm"
+          class="group relative w-11 h-11 sm:w-auto sm:h-11 sm:px-6 rounded-full font-black text-[15px] flex items-center justify-center gap-2 transition-all duration-500 active:scale-95 text-white backdrop-blur-[40px] border border-white/40 shadow-2xl overflow-hidden"
           style="
-            background: linear-gradient(135deg, rgba({themeColorRGB}, 0.7) 0%, rgba({themeColorRGB}, 0.3) 100%);
+            background: 
+              linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 50%, rgba(0,0,0,0.1) 100%),
+              rgba({themeColorRGB}, 0.6);
             box-shadow: 
-              inset 0 1px 1px rgba(255,255,255,0.4),
-              inset 0 -1px 1px rgba(0,0,0,0.1);
+              inset 0 1px 1px 0 rgba(255, 255, 255, 0.4),
+              inset 0 12px 24px -10px rgba(255, 255, 255, 0.2),
+              inset 0 -1px 1px 0 rgba(0, 0, 0, 0.2);
           "
         >
-          <span class="transition-transform duration-300 group-hover:translate-x-1">
+          <!-- Specular Light Reflection -->
+          <div class="absolute inset-0 opacity-20 pointer-events-none group-hover:translate-x-full transition-transform duration-1000 ease-in-out" 
+               style="background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent); transform: skewX(-20deg) translateX(-150%);"></div>
+          
+          <span class="relative z-10 transition-transform duration-300 group-hover:translate-x-1">
             <Camera size={18} />
           </span>
           <span class="hidden sm:inline transition-transform duration-300 group-hover:translate-x-1">Mark</span>

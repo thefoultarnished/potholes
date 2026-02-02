@@ -8,6 +8,7 @@
   export let onSelect: (data: Report) => void;
   export let darkMode: boolean;
   export let soundEnabled: boolean;
+  export let blueColor = 'text-cyan-400';
   
   $: sizeInfo = getSizeFromSeverity(data.severity);
 </script>
@@ -17,7 +18,7 @@
   class="rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1 group/tile
     {darkMode 
       ? '' 
-      : 'bg-white/20 border border-white/40 shadow-xl ring-1 ring-white/40 hover:shadow-[0_12px_40px_rgba(6,182,212,0.1)] backdrop-blur-xl'
+      : `bg-white/20 border border-white/40 shadow-xl ring-1 ring-white/40 hover:shadow-[0_12px_40px_rgba(${blueColor.includes('yellow') ? '250,204,21' : '6,182,212'},0.1)] backdrop-blur-xl`
     }"
   style={darkMode ? `
     background: 
@@ -59,7 +60,7 @@
       <span class="text-xs font-medium {darkMode ? 'text-zinc-400' : 'text-slate-500'}">
         {formatDate(data.created_at)}
       </span>
-      <UpvoteButton {onVote} votes={data.votes} size="sm" {darkMode} {soundEnabled} />
+      <UpvoteButton {onVote} votes={data.votes} size="sm" {darkMode} {soundEnabled} {blueColor} />
     </div>
   </div>
 </div>

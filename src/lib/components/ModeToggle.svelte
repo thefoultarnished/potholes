@@ -4,6 +4,8 @@
   // 0 = light, 1 = dark, 2 = torchlight
   export let mode: number;
   export let setMode: (val: number) => void;
+  export let blueColor = 'text-cyan-400';
+  $: themeColor = blueColor.includes('yellow') ? 'yellow' : 'cyan';
 </script>
 
 <button
@@ -11,7 +13,7 @@
   aria-label={mode === 1 ? 'Switch to torchlight mode' : 'Switch to dark mode'}
   class="w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95
     {mode === 0 
-      ? 'bg-white/40 border border-white/40 ring-1 ring-white/40 text-cyan-600 hover:bg-white/60 shadow-sm backdrop-blur-md'
+      ? `bg-white/40 border border-white/40 ring-1 ring-white/40 ${blueColor} hover:bg-white/60 shadow-sm backdrop-blur-md`
       : ''
     }"
   style={mode !== 0 ? `

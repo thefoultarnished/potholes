@@ -5,11 +5,13 @@
   export let message: string;
   export let type: 'success' | 'error' | 'info' = 'info';
   export let onClose: () => void;
+  export let blueColor = 'text-cyan-400';
+  export let themeColor = 'cyan';
   
   const colors = {
-    success: 'bg-cyan-500/20 border-cyan-500/30 text-cyan-400',
+    success: 'bg-green-500/20 border-green-500/30 text-green-400',
     error: 'bg-red-500/20 border-red-500/30 text-red-400',
-    info: 'bg-cyan-500/20 border-cyan-500/30 text-cyan-400'
+    info: (themeColor === 'yellow' ? 'bg-yellow-500/20 border-yellow-500/30 text-yellow-400' : 'bg-cyan-500/20 border-cyan-500/30 text-cyan-400')
   };
   
   // Auto-dismiss after 4 seconds

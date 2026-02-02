@@ -10,8 +10,10 @@
   export let onVote: () => void;
   export let darkMode: boolean;
   export let soundEnabled: boolean;
+  export let blueColor = 'text-cyan-400';
 
   $: sizeInfo = getSizeFromSeverity(data.severity);
+  $: themeColor = blueColor.includes('yellow') ? 'yellow' : 'cyan';
 
   let fullScreen = false;
   let isDragging = false;
@@ -156,14 +158,14 @@
       <div class="md:hidden p-4 pb-2 flex justify-between items-start">
         <div class="space-y-1 flex-1 min-w-0">
           <div class="flex items-center gap-1.5">
-            <div class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse flex-shrink-0"></div>
-            <span class="text-[10px] font-bold {darkMode ? 'text-cyan-400' : 'text-cyan-600'}">{sizeInfo.label} Damage</span>
+            <div class="w-2 h-2 rounded-full {blueColor.replace('text-', 'bg-')} animate-pulse flex-shrink-0"></div>
+            <span class="text-[10px] font-bold {blueColor}">{sizeInfo.label} Damage</span>
           </div>
           <h2 class="text-lg font-black tracking-tight leading-tight truncate {darkMode ? 'text-white' : 'text-slate-800'}">
             {sizeInfo.title}
           </h2>
           <div class="flex items-center gap-1 text-xs font-medium {darkMode ? 'text-zinc-400' : 'text-slate-500'}">
-            <MapPin size={12} class={darkMode ? 'text-cyan-400' : 'text-cyan-600'} />
+            <MapPin size={12} class={blueColor} />
             <span class="line-clamp-1">{getDisplayLocation(data.location)}</span>
           </div>
         </div>
@@ -235,7 +237,7 @@
           ? 'bg-white/10 text-white backdrop-blur-md' 
           : 'bg-black/10 text-slate-700 backdrop-blur-md'
       }">
-        <div class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></div>
+        <div class="w-2 h-2 rounded-full {blueColor.replace('text-', 'bg-')} animate-pulse"></div>
         {fullScreen ? 'Cinematic Mode' : `${sizeInfo.label} Damage`}
       </div>
 
@@ -259,14 +261,14 @@
         <!-- Details Header - Desktop only (mobile header is at top) -->
         <div class="hidden md:flex justify-between items-start mb-8">
           <div class="space-y-1">
-            <div class="text-[10px] font-bold tracking-[0.2em] uppercase {darkMode ? 'text-cyan-400/70' : 'text-cyan-600'}">
+            <div class="text-[10px] font-bold tracking-[0.2em] uppercase {blueColor} opacity-70">
               Subject Inspection
             </div>
             <h2 class="text-3xl font-black tracking-tight leading-tight {darkMode ? 'text-white' : 'text-slate-800'}">
               {sizeInfo.title}
             </h2>
             <div class="flex items-center gap-1.5 text-sm font-medium {darkMode ? 'text-zinc-400' : 'text-slate-500'}">
-              <MapPin size={14} class={darkMode ? 'text-cyan-400' : 'text-cyan-600'} />
+              <MapPin size={14} class={blueColor} />
               <span class="line-clamp-1">{getDisplayLocation(data.location)}</span>
             </div>
           </div>
@@ -325,7 +327,7 @@
               <div class="text-sm md:text-2xl font-black tracking-tight text-center {sizeInfo.textColor}">
                 {sizeInfo.title}
               </div>
-              <div class="text-[8px] md:text-[10px] font-bold px-2 md:px-3 py-0.5 md:py-1 rounded-full {darkMode ? 'bg-white/10 text-cyan-400' : 'bg-cyan-50 text-cyan-700'}">
+              <div class="text-[8px] md:text-[10px] font-bold px-2 md:px-3 py-0.5 md:py-1 rounded-full {darkMode ? 'bg-white/10 ' + blueColor : (themeColor === 'yellow' ? 'bg-yellow-50 text-yellow-700' : 'bg-cyan-50 text-cyan-700')}">
                 {sizeInfo.label}
               </div>
             </div>
@@ -341,9 +343,9 @@
               <div class="text-[8px] md:text-[9px] font-bold tracking-widest uppercase mb-2 md:mb-4 {darkMode ? 'text-zinc-500' : 'text-slate-400'}">
                 Public Outrage
               </div>
-              <UpvoteButton onVote={onVote} votes={data.votes} size="sm" {darkMode} {soundEnabled} />
+              <UpvoteButton onVote={onVote} votes={data.votes} size="sm" {darkMode} {soundEnabled} {blueColor} />
               <p class="hidden md:block text-[10px] mt-4 leading-relaxed font-medium max-w-[220px] {darkMode ? 'text-zinc-500' : 'text-slate-400'}">
-                High interaction levels escalate this hazard into the <span class={darkMode ? 'text-cyan-400' : 'text-cyan-600'}>Hall of Shame</span>.
+                High interaction levels escalate this hazard into the <span class={blueColor}>Hall of Shame</span>.
               </p>
             </div>
           </div>
@@ -355,8 +357,8 @@
             on:click={handleShare}
             class="w-full py-2 md:py-3 rounded-xl md:rounded-2xl font-bold text-[10px] md:text-xs tracking-wide transition-all flex items-center justify-center gap-2 border ring-1 backdrop-blur-md
               {darkMode 
-                ? 'bg-white/[0.05] border-white/10 ring-white/5 text-cyan-400 hover:bg-white/10' 
-                : 'bg-white/40 border-white/40 ring-white/40 text-cyan-600 hover:bg-white/60'
+                ? `bg-white/[0.05] border-white/10 ring-white/5 ${blueColor} hover:bg-white/10` 
+                : `bg-white/40 border-white/40 ring-white/40 ${blueColor} hover:bg-white/60`
               }"
           >
             <Share2 size={14} class="md:hidden" />
@@ -369,7 +371,7 @@
         <div class="hidden md:flex mt-auto pt-8 flex-col gap-4">
           <div class="flex items-center gap-3 p-4 rounded-2xl border {darkMode ? 'bg-black/20 border-white/5' : 'bg-white/30 border-black/5'}">
             <div class="p-2 rounded-xl {darkMode ? 'bg-white/5' : 'bg-black/5'}">
-              <Calendar size={14} class={darkMode ? 'text-cyan-400' : 'text-cyan-600'} />
+              <Calendar size={14} class={blueColor} />
             </div>
             <div class="flex flex-col">
               <span class="text-[9px] font-bold tracking-widest uppercase {darkMode ? 'text-zinc-600' : 'text-slate-400'}">DISCOVERED ON</span>

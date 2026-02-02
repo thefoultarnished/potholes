@@ -8,6 +8,9 @@
   export let onSelect: (data: Report) => void;
   export let darkMode: boolean;
   export let soundEnabled: boolean;
+  export let blueColor = 'text-cyan-400';
+  export let themeColorRGB = '34, 211, 238';
+  $: themeColor = blueColor.includes('yellow') ? 'yellow' : 'cyan';
   
   $: sizeInfo = getSizeFromSeverity(data.severity);
   $: aura = getAuraByRank(rank);
@@ -46,7 +49,9 @@
   <div class="absolute top-3 left-3 z-20">
     <div class="font-black rounded-xl flex items-center justify-center backdrop-blur-md
       {isChampion 
-        ? 'w-10 h-10 text-sm shadow-[0_4px_16px_rgba(6,182,212,0.4)] ' + (darkMode ? 'bg-gradient-to-b from-cyan-400 to-cyan-500 text-cyan-950' : 'bg-gradient-to-b from-cyan-500 to-cyan-600 text-white')
+        ? `w-10 h-10 text-sm shadow-[0_4px_16px_rgba(${themeColorRGB},0.4)] ` + (darkMode 
+            ? (themeColor === 'yellow' ? 'bg-gradient-to-b from-yellow-400 to-yellow-500 text-yellow-950' : 'bg-gradient-to-b from-cyan-400 to-cyan-500 text-cyan-950') 
+            : (themeColor === 'yellow' ? 'bg-gradient-to-b from-yellow-500 to-yellow-600 text-white' : 'bg-gradient-to-b from-cyan-500 to-cyan-600 text-white'))
         : rank === 2
           ? 'w-8 h-8 text-xs ' + (darkMode ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] text-zinc-300 shadow-[0_2px_8px_rgba(0,0,0,0.3)]' : 'bg-white/80 text-slate-600 shadow-[0_2px_8px_rgba(0,0,0,0.1)]')
           : 'w-8 h-8 text-xs ' + (darkMode ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] text-zinc-400 shadow-[0_2px_8px_rgba(0,0,0,0.3)]' : 'bg-white/80 text-slate-500 shadow-[0_2px_8px_rgba(0,0,0,0.1)]')
@@ -100,7 +105,7 @@
       <span class="font-medium {isChampion ? 'text-xs' : 'text-[10px]'} {darkMode ? 'text-zinc-300' : 'text-slate-600'}">
         {formatDate(data.created_at)}
       </span>
-      <UpvoteButton {onVote} votes={data.votes} size="sm" {darkMode} {soundEnabled} />
+      <UpvoteButton {onVote} votes={data.votes} size="sm" {darkMode} {soundEnabled} {blueColor} />
     </div>
   </div>
 </div>

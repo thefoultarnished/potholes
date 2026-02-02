@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
-  import { Camera, X, Menu, Award, Map as MapIcon } from 'lucide-svelte';
+  import { Camera, X, Menu, Award, Map as MapIcon, Sparkles, TrendingUp, Zap } from 'lucide-svelte';
   import ModeToggle from '$lib/components/ModeToggle.svelte';
   import SoundToggle from '$lib/components/SoundToggle.svelte';
   import ReportCard from '$lib/components/ReportCard.svelte';
@@ -69,6 +69,22 @@
   // Sort options
   type SortOption = 'recent' | 'votes' | 'severity';
   let sortBy: SortOption = 'recent';
+
+  // Centralized text color for consistency
+  $: primaryTextColor = localDarkMode ? 'text-zinc-200' : 'text-slate-500';
+  
+  // Theme Color Mapping
+  // Change 'yellow' back to 'cyan' to revert to blue.
+  $: themeColor = 'cyan'; 
+  $: themeColorRGB = themeColor === 'yellow' ? '250, 204, 21' : '34, 211, 238';
+
+  $: blueColor = themeColor === 'yellow' 
+    ? (localDarkMode ? 'text-yellow-400' : 'text-yellow-600')
+    : (localDarkMode ? 'text-cyan-400' : 'text-cyan-600');
+  $: blueBgClass = themeColor === 'yellow'
+    ? (localDarkMode ? 'bg-yellow-400' : 'bg-yellow-500')
+    : (localDarkMode ? 'bg-cyan-400' : 'bg-cyan-500');
+  $: blueShadowClass = localDarkMode ? `rgba(${themeColorRGB}, 0.3)` : `rgba(${themeColorRGB}, 0.2)`;
   
   // Analytics tracking
   function trackEvent(event: string, data?: Record<string, any>) {
@@ -351,6 +367,8 @@
 </svelte:head>
 
 <div class="min-h-screen relative transition-colors duration-500 {localDarkMode ? 'bg-[#020617]' : 'bg-gradient-to-br from-slate-100 via-blue-50 to-cyan-50'}" on:mousemove={handleMouseMove} on:touchmove={handleTouchMove} on:touchstart={handleTouchMove} role="application">
+  <!-- Dynamic Theme Color Protection -->
+  <div class="hidden text-yellow-400 text-yellow-500 text-yellow-600 bg-yellow-400 bg-yellow-500 bg-yellow-600 text-cyan-400 text-cyan-500 text-cyan-600 bg-cyan-400 bg-cyan-500 bg-cyan-600 border-yellow-400 border-yellow-500 border-cyan-400 border-cyan-500 focus-within:ring-yellow-500/30 focus-within:ring-cyan-500/30 shadow-yellow-400/50 shadow-cyan-400/50"></div>
   
   <div class="fixed inset-0 overflow-hidden pointer-events-none" style="z-index: 0">
     {#if localDarkMode}
@@ -385,7 +403,7 @@
   </div>
 
   {#if showSplash}
-    <LoadingScreen darkMode={localDarkMode} onComplete={() => showSplash = false} />
+    <LoadingScreen darkMode={localDarkMode} blueColor={blueColor} themeColorRGB={themeColorRGB} onComplete={() => showSplash = false} />
   {/if}
 
   <!-- Header -->
@@ -399,10 +417,10 @@
         />
         <div>
           <h1 class="font-bold text-lg tracking-tight leading-none {localDarkMode ? 'text-white' : 'text-slate-600'}">
-            Mark<span class={localDarkMode ? 'text-cyan-400' : 'text-cyan-600'}>My</span>Pothole
+            Mark<span class={blueColor}>My</span>Pothole
           </h1>
-          <p class="text-[10px] font-medium tracking-wide {localDarkMode ? 'text-zinc-400' : 'text-slate-400'}">
-            They ignore it, <span class="text-cyan-400 font-bold">we expose it</span>.
+          <p class="text-[10px] font-medium tracking-wide {primaryTextColor}">
+            They ignore it, <span class="{blueColor} font-bold">we expose it</span>.
           </p>
         </div>
       </div>
@@ -413,7 +431,7 @@
           on:click={() => localShowUpload = true}
           class="group relative h-11 px-6 rounded-full font-medium text-[15px] flex items-center justify-center gap-2 transition-all duration-300 hover:scale-105 active:scale-95
             {localDarkMode 
-              ? 'hover:shadow-[0_0_30px_4px_rgba(34,211,238,0.3)]' 
+              ? `hover:shadow-[0_0_30px_4px_rgba(${themeColorRGB},0.3)]` 
               : 'bg-white/40 border border-white/40 ring-1 ring-white/40 text-slate-700 hover:bg-white/60 backdrop-blur-md'}"
           style={localDarkMode ? `
             background: 
@@ -431,7 +449,7 @@
           ` : ""}
         >
           <!-- Colorful Icon -->
-          <span class="{localDarkMode ? 'text-cyan-400' : ''}">
+          <span class="{blueColor}">
             <Camera size={18} />
           </span>
           <span>Mark</span>
@@ -441,14 +459,13 @@
           class="w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95
             {localDarkMode 
               ? '' 
-              : 'bg-white/40 border border-white/40 ring-1 ring-white/40 text-cyan-600 hover:bg-white/60 shadow-sm backdrop-blur-md'
+              : `bg-white/40 border border-white/40 ring-1 ring-white/40 ${blueColor} hover:bg-white/60 shadow-sm backdrop-blur-md`
             }"
           style={localDarkMode ? `
             background: 
               linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
               linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
               linear-gradient(rgba(255, 242, 212, 0.06), rgba(255, 242, 212, 0.02));
-            color: rgb(34, 211, 238);
             box-shadow: 
               rgba(10, 8, 5, 0.08) 0px 48px 56px 0px, 
               rgba(10, 8, 5, 0.12) 0px 24px 32px 0px, 
@@ -456,12 +473,13 @@
               inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
               inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
               inset 0px 4px 12px -6px rgba(255, 243, 215, 0.06);
-          ` : ""}
+            color: rgb(${themeColorRGB});
+          ` : `color: rgb(${themeColorRGB});`}
         >
-          <MapIcon size={20} />
+          <MapIcon size={20} class={localDarkMode ? blueColor : ''} />
         </button>
-        <SoundToggle soundEnabled={localSoundEnabled} setSoundEnabled={(v: boolean) => localSoundEnabled = v} darkMode={localDarkMode} />
-        <ModeToggle mode={localMode} setMode={(v: number) => localMode = v} />
+        <SoundToggle soundEnabled={localSoundEnabled} setSoundEnabled={(v: boolean) => localSoundEnabled = v} darkMode={localDarkMode} blueColor={blueColor} />
+        <ModeToggle mode={localMode} setMode={(v: number) => localMode = v} blueColor={blueColor} />
       </div>
 
       <!-- Mobile Menu Toggle -->
@@ -496,18 +514,19 @@
               box-shadow: 
                 inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
                 inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.24);
-            ` : ""}
+              color: rgb(${themeColorRGB});
+            ` : `color: rgb(${themeColorRGB});`}
           >
-            <MapIcon size={20} class={localDarkMode ? 'text-cyan-400' : 'text-cyan-600'} />
+            <MapIcon size={20} class={blueColor} />
           </button>
         </div>
         <div class="flex items-center justify-between p-2">
           <span class="font-semibold">Sound Effects</span>
-          <SoundToggle soundEnabled={localSoundEnabled} setSoundEnabled={(v: boolean) => localSoundEnabled = v} darkMode={localDarkMode} />
+          <SoundToggle soundEnabled={localSoundEnabled} setSoundEnabled={(v: boolean) => localSoundEnabled = v} darkMode={localDarkMode} blueColor={blueColor} />
         </div>
         <div class="flex items-center justify-between p-2">
           <span class="font-semibold">Display Mode</span>
-          <ModeToggle mode={localMode} setMode={(v: number) => localMode = v} />
+          <ModeToggle mode={localMode} setMode={(v: number) => localMode = v} blueColor={blueColor} />
         </div>
       </div>
     </div>
@@ -518,21 +537,21 @@
     on:click={() => localShowUpload = true}
     class="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full flex items-center justify-center sm:hidden transition-all active:scale-95
       {localDarkMode
-        ? ''
-        : 'bg-white text-cyan-600 shadow-[0_4px_12px_rgba(0,0,0,0.12)] border border-white/60'
+        ? blueColor
+        : `bg-white ${blueColor} shadow-[0_4px_12px_rgba(0,0,0,0.12)] border border-white/60`
       }"
     style={localDarkMode ? `
       background: 
         linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
         linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
         linear-gradient(rgba(255, 242, 212, 0.06), rgba(255, 242, 212, 0.02));
-      color: rgb(34, 211, 238);
       box-shadow: 
         rgba(10, 8, 5, 0.2) 0px 12px 24px 0px, 
         inset 0px 0px 0px 1px rgba(255, 243, 215, 0.06), 
         inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
         inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.24);
-    ` : ""}
+      color: rgb(${themeColorRGB});
+    ` : `color: rgb(${themeColorRGB});`}
   >
     <Camera size={24} />
   </button>
@@ -562,22 +581,22 @@
         <div class="flex flex-col items-center justify-center mb-2 text-center">
           <div class="flex items-center gap-3 mb-2">
             <div class="p-2 rounded-xl backdrop-blur-md {localDarkMode ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] shadow-[0_4px_12px_rgba(0,0,0,0.3)]' : 'bg-white/80 border border-white/60 shadow-[0_4px_12px_rgba(0,0,0,0.06)]'}">
-              <Award size={22} class={localDarkMode ? 'text-cyan-400' : 'text-cyan-500'} />
+              <Award size={22} class={blueColor} />
             </div>
             <h2 class="text-2xl md:text-3xl font-black tracking-tight {localDarkMode ? 'text-white' : 'text-slate-800'}">
               Legendary Potholes
             </h2>
           </div>
           
-          <div class="flex items-center gap-3 text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase {localDarkMode ? 'text-cyan-400/90' : 'text-cyan-600'}">
+          <div class="flex items-center gap-3 text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase {blueColor} opacity-90">
             <span class="w-6 h-px bg-current opacity-50"></span>
             <span>Hall of Shame</span>
             <span class="w-6 h-px bg-current opacity-50"></span>
           </div>
         </div>
 
-        <p class="text-center text-[11px] sm:text-xs mb-6 px-4 {localDarkMode ? 'text-zinc-400' : 'text-slate-500'}">
-          Earned their <span class={localDarkMode ? 'text-cyan-400' : 'text-cyan-600'}>elemental aura</span> through pure destructive power
+        <p class="text-center text-[11px] sm:text-xs mb-6 px-4 {primaryTextColor}">
+          Earned their <span class="text-transparent bg-clip-text {localDarkMode ? 'bg-[linear-gradient(90deg,#fb923c,#a78bfa,#22d3ee,#fb923c,#fb923c,#a78bfa,#22d3ee,#fb923c)]' : 'bg-[linear-gradient(90deg,#f97316,#7c3aed,#0891b2,#f97316,#f97316,#7c3aed,#0891b2,#f97316)]'} font-bold animate-aura-text">elemental aura</span> through pure destructive power
         </p>
 
         <div class="flex flex-wrap sm:flex-nowrap items-end justify-center gap-3 sm:gap-6">
@@ -620,61 +639,92 @@
         <div class="flex items-center gap-3">
           <div class="p-2.5 rounded-2xl {localDarkMode ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] shadow-[0_4px_12px_rgba(0,0,0,0.3)]' : 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06)]'}">
             <div 
-              class="w-[20px] h-[20px] {localDarkMode ? 'bg-cyan-400' : 'bg-cyan-500'}"
+              class="w-[20px] h-[20px] {blueBgClass}"
               style="mask-image: url(/assets/play-stream-svgrepo-com.svg); mask-size: contain; mask-repeat: no-repeat; mask-position: center; -webkit-mask-image: url(/assets/play-stream-svgrepo-com.svg); -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center;"
             ></div>
           </div>
           <div>
             <h2 class="text-xl font-bold tracking-tight {localDarkMode ? 'text-white' : 'text-slate-700'}">Live Feed</h2>
-            <p class="text-xs font-semibold tracking-wider {localDarkMode ? 'text-cyan-400/70' : 'text-cyan-600'}">FRESH FROM THE STREETS</p>
+            <p class="text-xs font-semibold tracking-wider {blueColor} {localDarkMode ? 'opacity-70' : ''}">FRESH FROM THE STREETS</p>
           </div>
         </div>
         
         <!-- Sort Controls - Segmented Buttons with Sliding Indicator -->
-        <div class="relative flex items-center p-1 rounded-full border
+        <!-- Sort Controls - Segmented Buttons with Sliding Indicator -->
+        <div class="relative grid grid-cols-3 p-1 rounded-full border w-full max-w-[280px] sm:max-w-[320px]
           {localDarkMode 
             ? 'border-[#fff3d7]/10' 
-            : 'bg-white/30 border-white/40 backdrop-blur-md'
+            : 'bg-white/40 border-white/40 shadow-sm backdrop-blur-xl'
           }"
           style={localDarkMode ? `
             background: 
-              linear-gradient(rgba(16, 13, 10, 0.4), rgba(16, 13, 10, 0.4));
+              linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
+              linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
+              linear-gradient(rgba(255, 242, 212, 0.06), rgba(255, 242, 212, 0.02));
             box-shadow: 
               inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.12), 
-              inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.08);
+              inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.12);
           ` : ""}>
           
           <!-- Sliding Indicator -->
           <div 
-            class="absolute inset-1 rounded-full transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
-              {localDarkMode ? 'bg-cyan-500/20' : 'bg-cyan-500/25'}"
-            style="width: calc(33.333% - 5.33px); left: calc(4px + {sortBy === 'recent' ? 0 : sortBy === 'votes' ? 1 : 2} * (33.333% - 1.33px));"
+            class="absolute top-1 bottom-1 rounded-full transition-all duration-300 ease-out border shadow-sm
+              {localDarkMode ? 'border-transparent' : 'bg-white border-black/5'}"
+            style="
+              width: calc((100% - 8px) / 3); 
+              left: 4px;
+              transform: translateX({sortBy === 'recent' ? '0%' : sortBy === 'votes' ? '100%' : '200%'});
+              {localDarkMode ? `
+                background: 
+                  linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
+                  linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
+                  linear-gradient(rgba(255, 242, 212, 0.1), rgba(255, 242, 212, 0.05));
+                box-shadow: 
+                  rgba(0, 0, 0, 0.3) 0px 4px 10px -2px, 
+                  inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.3), 
+                  inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.2);
+              ` : ''}
+            "
           ></div>
           
           <button 
             on:click={() => sortBy = 'recent'}
-            class="relative z-10 flex-1 px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold text-center transition-colors duration-300
+            class="group relative z-10 py-2 rounded-full flex items-center justify-center gap-1.5 text-[10px] sm:text-xs font-bold transition-colors duration-300
               {sortBy === 'recent' 
-                ? localDarkMode ? 'text-cyan-400' : 'text-cyan-600'
-                : localDarkMode ? 'text-zinc-500 hover:text-zinc-300' : 'text-slate-500 hover:text-slate-700'
+                ? blueColor
+                : localDarkMode ? 'text-zinc-300 hover:text-zinc-200' : 'text-slate-500 hover:text-slate-700'
               }"
-          >Latest</button>
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" class="{blueColor} {sortBy === 'recent' ? '' : 'opacity-70 group-hover:opacity-100'}" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2s10 4.477 10 10zm-4.581 3.324a1 1 0 0 0-.525-1.313L13 12.341V6.5a1 1 0 0 0-2 0v6.17c0 .6.357 1.143.909 1.379l4.197 1.8a1 1 0 0 0 1.313-.525z" />
+            </svg>
+            Latest
+          </button>
           <button 
             on:click={() => sortBy = 'votes'}
-            class="relative z-10 flex-1 px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold text-center transition-colors duration-300
+            class="group relative z-10 py-2 rounded-full flex items-center justify-center gap-1.5 text-[10px] sm:text-xs font-bold transition-colors duration-300
               {sortBy === 'votes' 
-                ? localDarkMode ? 'text-cyan-400' : 'text-cyan-600'
-                : localDarkMode ? 'text-zinc-500 hover:text-zinc-300' : 'text-slate-500 hover:text-slate-700'
+                ? blueColor
+                : localDarkMode ? 'text-zinc-300 hover:text-zinc-200' : 'text-slate-500 hover:text-slate-700'
               }"
-          >Top</button>
+          >
+            <TrendingUp size={16} class="text-emerald-400 {sortBy === 'votes' ? '' : 'opacity-70 group-hover:opacity-100'}" />
+            Ranked
+          </button>
           <button 
             on:click={() => sortBy = 'severity'}
-            class="relative z-10 flex-1 px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold text-center transition-colors duration-300
+            class="group relative z-10 py-2 rounded-full flex items-center justify-center gap-1.5 text-[10px] sm:text-xs font-bold transition-colors duration-300
               {sortBy === 'severity' 
-                ? localDarkMode ? 'text-cyan-400' : 'text-cyan-600'
-                : localDarkMode ? 'text-zinc-500 hover:text-zinc-300' : 'text-slate-500 hover:text-slate-700'
+                ? blueColor
+                : localDarkMode ? 'text-zinc-300 hover:text-zinc-200' : 'text-slate-500 hover:text-slate-700'
               }"
-          >Severe</button>
+          >
+            <svg viewBox="0 0 128 128" width="16" height="16" class="text-red-500 {sortBy === 'severity' ? '' : 'opacity-70 group-hover:opacity-100'}" aria-hidden="true" role="img" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+              <path d="M117.95 95.7c25.01-27.3-28.72-49.4-65.53-44.38c-41.89 3.58-68.95 33.41-28.93 53.74c30.38 15.44 79.32 7.93 94.46-9.36c-.01 0-.01 0 0 0c-.01 0-.01 0 0 0zM64 109.27c-24.1 0-45.21-7.87-52.9-18.51c13.71-34.17 93.92-32.23 105.8 0c-7.69 10.63-28.8 18.51-52.9 18.51z" fill="currentColor"></path>
+              <ellipse cx="64" cy="82" rx="57.07" ry="29.74" fill="currentColor" opacity="0.4"></ellipse>
+            </svg>
+            Severe
+          </button>
         </div>
       </div>
 
@@ -696,10 +746,10 @@
       {:else if localReports.length === 0}
         <div class="text-center py-16 rounded-3xl {localDarkMode ? 'bg-white/5' : 'bg-white/10'}">
           <div class="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center {localDarkMode ? 'bg-white/5' : 'bg-slate-100'}">
-            <Camera size={28} class={localDarkMode ? 'text-zinc-500' : 'text-slate-400'} />
+            <Camera size={28} class={blueColor} />
           </div>
-          <p class="font-medium {localDarkMode ? 'text-zinc-400' : 'text-slate-500'}">No reports yet</p>
-          <p class="text-sm mt-1 {localDarkMode ? 'text-zinc-600' : 'text-slate-400'}">Be the first to report a pothole!</p>
+          <p class="font-medium {blueColor}">No reports yet</p>
+          <p class="text-sm mt-1 {primaryTextColor}">Be the first to report a pothole!</p>
         </div>
       {:else}
         <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
@@ -711,6 +761,7 @@
               onSelect={(d: Report) => localSelectedPothole = d}
               darkMode={localDarkMode}
               soundEnabled={localSoundEnabled}
+              blueColor={blueColor}
             />
           {/each}
         </div>
@@ -721,8 +772,8 @@
               on:click={loadMore}
               class="px-8 py-3 rounded-full font-bold text-sm transition-all duration-200 hover:scale-105 border ring-1 backdrop-blur-md
                 {localDarkMode 
-                  ? 'bg-white/[0.05] border-white/10 ring-white/5 text-cyan-400 hover:bg-white/10' 
-                  : 'bg-white/40 border-white/40 ring-white/40 text-cyan-600 hover:bg-white/60 shadow-sm'
+                  ? `bg-white/[0.05] border-white/10 ring-white/5 ${blueColor} hover:bg-white/10` 
+                  : `bg-white/40 border-white/40 ring-white/40 ${blueColor} hover:bg-white/60 shadow-sm`
                 }"
             >
               Load More ({localReports.length - visibleCount} remaining)
@@ -756,7 +807,7 @@
             inset 0px 4px 12px -6px rgba(255, 243, 215, 0.04);
         ` : ""}>
         <div class="flex flex-col items-center gap-4">
-        <div class="flex items-center gap-2 text-sm font-medium {localDarkMode ? 'text-zinc-400' : 'text-slate-600'}">
+        <div class="flex items-center gap-2 text-sm font-medium {primaryTextColor}">
           Made with <span class="text-red-500 font-bold">frustration</span>
           <span 
             class="h-5 w-5 inline-block relative bg-current transition-colors"
@@ -820,7 +871,7 @@
               target="_blank" 
               rel="noopener noreferrer" 
               class="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all hover:pl-5 hover:pr-3 border
-                {localDarkMode ? 'text-zinc-400 bg-white/5 border-transparent' : 'bg-white/40 border-white/40 shadow-sm text-slate-500 hover:text-slate-800'} {tech.color}"
+                {localDarkMode ? 'text-zinc-300 bg-white/5 border-transparent' : 'bg-white/40 border-white/40 shadow-sm text-slate-500 hover:text-slate-800'} {tech.color}"
               style={localDarkMode ? `
                 background-image: 
                   linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
@@ -840,7 +891,7 @@
 
         <div class="w-12 h-px {localDarkMode ? 'bg-white/10' : 'bg-black/10'}"></div>
         
-        <p class="text-xs leading-relaxed max-w-none mx-auto opacity-70 {localDarkMode ? 'text-zinc-500' : 'text-slate-500'}">
+        <p class="text-xs leading-relaxed max-w-none mx-auto opacity-70 {primaryTextColor}">
           All content is crowdsourced. I take no responsibility for image accuracy, authenticity, or ownership.
         </p>
       </div>
@@ -854,6 +905,9 @@
       onClose={() => localShowUpload = false}
       onCreate={handleCreate}
       darkMode={localDarkMode}
+      blueColor={blueColor}
+      blueBgClass={blueBgClass}
+      themeColorRGB={themeColorRGB}
     />
   {/if}
 
@@ -872,6 +926,7 @@
       onVote={() => localSelectedPothole && handleVote(localSelectedPothole.id)}
       darkMode={localDarkMode}
       soundEnabled={localSoundEnabled}
+      blueColor={blueColor}
     />
   {/if}
 
@@ -881,6 +936,8 @@
       message={toast.message} 
       type={toast.type} 
       onClose={() => removeToast(toast.id)} 
+      blueColor={blueColor}
+      themeColor={themeColor}
     />
   {/each}
 

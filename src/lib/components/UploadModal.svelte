@@ -6,6 +6,10 @@
   export let onClose: () => void;
   export let onCreate: (report: Report) => void;
   export let darkMode: boolean;
+  export let blueColor = 'text-cyan-400';
+  export let blueBgClass = 'bg-cyan-400';
+  export let themeColorRGB = '34, 211, 238';
+  $: themeColor = blueBgClass.split('-')[1] || 'cyan';
   
   let file: File | null = null;
   let preview: string | null = null;
@@ -326,7 +330,7 @@
               inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
               inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.24);
           ` : ""}>
-          <Camera size={20} class={darkMode ? 'text-cyan-400' : 'text-cyan-600'} />
+          <Camera size={20} class={darkMode ? blueColor : 'text-cyan-600'} />
         </div>
         <h2 class="text-xl font-bold tracking-tight {darkMode ? 'text-white' : 'text-slate-700'}">Mark My Pothole</h2>
       </div>
@@ -371,7 +375,9 @@
               role="button"
               tabindex="0"
               class="cursor-pointer aspect-[2/1] rounded-[2rem] flex flex-col items-center justify-center relative overflow-hidden transition-all duration-500 group backdrop-blur-md border-2 border-dashed
-                {darkMode ? 'bg-white/5 border-white/10 hover:border-cyan-400/50 hover:bg-white/[0.07]' : 'bg-black/5 border-black/5 hover:border-cyan-500/50 hover:bg-black/[0.07]'}
+                {darkMode 
+                  ? `bg-white/5 border-white/10 ${themeColor === 'yellow' ? 'hover:border-yellow-400/50' : 'hover:border-cyan-400/50'} hover:bg-white/[0.07]` 
+                  : `bg-black/5 border-black/5 ${themeColor === 'yellow' ? 'hover:border-yellow-500/50' : 'hover:border-cyan-500/50'} hover:bg-black/[0.07]`}
                 {scanning || uploading ? 'cursor-wait opacity-80' : ''}"
             >
               {#if preview}
@@ -379,14 +385,14 @@
                   <img src={preview} class="w-full h-full object-cover" alt="Preview" />
                   {#if scanning}
                     <div class="absolute inset-0 z-10 overflow-hidden pointer-events-none rounded-[2rem]">
-                      <div class="absolute w-full h-[50%] bg-gradient-to-b from-transparent via-cyan-500/20 to-transparent animate-scan" style="top: -50%;"></div>
-                      <div class="absolute top-[50%] left-0 right-0 h-px bg-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.8)] animate-scan-line"></div>
+                      <div class="absolute w-full h-[50%] bg-gradient-to-b from-transparent {themeColor === 'yellow' ? 'via-yellow-500/20' : 'via-cyan-500/20'} to-transparent animate-scan" style="top: -50%;"></div>
+                      <div class="absolute top-[50%] left-0 right-0 h-px {blueBgClass} shadow-[0_0_15px_rgba({themeColorRGB},0.8)] animate-scan-line"></div>
                     </div>
                     
                     <div class="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px] rounded-[2rem] z-20">
                       <div class="bg-black/80 backdrop-blur-xl border border-white/10 px-6 py-3 rounded-2xl shadow-2xl">
                         <div class="flex items-center gap-3">
-                          <Loader2 size={16} class="text-cyan-400 animate-spin" />
+                          <Loader2 size={16} class="{blueColor} animate-spin" />
                           <span class="font-bold text-xs tracking-widest text-white uppercase">{aiStatus}</span>
                         </div>
                       </div>
@@ -415,7 +421,7 @@
                 Geographic Location
               </label>
               <div class="relative flex items-center p-1.5 rounded-2xl transition-all duration-300 backdrop-blur-md border
-                {darkMode ? 'bg-white/5 border-white/10' : 'bg-white/40 border-black/5'} focus-within:ring-2 focus-within:ring-cyan-500/30">
+                {darkMode ? 'bg-white/5 border-white/10' : 'bg-white/40 border-black/5'} focus-within:ring-2 {themeColor === 'yellow' ? 'focus-within:ring-yellow-500/30' : 'focus-within:ring-cyan-500/30'}">
                 <input 
                   id="location-input"
                   type="text" 
@@ -427,27 +433,27 @@
                   on:click={detectLocation}
                   disabled={isLocating}
                   class="flex items-center justify-center gap-1.5 w-28 py-2.5 rounded-full text-[9px] font-black tracking-widest uppercase transition-all
-                    {darkMode ? '' : 'bg-white/40 border border-white/40 ring-1 ring-white/40 text-cyan-600 hover:bg-white/60 shadow-sm backdrop-blur-md'}"
+                    {darkMode ? blueColor : `bg-white/40 border border-white/40 ring-1 ring-white/40 ${blueColor} hover:bg-white/60 shadow-sm backdrop-blur-md`}"
                   style={darkMode ? `
                     background: 
                       linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
                       linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
                       linear-gradient(rgba(255, 242, 212, 0.06), rgba(255, 242, 212, 0.02));
-                    color: rgb(34, 211, 238);
+                    color: rgb(${themeColorRGB});
                     border: 1px solid rgba(255, 243, 215, 0.06);
                     box-shadow: 
                       rgba(10, 8, 5, 0.12) 0px 4px 12px 0px, 
                       inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
                       inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.24),
                       inset 0px 2px 6px -3px rgba(255, 243, 215, 0.06);
-                  ` : ""}
+                  ` : `color: rgb(${themeColorRGB});`}
                 >
                   {#if isLocating}
-                    <Loader2 size={12} class="animate-spin" />
-                    <span class="animate-pulse">Locating</span>
+                    <Loader2 size={12} class="animate-spin {blueColor}" />
+                    <span class="animate-pulse {blueColor}">Locating</span>
                   {:else}
-                    <LocateFixed size={12} />
-                    <span>Locate</span>
+                    <LocateFixed size={12} class={blueColor} />
+                    <span class={blueColor}>Locate</span>
                   {/if}
                 </button>
               </div>
@@ -474,7 +480,7 @@
                         linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
                         linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
                         linear-gradient(${severity === s.level ? 
-                          (s.level === 1 ? 'rgba(34, 211, 238, 0.3)' : 
+                          (s.level === 1 ? `rgba(${themeColorRGB}, 0.3)` : 
                            s.level === 2 ? 'rgba(14, 165, 233, 0.3)' : 
                            s.level === 3 ? 'rgba(59, 130, 246, 0.3)' : 
                            s.level === 4 ? 'rgba(99, 102, 241, 0.3)' : 
@@ -483,7 +489,7 @@
                            s.level === 7 ? 'rgba(244, 63, 94, 0.3)' : 
                            'rgba(220, 38, 38, 0.3)') : 
                           'rgba(255, 242, 212, 0.06)'}, ${severity === s.level ? 
-                          (s.level === 1 ? 'rgba(34, 211, 238, 0.15)' : 
+                          (s.level === 1 ? `rgba(${themeColorRGB}, 0.15)` : 
                            s.level === 2 ? 'rgba(14, 165, 233, 0.15)' : 
                            s.level === 3 ? 'rgba(59, 130, 246, 0.15)' : 
                            s.level === 4 ? 'rgba(99, 102, 241, 0.15)' : 
@@ -494,7 +500,7 @@
                           'rgba(255, 242, 212, 0.02)'});
                       color: ${severity === s.level ? '#fff' : 'rgb(161, 161, 170)'};
                       border: 1px solid ${severity === s.level ? 
-                        (s.level === 1 ? 'rgba(34, 211, 238, 0.5)' : 
+                        (s.level === 1 ? `rgba(${themeColorRGB}, 0.5)` : 
                          s.level === 2 ? 'rgba(14, 165, 233, 0.5)' : 
                          s.level === 3 ? 'rgba(59, 130, 246, 0.5)' : 
                          s.level === 4 ? 'rgba(99, 102, 241, 0.5)' : 
@@ -505,7 +511,7 @@
                         'rgba(255, 243, 215, 0.06)'};
                       box-shadow: 
                         ${severity === s.level ? 
-                          (s.level === 1 ? 'rgba(34, 211, 238, 0.2)' : 
+                          (s.level === 1 ? `rgba(${themeColorRGB}, 0.2)` : 
                            s.level === 2 ? 'rgba(14, 165, 233, 0.2)' : 
                            s.level === 3 ? 'rgba(59, 130, 246, 0.2)' : 
                            s.level === 4 ? 'rgba(99, 102, 241, 0.2)' : 

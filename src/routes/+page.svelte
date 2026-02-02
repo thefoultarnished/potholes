@@ -15,8 +15,7 @@
   import UpvoteButton from '$lib/components/UpvoteButton.svelte';
   import PlayStreamIcon from '$lib/components/PlayStreamIcon.svelte';
   import AngryEmoji from '$lib/components/AngryEmoji.svelte';
-  import ViteLogo from '$lib/components/ViteLogo.svelte';
-  import LucideLogo from '$lib/components/LucideLogo.svelte';
+
   import { 
     SUPABASE_URL, SUPABASE_ANON_KEY, type Report
   } from '$lib/stores';
@@ -428,33 +427,21 @@
       </div>
 
       <!-- Desktop Actions -->
-      <div class="hidden sm:flex items-center gap-2">
+      <div class="flex items-center gap-1.5 sm:gap-2">
         <button
           on:click={() => localShowUpload = true}
-          class="group relative h-11 px-6 rounded-full font-medium text-[15px] flex items-center justify-center gap-2 transition-all duration-300 hover:scale-105 active:scale-95
-            {localDarkMode 
-              ? `hover:shadow-[0_0_30px_4px_rgba(${themeColorRGB},0.3)]` 
-              : 'bg-white/40 border border-white/40 ring-1 ring-white/40 text-slate-700 hover:bg-white/60 backdrop-blur-md'}"
-          style={localDarkMode ? `
-            background: 
-              linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
-              linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
-              linear-gradient(rgba(255, 242, 212, 0.06), rgba(255, 242, 212, 0.02));
-            color: rgb(255, 243, 215);
+          class="group relative w-11 h-11 sm:w-auto sm:h-11 sm:px-6 rounded-full font-bold text-[15px] flex items-center justify-center gap-2 transition-all duration-500 active:scale-95 text-white backdrop-blur-2xl border border-white/40 shadow-sm"
+          style="
+            background: linear-gradient(135deg, rgba({themeColorRGB}, 0.7) 0%, rgba({themeColorRGB}, 0.3) 100%);
             box-shadow: 
-              rgba(10, 8, 5, 0.08) 0px 48px 56px 0px, 
-              rgba(10, 8, 5, 0.12) 0px 24px 32px 0px, 
-              inset 0px 0px 0px 1px rgba(255, 243, 215, 0.06), 
-              inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
-              inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
-              inset 0px 4px 12px -6px rgba(255, 243, 215, 0.06);
-          ` : ""}
+              inset 0 1px 1px rgba(255,255,255,0.4),
+              inset 0 -1px 1px rgba(0,0,0,0.1);
+          "
         >
-          <!-- Colorful Icon -->
-          <span class="{blueColor}">
+          <span class="transition-transform duration-300 group-hover:translate-x-1">
             <Camera size={18} />
           </span>
-          <span>Mark</span>
+          <span class="hidden sm:inline transition-transform duration-300 group-hover:translate-x-1">Mark</span>
         </button>
         <button
           on:click={() => localShowMap = true}
@@ -480,59 +467,17 @@
         >
           <MapIcon size={20} class={localDarkMode ? blueColor : ''} />
         </button>
-        <SoundToggle soundEnabled={localSoundEnabled} setSoundEnabled={(v: boolean) => localSoundEnabled = v} darkMode={localDarkMode} blueColor={blueColor} />
-        <ModeToggle mode={localMode} setMode={(v: number) => localMode = v} blueColor={blueColor} />
+        <div class="hidden">
+          <SoundToggle soundEnabled={localSoundEnabled} setSoundEnabled={(v: boolean) => localSoundEnabled = v} darkMode={localDarkMode} blueColor={blueColor} />
+        </div>
+        <ModeToggle mode={localMode} setMode={(v: number) => localMode = v} blueColor={blueColor} themeColorRGB={themeColorRGB} />
       </div>
 
-      <!-- Mobile Menu Toggle -->
-      <button
-        on:click={() => localShowMobileMenu = !localShowMobileMenu}
-        class="sm:hidden p-2 rounded-xl transition-all {localDarkMode ? 'text-zinc-400 hover:text-white hover:bg-white/5' : 'text-slate-500 hover:text-slate-800 hover:bg-black/5'}"
-      >
-        {#if localShowMobileMenu}
-          <X size={24} />
-        {:else}
-          <Menu size={24} />
-        {/if}
-      </button>
+
     </div>
   </header>
 
-  <!-- Mobile Menu -->
-  {#if localShowMobileMenu}
-    <div class="fixed inset-x-0 top-16 z-30 p-4 border-b sm:hidden {localDarkMode ? 'bg-[#0f1219]/95 border-white/10 text-white backdrop-blur-xl' : 'bg-white/95 border-black/5 text-slate-800 backdrop-blur-xl'}">
-      <div class="flex flex-col gap-4">
-        <div class="flex items-center justify-between p-2">
-          <span class="font-semibold">Map View</span>
-          <button
-            on:click={() => { localShowMap = true; localShowMobileMenu = false; }}
-            class="p-2.5 rounded-xl transition-all
-              {localDarkMode ? '' : 'bg-black/5'}"
-            style={localDarkMode ? `
-              background: 
-                linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
-                linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
-                linear-gradient(rgba(255, 242, 212, 0.06), rgba(255, 242, 212, 0.02));
-              box-shadow: 
-                inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
-                inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.24);
-              color: rgb(${themeColorRGB});
-            ` : `color: rgb(${themeColorRGB});`}
-          >
-            <MapIcon size={20} class={blueColor} />
-          </button>
-        </div>
-        <div class="flex items-center justify-between p-2">
-          <span class="font-semibold">Sound Effects</span>
-          <SoundToggle soundEnabled={localSoundEnabled} setSoundEnabled={(v: boolean) => localSoundEnabled = v} darkMode={localDarkMode} blueColor={blueColor} />
-        </div>
-        <div class="flex items-center justify-between p-2">
-          <span class="font-semibold">Display Mode</span>
-          <ModeToggle mode={localMode} setMode={(v: number) => localMode = v} blueColor={blueColor} />
-        </div>
-      </div>
-    </div>
-  {/if}
+
 
   <!-- FAB Mobile -->
   <button
@@ -558,7 +503,7 @@
     <Camera size={24} />
   </button>
 
-  <main class="pt-24 pb-20 relative z-10">
+  <main class="pt-24 pb-1 relative z-10">
     <!-- Hall of Shame -->
     <section class="mb-8 max-w-6xl mx-auto px-4">
       <div class="p-6 rounded-[2.5rem] transition-all duration-300
@@ -602,11 +547,10 @@
         </p>
 
         <div class="flex flex-wrap sm:flex-nowrap items-end justify-center gap-3 sm:gap-6">
-          {#each [top3[1], top3[0], top3[2]].filter(Boolean) as p, idx}
-            {@const actualRank = idx === 1 ? 1 : idx === 0 ? 2 : 3}
+          {#each [top3[1], top3[0], top3[2]].filter(Boolean) as p}
             <PodiumCard 
               data={p} 
-              rank={actualRank}
+              rank={top3.indexOf(p) + 1}
               onVote={() => handleVote(p.id)}
               onSelect={(d: Report) => localSelectedPothole = d}
               darkMode={localDarkMode}
@@ -643,14 +587,12 @@
             <PlayStreamIcon size="20" className="{blueColor}" />
           </div>
           <div>
-            <h2 class="text-xl font-bold tracking-tight {localDarkMode ? 'text-white' : 'text-slate-700'}">Live Feed</h2>
-            <p class="text-xs font-semibold tracking-wider {blueColor} {localDarkMode ? 'opacity-70' : ''}">FRESH FROM THE STREETS</p>
+            <h2 class="text-xl font-bold tracking-tight {localDarkMode ? 'text-white' : 'text-slate-700'}">Feed</h2>
           </div>
         </div>
         
         <!-- Sort Controls - Segmented Buttons with Sliding Indicator -->
-        <!-- Sort Controls - Segmented Buttons with Sliding Indicator -->
-        <div class="relative grid grid-cols-3 p-1 rounded-full border w-full max-w-[280px] sm:max-w-[320px]
+        <div class="relative grid grid-cols-3 p-0 sm:p-1 rounded-full border w-full max-w-[120px] sm:max-w-[320px] h-10 sm:h-auto
           {localDarkMode 
             ? 'border-[#fff3d7]/10' 
             : 'bg-white/40 border-white/40 shadow-sm backdrop-blur-xl'
@@ -666,13 +608,34 @@
           ` : ""}>
           
           <!-- Sliding Indicator -->
+          <!-- Desktop Indicator -->
           <div 
-            class="absolute top-1 bottom-1 rounded-full transition-all duration-300 ease-out border shadow-sm
+            class="absolute top-1 bottom-1 rounded-full transition-all duration-200 ease-out border shadow-sm hidden sm:block
               {localDarkMode ? 'border-transparent' : 'bg-white border-black/5'}"
             style="
               width: calc((100% - 8px) / 3); 
               left: 4px;
               transform: translateX({sortBy === 'recent' ? '0%' : sortBy === 'votes' ? '100%' : '200%'});
+              {localDarkMode ? `
+                background: 
+                  linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
+                  linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
+                  linear-gradient(rgba(255, 242, 212, 0.1), rgba(255, 242, 212, 0.05));
+                box-shadow: 
+                  rgba(0, 0, 0, 0.3) 0px 4px 10px -2px, 
+                  inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.3), 
+                  inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.2);
+              ` : ''}
+            "
+          ></div>
+
+          <!-- Mobile Indicator -->
+          <div 
+            class="absolute top-[4px] bottom-1 rounded-full transition-all duration-200 ease-out border shadow-sm block sm:hidden
+              {localDarkMode ? 'border-transparent' : 'bg-white border-black/5'}"
+            style="
+              width: 28%;
+              left: calc({sortBy === 'recent' ? 0 : sortBy === 'votes' ? 1 : 2} * 33.333% + 2.666%);
               {localDarkMode ? `
                 background: 
                   linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
@@ -697,7 +660,7 @@
             <svg viewBox="0 0 24 24" width="16" height="16" class="{blueColor} {sortBy === 'recent' ? '' : 'opacity-70 group-hover:opacity-100'}" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
               <path fill-rule="evenodd" clip-rule="evenodd" d="M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2s10 4.477 10 10zm-4.581 3.324a1 1 0 0 0-.525-1.313L13 12.341V6.5a1 1 0 0 0-2 0v6.17c0 .6.357 1.143.909 1.379l4.197 1.8a1 1 0 0 0 1.313-.525z" />
             </svg>
-            Latest
+            <span class="hidden sm:inline">Latest</span>
           </button>
           <button 
             on:click={() => sortBy = 'votes'}
@@ -708,7 +671,7 @@
               }"
           >
             <TrendingUp size={16} class="text-emerald-400 {sortBy === 'votes' ? '' : 'opacity-70 group-hover:opacity-100'}" />
-            Ranked
+            <span class="hidden sm:inline">Ranked</span>
           </button>
           <button 
             on:click={() => sortBy = 'severity'}
@@ -722,7 +685,7 @@
               <path d="M117.95 95.7c25.01-27.3-28.72-49.4-65.53-44.38c-41.89 3.58-68.95 33.41-28.93 53.74c30.38 15.44 79.32 7.93 94.46-9.36c-.01 0-.01 0 0 0c-.01 0-.01 0 0 0zM64 109.27c-24.1 0-45.21-7.87-52.9-18.51c13.71-34.17 93.92-32.23 105.8 0c-7.69 10.63-28.8 18.51-52.9 18.51z" fill="currentColor"></path>
               <ellipse cx="64" cy="82" rx="57.07" ry="29.74" fill="currentColor" opacity="0.4"></ellipse>
             </svg>
-            Severe
+            <span class="hidden sm:inline">Severe</span>
           </button>
         </div>
       </div>
@@ -819,12 +782,7 @@
               color: 'hover:text-orange-500 hover:bg-orange-500/10 hover:border-orange-500/20',
               logo: 'https://cdn.simpleicons.org/svelte/FF3E00'
             },
-            { 
-              name: 'Tailwind', 
-              url: 'https://tailwindcss.com', 
-              color: 'hover:text-cyan-500 hover:bg-cyan-500/10 hover:border-cyan-500/20',
-              logo: 'https://cdn.simpleicons.org/tailwindcss/06B6D4'
-            },
+
             { 
               name: 'Supabase', 
               url: 'https://supabase.com', 
@@ -843,18 +801,7 @@
               color: 'hover:text-yellow-500 hover:bg-yellow-500/10 hover:border-yellow-500/20',
               logo: 'https://cdn.simpleicons.org/tensorflow/FF6F00'
             },
-            { 
-              name: 'Vite', 
-              url: 'https://vitejs.dev', 
-              color: 'hover:text-purple-500 hover:bg-purple-500/10 hover:border-purple-500/20',
-              logo: ViteLogo
-            },
-            { 
-              name: 'Lucide', 
-              url: 'https://lucide.dev', 
-              color: 'hover:text-pink-500 hover:bg-pink-500/10 hover:border-pink-500/20',
-              logo: LucideLogo
-            },
+
             { 
               name: 'OpenStreetMap', 
               url: 'https://www.openstreetmap.org', 
@@ -879,17 +826,13 @@
                   inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.12), 
                   inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.12);
               ` : ""}>
-              {#if typeof tech.logo === 'string'}
-                <img src={tech.logo} alt={tech.name} class="w-3.5 h-3.5 object-contain" />
-              {:else}
-                <svelte:component this={tech.logo} size="14" className="w-3.5 h-3.5 object-contain" />
-              {/if}
+              <img src={tech.logo} alt={tech.name} class="w-3.5 h-3.5 object-contain" />
               {tech.name}
             </a>
           {/each}
         </div>
 
-        <div class="w-12 h-px {localDarkMode ? 'bg-white/10' : 'bg-black/10'}"></div>
+        <div class="w-full max-w-[32rem] h-px {localDarkMode ? 'bg-white/10' : 'bg-black/10'}"></div>
         
         <p class="text-xs leading-relaxed max-w-none mx-auto opacity-70 {primaryTextColor}">
           All content is crowdsourced. I take no responsibility for image accuracy, authenticity, or ownership.

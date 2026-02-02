@@ -336,18 +336,13 @@
       </div>
       <button 
         on:click={onClose} 
-        class="p-2.5 rounded-full transition-all flex-shrink-0 hover:rotate-90 duration-300
-          {darkMode ? '' : 'bg-white/40 border border-white/40 ring-1 ring-white/40 text-slate-500 hover:text-slate-800 hover:bg-white/60 shadow-sm backdrop-blur-md'}"
-        style={darkMode ? `
-          background: 
-            linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
-            linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
-            linear-gradient(rgba(255, 242, 212, 0.06), rgba(255, 242, 212, 0.02));
-          color: rgb(161, 161, 170);
+        class="group p-2.5 rounded-full transition-all flex-shrink-0 hover:rotate-90 duration-500 text-white backdrop-blur-2xl border border-white/40 shadow-sm"
+        style="
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
           box-shadow: 
-            inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
-            inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.24);
-        ` : ""}
+            inset 0 1px 1px rgba(255,255,255,0.4),
+            inset 0 -1px 1px rgba(0,0,0,0.1);
+        "
       >
         <X size={18} />
       </button>

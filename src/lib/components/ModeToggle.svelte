@@ -5,6 +5,7 @@
   export let mode: number;
   export let setMode: (val: number) => void;
   export let blueColor = 'text-cyan-400';
+  export let themeColorRGB = '34, 211, 238';
   $: themeColor = blueColor.includes('yellow') ? 'yellow' : 'cyan';
 </script>
 
@@ -21,7 +22,7 @@
       linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
       linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
       linear-gradient(rgba(255, 242, 212, 0.06), rgba(255, 242, 212, 0.02));
-    color: ${mode === 1 ? 'rgb(251, 191, 36)' : 'rgb(168, 85, 247)'};
+    color: ${mode === 1 ? `rgb(${themeColorRGB})` : 'rgb(168, 85, 247)'};
     box-shadow: 
       rgba(10, 8, 5, 0.08) 0px 48px 56px 0px, 
       rgba(10, 8, 5, 0.12) 0px 24px 32px 0px, 

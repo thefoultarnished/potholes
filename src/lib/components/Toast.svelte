@@ -7,7 +7,7 @@
   export let onClose: () => void;
   
   const colors = {
-    success: 'bg-green-500/20 border-green-500/30 text-green-400',
+    success: 'bg-cyan-500/20 border-cyan-500/30 text-cyan-400',
     error: 'bg-red-500/20 border-red-500/30 text-red-400',
     info: 'bg-cyan-500/20 border-cyan-500/30 text-cyan-400'
   };

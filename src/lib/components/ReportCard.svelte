@@ -13,14 +13,28 @@
 </script>
 
 <div
-  class="rounded-3xl overflow-hidden backdrop-blur-xl border cursor-pointer transition-all duration-300 hover:-translate-y-1
+  on:click={() => onSelect(data)} on:keypress={() => onSelect(data)} role="button" tabindex="0"
+  class="rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1 group/tile
     {darkMode 
-      ? 'bg-white/[0.02] border-white/15 shadow-2xl shadow-black/20 ring-1 ring-white/5 hover:shadow-[0_12px_40px_rgba(6,182,212,0.2)]' 
-      : 'bg-white/20 border-white/40 shadow-xl ring-1 ring-white/40 hover:shadow-[0_12px_40px_rgba(6,182,212,0.1)]'
+      ? '' 
+      : 'bg-white/20 border border-white/40 shadow-xl ring-1 ring-white/40 hover:shadow-[0_12px_40px_rgba(6,182,212,0.1)] backdrop-blur-xl'
     }"
-  style="animation-delay: {index * 50}ms"
+  style={darkMode ? `
+    background: 
+      linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
+      linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
+      linear-gradient(rgba(255, 242, 212, 0.04), rgba(255, 242, 212, 0.01));
+    border: 1px solid rgba(255, 243, 215, 0.06);
+    box-shadow: 
+      rgba(10, 8, 5, 0.08) 0px 48px 56px 0px, 
+      rgba(10, 8, 5, 0.12) 0px 24px 32px 0px, 
+      inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.12), 
+      inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.08), 
+      inset 0px 4px 12px -6px rgba(255, 243, 215, 0.04);
+    animation-delay: ${index * 50}ms;
+  ` : `animation-delay: ${index * 50}ms`}
 >
-  <div class="aspect-square relative overflow-hidden group" on:click={() => onSelect(data)} on:keypress={() => onSelect(data)} role="button" tabindex="0">
+  <div class="aspect-square relative overflow-hidden rounded-t-3xl" on:click={() => onSelect(data)} on:keypress={() => onSelect(data)} role="button" tabindex="0">
     <img 
       src={data.image_url.includes('cloudinary') ? data.image_url.replace('/upload/', '/upload/w_500,h_500,c_fill,f_auto,q_auto/') : data.image_url} 
       alt={getDisplayLocation(data.location)} 

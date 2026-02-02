@@ -292,24 +292,58 @@
 </script>
 
 <div class="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md {darkMode ? 'bg-black/30' : 'bg-black/5'}">
-  <div class="w-full max-w-2xl rounded-[2rem] p-4 md:p-6 transition-all duration-300 backdrop-blur-[75px] border
+  <div class="w-full max-w-2xl rounded-[2.5rem] p-4 md:p-6 transition-all duration-300
     {darkMode 
-      ? 'bg-[#0f172a]/60 border-white/10 shadow-[0_24px_60px_rgba(0,0,0,0.5)]' 
-      : 'bg-white/70 border-white/60 shadow-[0_20px_40px_rgba(0,0,0,0.1)]'
-    }">
+      ? '' 
+      : 'bg-white/20 border border-white/40 shadow-xl ring-1 ring-white/40 backdrop-blur-xl'
+    }"
+    style={darkMode ? `
+      background: 
+        linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
+        linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
+        linear-gradient(rgba(255, 242, 212, 0.04), rgba(255, 242, 212, 0.01)),
+        rgba(6, 11, 25, 0.4);
+      border: 1px solid rgba(255, 243, 215, 0.06);
+      box-shadow: 
+        rgba(10, 8, 5, 0.08) 0px 48px 56px 0px, 
+        rgba(10, 8, 5, 0.12) 0px 24px 32px 0px, 
+        inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.12), 
+        inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.08), 
+        inset 0px 4px 12px -6px rgba(255, 243, 215, 0.04);
+    ` : ""}>
     
     <!-- Header -->
     <div class="flex justify-between items-center mb-4">
       <div class="flex items-center gap-3">
-        <div class="p-2.5 rounded-2xl {darkMode ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] shadow-[0_4px_12px_rgba(0,0,0,0.3)]' : 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06)]'}">
+        <div class="p-2.5 rounded-2xl
+          {darkMode ? '' : 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06)]'}"
+          style={darkMode ? `
+            background: 
+              linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
+              linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
+              linear-gradient(rgba(255, 242, 212, 0.06), rgba(255, 242, 212, 0.02));
+            box-shadow: 
+              inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
+              inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.24);
+          ` : ""}>
           <Camera size={20} class={darkMode ? 'text-cyan-400' : 'text-cyan-600'} />
         </div>
         <h2 class="text-xl font-bold tracking-tight {darkMode ? 'text-white' : 'text-slate-700'}">Mark My Pothole</h2>
       </div>
       <button 
         on:click={onClose} 
-        class="p-2.5 rounded-full transition-all flex-shrink-0 hover:rotate-90 duration-300 border ring-1 backdrop-blur-md
-          {darkMode ? 'bg-white/[0.05] border-white/10 ring-white/5 text-zinc-400 hover:text-white hover:bg-white/10' : 'bg-white/40 border-white/40 ring-white/40 text-slate-500 hover:text-slate-800 hover:bg-white/60 shadow-sm'}"
+        class="p-2.5 rounded-full transition-all flex-shrink-0 hover:rotate-90 duration-300
+          {darkMode ? '' : 'bg-white/40 border border-white/40 ring-1 ring-white/40 text-slate-500 hover:text-slate-800 hover:bg-white/60 shadow-sm backdrop-blur-md'}"
+        style={darkMode ? `
+          background: 
+            linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
+            linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
+            linear-gradient(rgba(255, 242, 212, 0.06), rgba(255, 242, 212, 0.02));
+          color: rgb(161, 161, 170);
+          box-shadow: 
+            inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
+            inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.24);
+        ` : ""}
       >
         <X size={18} />
       </button>
@@ -344,9 +378,13 @@
                 <div class="relative w-full h-full">
                   <img src={preview} class="w-full h-full object-cover" alt="Preview" />
                   {#if scanning}
-                    <div class="absolute inset-0 bg-cyan-500/10 backdrop-blur-[2px]"></div>
-                    <div class="absolute inset-0 flex items-center justify-center">
-                      <div class="bg-black/60 backdrop-blur-xl border border-white/10 px-6 py-3 rounded-2xl shadow-2xl">
+                    <div class="absolute inset-0 z-10 overflow-hidden pointer-events-none rounded-[2rem]">
+                      <div class="absolute w-full h-[50%] bg-gradient-to-b from-transparent via-cyan-500/20 to-transparent animate-scan" style="top: -50%;"></div>
+                      <div class="absolute top-[50%] left-0 right-0 h-px bg-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.8)] animate-scan-line"></div>
+                    </div>
+                    
+                    <div class="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px] rounded-[2rem] z-20">
+                      <div class="bg-black/80 backdrop-blur-xl border border-white/10 px-6 py-3 rounded-2xl shadow-2xl">
                         <div class="flex items-center gap-3">
                           <Loader2 size={16} class="text-cyan-400 animate-spin" />
                           <span class="font-bold text-xs tracking-widest text-white uppercase">{aiStatus}</span>
@@ -388,16 +426,28 @@
                 <button 
                   on:click={detectLocation}
                   disabled={isLocating}
-                  class="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-[9px] font-black tracking-widest uppercase transition-all border ring-1 backdrop-blur-md
-                    {darkMode ? 'bg-white/[0.05] border-white/10 ring-white/5 text-cyan-400 hover:bg-white/10' : 'bg-white/40 border-white/40 ring-white/40 text-cyan-600 hover:bg-white/60 shadow-sm'}
-                    {isLocating ? 'opacity-50' : ''}"
+                  class="flex items-center justify-center gap-1.5 w-28 py-2.5 rounded-full text-[9px] font-black tracking-widest uppercase transition-all
+                    {darkMode ? '' : 'bg-white/40 border border-white/40 ring-1 ring-white/40 text-cyan-600 hover:bg-white/60 shadow-sm backdrop-blur-md'}"
+                  style={darkMode ? `
+                    background: 
+                      linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
+                      linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
+                      linear-gradient(rgba(255, 242, 212, 0.06), rgba(255, 242, 212, 0.02));
+                    color: rgb(34, 211, 238);
+                    border: 1px solid rgba(255, 243, 215, 0.06);
+                    box-shadow: 
+                      rgba(10, 8, 5, 0.12) 0px 4px 12px 0px, 
+                      inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
+                      inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.24),
+                      inset 0px 2px 6px -3px rgba(255, 243, 215, 0.06);
+                  ` : ""}
                 >
                   {#if isLocating}
                     <Loader2 size={12} class="animate-spin" />
-                    Locating...
+                    <span class="animate-pulse">Locating</span>
                   {:else}
                     <LocateFixed size={12} />
-                    Locate
+                    <span>Locate</span>
                   {/if}
                 </button>
               </div>
@@ -412,13 +462,60 @@
                 {#each SIZES as s}
                   <button 
                     on:click={() => severity = s.level}
-                    class="py-2 rounded-2xl transition-all duration-300 font-black text-[9px] px-1.5 h-auto min-h-[38px] leading-tight backdrop-blur-md border uppercase tracking-wider ring-1
+                    class="py-2.5 rounded-full font-black text-[9px] px-2 h-auto min-h-[40px] leading-tight backdrop-blur-md border uppercase tracking-wider
                       {severity === s.level 
-                        ? s.color + ' text-white shadow-[0_8px_20px_-4px_rgba(0,0,0,0.3)] border-transparent scale-[1.05] z-10' 
+                        ? 'text-white scale-[1.05] z-10' 
                         : darkMode 
-                          ? 'bg-white/[0.05] border-white/10 ring-white/5 text-zinc-500 hover:bg-white/10' 
+                          ? '' 
                           : 'bg-white/40 border-white/40 ring-white/40 text-slate-500 hover:bg-white/60'
                       }"
+                    style={darkMode ? `
+                      background: 
+                        linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
+                        linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
+                        linear-gradient(${severity === s.level ? 
+                          (s.level === 1 ? 'rgba(34, 211, 238, 0.3)' : 
+                           s.level === 2 ? 'rgba(14, 165, 233, 0.3)' : 
+                           s.level === 3 ? 'rgba(59, 130, 246, 0.3)' : 
+                           s.level === 4 ? 'rgba(99, 102, 241, 0.3)' : 
+                           s.level === 5 ? 'rgba(139, 92, 246, 0.3)' : 
+                           s.level === 6 ? 'rgba(217, 70, 239, 0.3)' : 
+                           s.level === 7 ? 'rgba(244, 63, 94, 0.3)' : 
+                           'rgba(220, 38, 38, 0.3)') : 
+                          'rgba(255, 242, 212, 0.06)'}, ${severity === s.level ? 
+                          (s.level === 1 ? 'rgba(34, 211, 238, 0.15)' : 
+                           s.level === 2 ? 'rgba(14, 165, 233, 0.15)' : 
+                           s.level === 3 ? 'rgba(59, 130, 246, 0.15)' : 
+                           s.level === 4 ? 'rgba(99, 102, 241, 0.15)' : 
+                           s.level === 5 ? 'rgba(139, 92, 246, 0.15)' : 
+                           s.level === 6 ? 'rgba(217, 70, 239, 0.15)' : 
+                           s.level === 7 ? 'rgba(244, 63, 94, 0.15)' : 
+                           'rgba(220, 38, 38, 0.15)') : 
+                          'rgba(255, 242, 212, 0.02)'});
+                      color: ${severity === s.level ? '#fff' : 'rgb(161, 161, 170)'};
+                      border: 1px solid ${severity === s.level ? 
+                        (s.level === 1 ? 'rgba(34, 211, 238, 0.5)' : 
+                         s.level === 2 ? 'rgba(14, 165, 233, 0.5)' : 
+                         s.level === 3 ? 'rgba(59, 130, 246, 0.5)' : 
+                         s.level === 4 ? 'rgba(99, 102, 241, 0.5)' : 
+                         s.level === 5 ? 'rgba(139, 92, 246, 0.5)' : 
+                         s.level === 6 ? 'rgba(217, 70, 239, 0.5)' : 
+                         s.level === 7 ? 'rgba(244, 63, 94, 0.5)' : 
+                         'rgba(220, 38, 38, 0.5)') : 
+                        'rgba(255, 243, 215, 0.06)'};
+                      box-shadow: 
+                        ${severity === s.level ? 
+                          (s.level === 1 ? 'rgba(34, 211, 238, 0.2)' : 
+                           s.level === 2 ? 'rgba(14, 165, 233, 0.2)' : 
+                           s.level === 3 ? 'rgba(59, 130, 246, 0.2)' : 
+                           s.level === 4 ? 'rgba(99, 102, 241, 0.2)' : 
+                           s.level === 5 ? 'rgba(139, 92, 246, 0.2)' : 
+                           s.level === 6 ? 'rgba(217, 70, 239, 0.2)' : 
+                           s.level === 7 ? 'rgba(244, 63, 94, 0.2)' : 
+                           'rgba(220, 38, 38, 0.2)') + ' 0px 8px 20px -4px,' : 'rgba(10, 8, 5, 0.08) 0px 4px 6px 0px,'}
+                        inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.12), 
+                        inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.12);
+                    ` : ""}
                   >
                     <div class="flex flex-col items-center gap-1">
                       <span>{s.title}</span>
@@ -433,11 +530,23 @@
           <button 
             on:click={handleUpload}
             disabled={uploading || scanning || !file || !location || !isPothole || !severity}
-            class="w-full py-4 rounded-[2rem] font-black text-xs tracking-[0.2em] uppercase transition-all duration-300 disabled:opacity-30 disabled:grayscale mt-6 border ring-1 backdrop-blur-md
+            class="w-full py-4 rounded-full font-black text-xs tracking-[0.2em] uppercase transition-all duration-300 disabled:opacity-30 disabled:grayscale mt-6
               {darkMode 
-                ? 'bg-white/[0.05] border-white/10 ring-white/5 text-white hover:bg-white/10 shadow-[0_20px_40px_-10px_rgba(34,211,238,0.1)]' 
-                : 'bg-white/40 border-white/40 ring-white/40 text-slate-700 hover:bg-white/60 shadow-[0_20px_40px_-10px_rgba(15,23,42,0.1)]'
+                ? '' 
+                : 'bg-white/40 border border-white/40 ring-1 ring-white/40 text-slate-700 hover:bg-white/60 shadow-[0_20px_40px_-10px_rgba(15,23,42,0.1)] backdrop-blur-md'
               }"
+            style={darkMode ? `
+              background: 
+                linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
+                linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
+                linear-gradient(rgba(255, 242, 212, 0.06), rgba(255, 242, 212, 0.02));
+              color: white;
+              border: 1px solid rgba(255, 243, 215, 0.06);
+              box-shadow: 
+                rgba(34, 211, 238, 0.1) 0px 20px 40px -10px, 
+                inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
+                inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.24);
+            ` : ""}
           >
             {#if uploading}
               <div class="flex items-center justify-center gap-3">

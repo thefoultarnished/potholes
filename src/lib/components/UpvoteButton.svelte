@@ -26,11 +26,24 @@
 
 <button
   on:click={handleClick}
-  class="relative {s.height} {s.padding} rounded-full font-bold {s.text} transition-all duration-200 flex items-center gap-2 flex-shrink-0 hover:scale-105 border ring-1 backdrop-blur-md
+  class="relative {s.height} {s.padding} rounded-full font-bold {s.text} transition-all duration-200 flex items-center gap-2 flex-shrink-0 hover:scale-105 active:scale-95
     {darkMode 
-      ? 'bg-white/[0.05] border-white/10 ring-white/5 text-cyan-400 hover:bg-white/10' 
-      : 'bg-white/40 border-white/40 ring-white/40 text-cyan-600 hover:bg-white/60 shadow-sm'
+      ? '' 
+      : 'bg-white/40 border border-white/40 ring-1 ring-white/40 text-cyan-600 hover:bg-white/60 shadow-sm backdrop-blur-md'
     }"
+  style={darkMode ? `
+    background: 
+      linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
+      linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
+      linear-gradient(rgba(255, 242, 212, 0.06), rgba(255, 242, 212, 0.02));
+    color: rgb(34, 211, 238);
+    border: 1px solid rgba(255, 243, 215, 0.06);
+    box-shadow: 
+      rgba(10, 8, 5, 0.08) 0px 4px 6px 0px, 
+      inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
+      inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
+      inset 0px 2px 6px -3px rgba(255, 243, 215, 0.06);
+  ` : ""}
 >
   <svg 
     viewBox="0 0 24 24" 

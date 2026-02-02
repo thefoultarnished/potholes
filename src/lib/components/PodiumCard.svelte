@@ -19,15 +19,28 @@
   on:keypress={() => onSelect(data)}
   role="button"
   tabindex="0"
-  class="relative rounded-2xl cursor-pointer backdrop-blur-xl border transition-all duration-300 hover:-translate-y-1 {aura?.frameClass || ''}
+  class="relative rounded-2xl cursor-pointer overflow-hidden transition-all duration-300 hover:-translate-y-1 {aura?.frameClass || ''}
     {isChampion 
-      ? 'w-full sm:w-[33%] order-1 sm:order-2 z-10 overflow-visible scale-[1.02] sm:scale-105 mb-2 sm:mb-0' 
-      : 'w-[48%] sm:w-[33%] overflow-hidden ' + (rank === 2 ? 'order-2 sm:order-1' : 'order-3 sm:order-3')
+      ? 'w-full sm:w-[33%] order-1 sm:order-2 z-10 scale-[1.02] sm:scale-105 mb-2 sm:mb-0' 
+      : 'w-[48%] sm:w-[33%] ' + (rank === 2 ? 'order-2 sm:order-1' : 'order-3 sm:order-3')
     }
     {darkMode 
-      ? 'bg-white/[0.02] border-white/15 shadow-2xl shadow-black/20 ring-1 ring-white/5' 
-      : 'bg-white/20 border-white/40 shadow-xl ring-1 ring-white/40'
+      ? '' 
+      : 'bg-white/20 border border-white/40 shadow-xl ring-1 ring-white/40 backdrop-blur-xl'
     }"
+  style={darkMode ? `
+    background: 
+      linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
+      linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
+      linear-gradient(rgba(255, 242, 212, 0.04), rgba(255, 242, 212, 0.01));
+    border: 1px solid rgba(255, 243, 215, 0.06);
+    box-shadow: 
+      rgba(10, 8, 5, 0.08) 0px 48px 56px 0px, 
+      rgba(10, 8, 5, 0.12) 0px 24px 32px 0px, 
+      inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.12), 
+      inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.08), 
+      inset 0px 4px 12px -6px rgba(255, 243, 215, 0.04);
+  ` : ""}
 >
   <!-- Rank Badge -->
   <div class="absolute top-3 left-3 z-20">
@@ -42,7 +55,7 @@
     </div>
   </div>
 
-  <div class="relative overflow-hidden cursor-pointer {isChampion ? 'h-52 sm:h-52 rounded-t-2xl' : 'h-48 sm:h-48'}">
+  <div class="relative overflow-hidden cursor-pointer rounded-t-2xl {isChampion ? 'h-52 sm:h-52' : 'h-48 sm:h-48'}">
     <img src={data.image_url.includes('cloudinary') ? data.image_url.replace('/upload/', '/upload/w_500,h_500,c_fill,f_auto,q_auto/') : data.image_url} alt={getDisplayLocation(data.location)} class="w-full h-full object-cover" loading="lazy" />
     
     {#if isChampion}

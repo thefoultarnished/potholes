@@ -28,8 +28,9 @@
 
 body {
   font-family: var(--font-body);
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -98,6 +99,27 @@ html {
     transparent
   );
   animation: shimmer-sweep 2.5s infinite;
+}
+
+/* Scanning Animation */
+@keyframes scan-move {
+  0% { top: -50%; }
+  100% { top: 150%; }
+}
+
+@keyframes scan-line-move {
+  0% { top: 0%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+.animate-scan {
+  animation: scan-move 3s linear infinite;
+}
+
+.animate-scan-line {
+  animation: scan-line-move 3s linear infinite;
 }
 
 @keyframes shimmer-sweep {

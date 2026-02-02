@@ -7,11 +7,25 @@
 <button
   on:click={() => setSoundEnabled(!soundEnabled)}
   aria-label={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'}
-  class="w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-102 active:scale-98 border ring-1 backdrop-blur-md
+  class="w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-102 active:scale-98
     {darkMode 
-      ? 'bg-white/[0.05] border-white/10 ring-white/5 text-cyan-400 hover:bg-white/10' 
-      : 'bg-white/40 border-white/40 ring-white/40 text-slate-500 hover:bg-white/60 shadow-sm'
+      ? '' 
+      : 'bg-white/40 border border-white/40 ring-1 ring-white/40 text-slate-500 hover:bg-white/60 shadow-sm backdrop-blur-md'
     }"
+  style={darkMode ? `
+    background: 
+      linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
+      linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
+      linear-gradient(rgba(255, 242, 212, 0.06), rgba(255, 242, 212, 0.02));
+    color: rgb(34, 211, 238);
+    box-shadow: 
+      rgba(10, 8, 5, 0.08) 0px 48px 56px 0px, 
+      rgba(10, 8, 5, 0.12) 0px 24px 32px 0px, 
+      inset 0px 0px 0px 1px rgba(255, 243, 215, 0.06), 
+      inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
+      inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
+      inset 0px 4px 12px -6px rgba(255, 243, 215, 0.06);
+  ` : ""}
 >
   {#if soundEnabled}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width={18} height={18}>

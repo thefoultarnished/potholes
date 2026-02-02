@@ -16,8 +16,26 @@
   } from '$lib/stores';
   
   // Persisted preferences
-  let localDarkMode = true;
+  // 0 = light, 1 = dark, 2 = torchlight
+  let localMode = 1;
+  $: localDarkMode = localMode >= 1;
   let localSoundEnabled = true;
+  
+  // Torchlight mouse/touch tracking
+  let mouseX = 0;
+  let mouseY = 0;
+  
+  function handleMouseMove(e: MouseEvent) {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+  }
+  
+  function handleTouchMove(e: TouchEvent) {
+    if (e.touches.length > 0) {
+      mouseX = e.touches[0].clientX;
+      mouseY = e.touches[0].clientY;
+    }
+  }
   
   // State
   let localReports: Report[] = [];
@@ -101,8 +119,8 @@
         break;
       case 'd':
         if (!localShowUpload && !localShowMap && !localSelectedPothole) {
-          localDarkMode = !localDarkMode;
-          trackEvent('keyboard_shortcut', { key: 'd', action: 'toggle_dark_mode' });
+          localMode = localMode === 1 ? 2 : 1;
+          trackEvent('keyboard_shortcut', { key: 'd', action: 'toggle_torch' });
         }
         break;
     }
@@ -135,12 +153,12 @@
   onMount(() => {
     // Load preferences from localStorage
     if (browser) {
-      const savedDarkMode = localStorage.getItem('darkMode');
+      const savedMode = localStorage.getItem('displayMode');
       const savedSound = localStorage.getItem('soundEnabled');
       const savedVotes = localStorage.getItem('votedIds');
       const savedSort = localStorage.getItem('sortBy') as SortOption;
       
-      if (savedDarkMode !== null) localDarkMode = savedDarkMode === 'true';
+      if (savedMode !== null) localMode = parseInt(savedMode) || 1;
       if (savedSound !== null) localSoundEnabled = savedSound === 'true';
       if (savedSort) sortBy = savedSort;
       if (savedVotes) {
@@ -332,16 +350,32 @@
   <title>MarkMyPothole - Community Pothole Reporter</title>
 </svelte:head>
 
-<div class="min-h-screen relative transition-colors duration-500 {localDarkMode ? 'bg-[#02040a]' : 'bg-gradient-to-br from-slate-100 via-blue-50 to-cyan-50'}">
+<div class="min-h-screen relative transition-colors duration-500 {localDarkMode ? 'bg-[#020617]' : 'bg-gradient-to-br from-slate-100 via-blue-50 to-cyan-50'}" on:mousemove={handleMouseMove} on:touchmove={handleTouchMove} on:touchstart={handleTouchMove} role="application">
   
   <div class="fixed inset-0 overflow-hidden pointer-events-none" style="z-index: 0">
     {#if localDarkMode}
-      <!-- Hard-Edged Geometric Background (No Blur) -->
-      <div class="absolute top-[-10%] left-[-10%] w-[60vw] h-[50vh] bg-pink-900/40 -rotate-12 origin-top-left"></div>
-      <div class="absolute top-[-20%] right-[-10%] w-[70vw] h-[60vh] bg-blue-950/80 rotate-12 origin-top-right"></div>
-      <div class="absolute top-[45%] left-[-20%] w-[150vw] h-[15vh] bg-teal-900/50 -rotate-6"></div>
-      <div class="absolute bottom-[-10%] left-[-10%] w-[50vw] h-[60vh] bg-blue-900/50 rotate-6 origin-bottom-left"></div>
-      <div class="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[50vh] bg-purple-900/50 -rotate-12 origin-bottom-right"></div>
+      <!-- Bold Chromatic Night -->
+      <div class="absolute inset-0 bg-[#030712]"></div>
+      
+      <!-- Hot Pink/Magenta Blaze (top-left) -->
+      <div class="absolute -top-[15%] -left-[10%] w-[90vw] h-[90vw] rounded-full opacity-50"
+        style="background: radial-gradient(circle at center, #ec4899 0%, transparent 60%); filter: blur(80px);"></div>
+      
+      <!-- Electric Cyan Burst (top-right) -->
+      <div class="absolute -top-[10%] -right-[15%] w-[80vw] h-[80vw] rounded-full opacity-45"
+        style="background: radial-gradient(circle at center, #06b6d4 0%, transparent 55%); filter: blur(70px);"></div>
+      
+      <!-- Deep Purple Core (center) -->
+      <div class="absolute top-[25%] left-[15%] w-[100vw] h-[70vh] rounded-full opacity-35"
+        style="background: radial-gradient(ellipse at center, #7c3aed 0%, transparent 65%); filter: blur(90px);"></div>
+      
+      <!-- Vibrant Blue Wave (bottom-left) -->
+      <div class="absolute bottom-[-20%] -left-[20%] w-[100vw] h-[100vw] rounded-full opacity-50"
+        style="background: radial-gradient(circle at center, #2563eb 0%, transparent 60%); filter: blur(80px);"></div>
+      
+      <!-- Teal Accent (bottom-right) -->
+      <div class="absolute -bottom-[25%] -right-[10%] w-[85vw] h-[85vw] rounded-full opacity-40"
+        style="background: radial-gradient(circle at center, #14b8a6 0%, transparent 60%); filter: blur(90px);"></div>
     {:else}
       <!-- Light Mode Static Background (Soft Pastels) -->
       <div class="absolute top-[-20%] left-[-10%] w-[60vw] h-[60vw] rounded-full bg-rose-200/60 blur-[120px]"></div>
@@ -377,26 +411,57 @@
       <div class="hidden sm:flex items-center gap-2">
         <button
           on:click={() => localShowUpload = true}
-          class="h-11 px-6 rounded-full font-bold text-sm flex items-center justify-center gap-2 transition-all duration-200 hover:scale-102 active:scale-98 border ring-1 backdrop-blur-md
+          class="group relative h-11 px-6 rounded-full font-medium text-[15px] flex items-center justify-center gap-2 transition-all duration-300 hover:scale-105 active:scale-95
             {localDarkMode 
-              ? 'bg-white/[0.05] border-white/10 ring-white/5 text-white hover:bg-white/10' 
-              : 'bg-white/40 border-white/40 ring-white/40 text-slate-700 hover:bg-white/60'}"
+              ? 'hover:shadow-[0_0_30px_4px_rgba(34,211,238,0.3)]' 
+              : 'bg-white/40 border border-white/40 ring-1 ring-white/40 text-slate-700 hover:bg-white/60 backdrop-blur-md'}"
+          style={localDarkMode ? `
+            background: 
+              linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
+              linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
+              linear-gradient(rgba(255, 242, 212, 0.06), rgba(255, 242, 212, 0.02));
+            color: rgb(255, 243, 215);
+            box-shadow: 
+              rgba(10, 8, 5, 0.08) 0px 48px 56px 0px, 
+              rgba(10, 8, 5, 0.12) 0px 24px 32px 0px, 
+              inset 0px 0px 0px 1px rgba(255, 243, 215, 0.06), 
+              inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
+              inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
+              inset 0px 4px 12px -6px rgba(255, 243, 215, 0.06);
+          ` : ""}
         >
-          <Camera size={18} />
+          <!-- Colorful Icon -->
+          <span class="{localDarkMode ? 'text-cyan-400' : ''}">
+            <Camera size={18} />
+          </span>
           <span>Mark</span>
         </button>
         <button
           on:click={() => localShowMap = true}
-          class="w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 border ring-1 backdrop-blur-md
+          class="w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95
             {localDarkMode 
-              ? 'bg-white/[0.05] border-white/10 ring-white/5 text-cyan-400 hover:bg-white/10' 
-              : 'bg-white/40 border-white/40 ring-white/40 text-cyan-600 hover:bg-white/60 shadow-sm'
+              ? '' 
+              : 'bg-white/40 border border-white/40 ring-1 ring-white/40 text-cyan-600 hover:bg-white/60 shadow-sm backdrop-blur-md'
             }"
+          style={localDarkMode ? `
+            background: 
+              linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
+              linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
+              linear-gradient(rgba(255, 242, 212, 0.06), rgba(255, 242, 212, 0.02));
+            color: rgb(34, 211, 238);
+            box-shadow: 
+              rgba(10, 8, 5, 0.08) 0px 48px 56px 0px, 
+              rgba(10, 8, 5, 0.12) 0px 24px 32px 0px, 
+              inset 0px 0px 0px 1px rgba(255, 243, 215, 0.06), 
+              inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
+              inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
+              inset 0px 4px 12px -6px rgba(255, 243, 215, 0.06);
+          ` : ""}
         >
           <MapIcon size={20} />
         </button>
-        <SoundToggle soundEnabled={localSoundEnabled} setSoundEnabled={(v) => localSoundEnabled = v} darkMode={localDarkMode} />
-        <ModeToggle darkMode={localDarkMode} setDarkMode={(v) => localDarkMode = v} />
+        <SoundToggle soundEnabled={localSoundEnabled} setSoundEnabled={(v: boolean) => localSoundEnabled = v} darkMode={localDarkMode} />
+        <ModeToggle mode={localMode} setMode={(v: number) => localMode = v} />
       </div>
 
       <!-- Mobile Menu Toggle -->
@@ -421,18 +486,28 @@
           <span class="font-semibold">Map View</span>
           <button
             on:click={() => { localShowMap = true; localShowMobileMenu = false; }}
-            class="p-2 rounded-lg {localDarkMode ? 'bg-white/10' : 'bg-black/5'}"
+            class="p-2.5 rounded-xl transition-all
+              {localDarkMode ? '' : 'bg-black/5'}"
+            style={localDarkMode ? `
+              background: 
+                linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
+                linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
+                linear-gradient(rgba(255, 242, 212, 0.06), rgba(255, 242, 212, 0.02));
+              box-shadow: 
+                inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
+                inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.24);
+            ` : ""}
           >
             <MapIcon size={20} class={localDarkMode ? 'text-cyan-400' : 'text-cyan-600'} />
           </button>
         </div>
         <div class="flex items-center justify-between p-2">
           <span class="font-semibold">Sound Effects</span>
-          <SoundToggle soundEnabled={localSoundEnabled} setSoundEnabled={(v) => localSoundEnabled = v} darkMode={localDarkMode} />
+          <SoundToggle soundEnabled={localSoundEnabled} setSoundEnabled={(v: boolean) => localSoundEnabled = v} darkMode={localDarkMode} />
         </div>
         <div class="flex items-center justify-between p-2">
-          <span class="font-semibold">Dark Mode</span>
-          <ModeToggle darkMode={localDarkMode} setDarkMode={(v) => localDarkMode = v} />
+          <span class="font-semibold">Display Mode</span>
+          <ModeToggle mode={localMode} setMode={(v: number) => localMode = v} />
         </div>
       </div>
     </div>
@@ -441,11 +516,23 @@
   <!-- FAB Mobile -->
   <button
     on:click={() => localShowUpload = true}
-    class="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center sm:hidden transition-all
+    class="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full flex items-center justify-center sm:hidden transition-all active:scale-95
       {localDarkMode
-        ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] text-cyan-400 shadow-[0_4px_12px_rgba(0,0,0,0.4)]'
+        ? ''
         : 'bg-white text-cyan-600 shadow-[0_4px_12px_rgba(0,0,0,0.12)] border border-white/60'
       }"
+    style={localDarkMode ? `
+      background: 
+        linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
+        linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
+        linear-gradient(rgba(255, 242, 212, 0.06), rgba(255, 242, 212, 0.02));
+      color: rgb(34, 211, 238);
+      box-shadow: 
+        rgba(10, 8, 5, 0.2) 0px 12px 24px 0px, 
+        inset 0px 0px 0px 1px rgba(255, 243, 215, 0.06), 
+        inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
+        inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.24);
+    ` : ""}
   >
     <Camera size={24} />
   </button>
@@ -453,11 +540,24 @@
   <main class="pt-24 pb-20 relative z-10">
     <!-- Hall of Shame -->
     <section class="mb-8 max-w-6xl mx-auto px-4">
-      <div class="p-6 rounded-[2.5rem] border backdrop-blur-xl transition-all duration-300
+      <div class="p-6 rounded-[2.5rem] transition-all duration-300
         {localDarkMode 
-          ? 'bg-white/[0.02] border-white/15 shadow-2xl shadow-black/20 ring-1 ring-white/5' 
-          : 'bg-white/20 border-white/40 shadow-xl ring-1 ring-white/40'
-        }">
+          ? '' 
+          : 'bg-white/20 border border-white/40 shadow-xl ring-1 ring-white/40 backdrop-blur-xl'
+        }"
+        style={localDarkMode ? `
+          background: 
+            linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
+            linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
+            linear-gradient(rgba(255, 242, 212, 0.04), rgba(255, 242, 212, 0.01));
+          border: 1px solid rgba(255, 243, 215, 0.06);
+          box-shadow: 
+            rgba(10, 8, 5, 0.08) 0px 48px 56px 0px, 
+            rgba(10, 8, 5, 0.12) 0px 24px 32px 0px, 
+            inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.12), 
+            inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.08), 
+            inset 0px 4px 12px -6px rgba(255, 243, 215, 0.04);
+        ` : ""}>
         
         <div class="flex flex-col items-center justify-center mb-2 text-center">
           <div class="flex items-center gap-3 mb-2">
@@ -498,6 +598,24 @@
 
     <!-- Live Feed -->
     <section class="max-w-6xl mx-auto px-4">
+      <div class="p-6 rounded-[2.5rem] transition-all duration-300
+        {localDarkMode 
+          ? '' 
+          : 'bg-white/20 border border-white/40 shadow-xl ring-1 ring-white/40 backdrop-blur-xl'
+        }"
+        style={localDarkMode ? `
+          background: 
+            linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
+            linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
+            linear-gradient(rgba(255, 242, 212, 0.04), rgba(255, 242, 212, 0.01));
+          border: 1px solid rgba(255, 243, 215, 0.06);
+          box-shadow: 
+            rgba(10, 8, 5, 0.08) 0px 48px 56px 0px, 
+            rgba(10, 8, 5, 0.12) 0px 24px 32px 0px, 
+            inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.12), 
+            inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.08), 
+            inset 0px 4px 12px -6px rgba(255, 243, 215, 0.04);
+        ` : ""}>
       <div class="flex items-center justify-between gap-3 mb-8">
         <div class="flex items-center gap-3">
           <div class="p-2.5 rounded-2xl {localDarkMode ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] shadow-[0_4px_12px_rgba(0,0,0,0.3)]' : 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06)]'}">
@@ -513,11 +631,18 @@
         </div>
         
         <!-- Sort Controls - Segmented Buttons with Sliding Indicator -->
-        <div class="relative flex items-center p-1 rounded-full border backdrop-blur-md
+        <div class="relative flex items-center p-1 rounded-full border
           {localDarkMode 
-            ? 'bg-white/[0.02] border-white/10' 
-            : 'bg-white/30 border-white/40'
-          }">
+            ? 'border-[#fff3d7]/10' 
+            : 'bg-white/30 border-white/40 backdrop-blur-md'
+          }"
+          style={localDarkMode ? `
+            background: 
+              linear-gradient(rgba(16, 13, 10, 0.4), rgba(16, 13, 10, 0.4));
+            box-shadow: 
+              inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.12), 
+              inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.08);
+          ` : ""}>
           
           <!-- Sliding Indicator -->
           <div 
@@ -605,13 +730,31 @@
           </div>
         {/if}
       {/if}
+      </div>
     </section>
   </main>
 
   <!-- Footer -->
   <footer class="relative z-10 py-8 text-center {localDarkMode ? 'bg-gradient-to-t from-black/20 to-transparent' : 'bg-gradient-to-t from-white/30 to-transparent'}">
     <div class="max-w-6xl mx-auto px-4">
-      <div class="px-6 py-5 rounded-3xl backdrop-blur-xl {localDarkMode ? 'bg-white/5 border border-white/10' : 'bg-white/60 border border-white/60 shadow-xl'}">
+      <div class="p-6 rounded-[2.5rem] transition-all duration-300
+        {localDarkMode 
+          ? '' 
+          : 'bg-white/20 border border-white/40 shadow-xl ring-1 ring-white/40 backdrop-blur-xl'
+        }"
+        style={localDarkMode ? `
+          background: 
+            linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
+            linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
+            linear-gradient(rgba(255, 242, 212, 0.04), rgba(255, 242, 212, 0.01));
+          border: 1px solid rgba(255, 243, 215, 0.06);
+          box-shadow: 
+            rgba(10, 8, 5, 0.08) 0px 48px 56px 0px, 
+            rgba(10, 8, 5, 0.12) 0px 24px 32px 0px, 
+            inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.12), 
+            inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.08), 
+            inset 0px 4px 12px -6px rgba(255, 243, 215, 0.04);
+        ` : ""}>
         <div class="flex flex-col items-center gap-4">
         <div class="flex items-center gap-2 text-sm font-medium {localDarkMode ? 'text-zinc-400' : 'text-slate-600'}">
           Made with <span class="text-red-500 font-bold">frustration</span>
@@ -676,8 +819,19 @@
               href={tech.url} 
               target="_blank" 
               rel="noopener noreferrer" 
-              class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all border {localDarkMode ? 'bg-white/5 border-white/10 text-zinc-400' : 'bg-white border-black/5 text-slate-500'} {tech.color} hover:pl-2 hover:pr-4"
-            >
+              class="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all hover:pl-5 hover:pr-3 border
+                {localDarkMode ? 'text-zinc-400 bg-white/5 border-transparent' : 'bg-white/40 border-white/40 shadow-sm text-slate-500 hover:text-slate-800'} {tech.color}"
+              style={localDarkMode ? `
+                background-image: 
+                  linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
+                  linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
+                  linear-gradient(rgba(255, 242, 212, 0.06), rgba(255, 242, 212, 0.02));
+                border-color: rgba(255, 243, 215, 0.06);
+                box-shadow: 
+                  rgba(10, 8, 5, 0.08) 0px 4px 6px 0px, 
+                  inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.12), 
+                  inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.12);
+              ` : ""}>
               <img src={tech.logo} alt={tech.name} class="w-3.5 h-3.5 object-contain" />
               {tech.name}
             </a>
@@ -729,4 +883,23 @@
       onClose={() => removeToast(toast.id)} 
     />
   {/each}
+
+  <!-- Torchlight Mode Overlay -->
+  {#if localMode === 2}
+    <div 
+      class="fixed inset-0 pointer-events-none"
+      style="
+        z-index: 9999;
+        background: radial-gradient(
+          circle 200px at {mouseX}px {mouseY}px,
+          transparent 0%,
+          transparent 40%,
+          rgba(0,0,0,0.3) 55%,
+          rgba(0,0,0,0.6) 70%,
+          rgba(0,0,0,0.85) 85%,
+          black 100%
+        );
+      "
+    ></div>
+  {/if}
 </div>

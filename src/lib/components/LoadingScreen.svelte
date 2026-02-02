@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { fade, scale } from 'svelte/transition';
+  import Logo from '$lib/components/Logo.svelte';
   
   export let darkMode: boolean = true;
   export let onComplete: () => void = () => {};
@@ -76,15 +77,7 @@
           </div>
           
           <!-- Logo icon -->
-          <img 
-            src="/assets/hole-emoji-smiley-svgrepo-com.svg" 
-            alt="Logo" 
-            class="w-8 h-8 {darkMode ? 'brightness-0 invert' : ''}"
-            style={darkMode ? (themeColor === 'yellow' 
-              ? 'filter: invert(80%) sepia(85%) saturate(1000%) hue-rotate(1deg) brightness(108%) contrast(105%);' 
-              : 'filter: invert(78%) sepia(44%) saturate(2099%) hue-rotate(147deg) brightness(101%) contrast(101%);') 
-              : ''}
-          />
+          <Logo size="32" className={darkMode ? 'text-white' : ''} />
         </div>
       </div>
       

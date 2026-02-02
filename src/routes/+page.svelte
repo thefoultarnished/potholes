@@ -11,6 +11,12 @@
   import MapView from '$lib/components/MapView.svelte';
   import Toast from '$lib/components/Toast.svelte';
   import LoadingScreen from '$lib/components/LoadingScreen.svelte';
+  import Logo from '$lib/components/Logo.svelte';
+  import UpvoteButton from '$lib/components/UpvoteButton.svelte';
+  import PlayStreamIcon from '$lib/components/PlayStreamIcon.svelte';
+  import AngryEmoji from '$lib/components/AngryEmoji.svelte';
+  import ViteLogo from '$lib/components/ViteLogo.svelte';
+  import LucideLogo from '$lib/components/LucideLogo.svelte';
   import { 
     SUPABASE_URL, SUPABASE_ANON_KEY, type Report
   } from '$lib/stores';
@@ -410,11 +416,7 @@
   <header class="fixed top-0 inset-x-0 z-30 py-1 transition-all duration-300 backdrop-blur-xl border-b {localDarkMode ? 'bg-white/[0.02] border-white/15 shadow-lg shadow-black/10' : 'bg-white/20 border-white/40 shadow-sm'}">
     <div class="max-w-6xl mx-auto w-full px-4 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <img 
-          src="/assets/hole-emoji-smiley-svgrepo-com.svg"
-          alt="Pothole Emoji" 
-          class="w-10 h-10 sm:w-12 sm:h-12 drop-shadow-lg"
-        />
+        <Logo size="48" className="{blueColor} drop-shadow-lg w-10 h-10 sm:w-12 sm:h-12" />
         <div>
           <h1 class="font-bold text-lg tracking-tight leading-none {localDarkMode ? 'text-white' : 'text-slate-600'}">
             Mark<span class={blueColor}>My</span>Pothole
@@ -638,10 +640,7 @@
       <div class="flex items-center justify-between gap-3 mb-8">
         <div class="flex items-center gap-3">
           <div class="p-2.5 rounded-2xl {localDarkMode ? 'bg-gradient-to-b from-[#2a3352] to-[#1e2844] shadow-[0_4px_12px_rgba(0,0,0,0.3)]' : 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06)]'}">
-            <div 
-              class="w-[20px] h-[20px] {blueBgClass}"
-              style="mask-image: url(/assets/play-stream-svgrepo-com.svg); mask-size: contain; mask-repeat: no-repeat; mask-position: center; -webkit-mask-image: url(/assets/play-stream-svgrepo-com.svg); -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center;"
-            ></div>
+            <PlayStreamIcon size="20" className="{blueColor}" />
           </div>
           <div>
             <h2 class="text-xl font-bold tracking-tight {localDarkMode ? 'text-white' : 'text-slate-700'}">Live Feed</h2>
@@ -809,10 +808,7 @@
         <div class="flex flex-col items-center gap-4">
         <div class="flex items-center gap-2 text-sm font-medium {primaryTextColor}">
           Made with <span class="text-red-500 font-bold">frustration</span>
-          <span 
-            class="h-5 w-5 inline-block relative bg-current transition-colors"
-            style="mask-image: url(/assets/angry-anger-svgrepo-com.svg); mask-size: contain; mask-repeat: no-repeat; mask-position: center; -webkit-mask-image: url(/assets/angry-anger-svgrepo-com.svg); -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center;"
-          ></span> & powered by :
+          <AngryEmoji size="20" className="inline-block relative text-red-500" /> & powered by :
         </div>
         
         <div class="flex flex-wrap justify-center items-center gap-x-3 gap-y-2 w-full">
@@ -851,13 +847,13 @@
               name: 'Vite', 
               url: 'https://vitejs.dev', 
               color: 'hover:text-purple-500 hover:bg-purple-500/10 hover:border-purple-500/20',
-              logo: '/assets/vite.svg'
+              logo: ViteLogo
             },
             { 
               name: 'Lucide', 
               url: 'https://lucide.dev', 
               color: 'hover:text-pink-500 hover:bg-pink-500/10 hover:border-pink-500/20',
-              logo: '/assets/lucide.svg'
+              logo: LucideLogo
             },
             { 
               name: 'OpenStreetMap', 
@@ -883,7 +879,11 @@
                   inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.12), 
                   inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.12);
               ` : ""}>
-              <img src={tech.logo} alt={tech.name} class="w-3.5 h-3.5 object-contain" />
+              {#if typeof tech.logo === 'string'}
+                <img src={tech.logo} alt={tech.name} class="w-3.5 h-3.5 object-contain" />
+              {:else}
+                <svelte:component this={tech.logo} size="14" className="w-3.5 h-3.5 object-contain" />
+              {/if}
               {tech.name}
             </a>
           {/each}

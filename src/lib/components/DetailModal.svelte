@@ -82,7 +82,33 @@
     isDragging = false;
   }
 
-  function handleImageClick(e: MouseEvent) {
+  // Mobile Touch Handling
+  function handleTouchStart(e: TouchEvent) {
+    if ($zoom <= 1 || e.touches.length !== 1) return;
+    isDragging = true;
+    dragDistance = 0;
+    startMousePos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    startImagePos = { ...$pos };
+    // e.preventDefault(); // Don't prevent default immediately to allow Pinch-to-zoom if added later
+  }
+
+  function handleTouchMove(e: TouchEvent) {
+    if (!isDragging || e.touches.length !== 1) return;
+    e.preventDefault(); // Stop page scrolling while panning image
+    const dx = e.touches[0].clientX - startMousePos.x;
+    const dy = e.touches[0].clientY - startMousePos.y;
+    dragDistance = Math.abs(dx) + Math.abs(dy);
+    pos.set({
+      x: startImagePos.x + dx,
+      y: startImagePos.y + dy
+    }, { hard: true });
+  }
+
+  function handleTouchEnd() {
+    isDragging = false;
+  }
+
+  function handleImageClick(e: MouseEvent | TouchEvent) {
     if (dragDistance > 5) return;
     if ($zoom > 1) {
       resetZoom();
@@ -201,6 +227,9 @@
       on:mousemove={handleMouseMove}
       on:mouseup={handleMouseUp}
       on:mouseleave={handleMouseUp}
+      on:touchstart={handleTouchStart}
+      on:touchmove={handleTouchMove}
+      on:touchend={handleTouchEnd}
       role="application"
       aria-label="Image viewer - drag to pan when zoomed"
     >

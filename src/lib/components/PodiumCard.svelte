@@ -28,21 +28,13 @@
       : 'w-[48%] sm:w-[33%] ' + (rank === 2 ? 'order-2 sm:order-1' : 'order-3 sm:order-3')
     }
     {darkMode 
-      ? '' 
+      ? 'bg-white/[0.04] border border-white/10 hover:border-white/20 hover:bg-white/[0.07] shadow-lg' 
       : 'bg-white/20 border border-white/40 shadow-xl ring-1 ring-white/40 backdrop-blur-xl'
     }"
   style={darkMode ? `
     background: 
-      linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
-      linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
-      linear-gradient(rgba(255, 242, 212, 0.04), rgba(255, 242, 212, 0.01));
-    border: 1px solid rgba(255, 243, 215, 0.06);
-    box-shadow: 
-      rgba(10, 8, 5, 0.08) 0px 48px 56px 0px, 
-      rgba(10, 8, 5, 0.12) 0px 24px 32px 0px, 
-      inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.12), 
-      inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.08), 
-      inset 0px 4px 12px -6px rgba(255, 243, 215, 0.04);
+      linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.02) 100%), 
+      linear-gradient(rgba(255, 243, 215, 0.02) 0%, rgba(0, 0, 0, 0) 20%);
   ` : ""}
 >
   <!-- Rank Badge -->
@@ -102,7 +94,7 @@
     {/if}
     
     <div class="flex items-center justify-between gap-2">
-      <span class="font-medium {isChampion ? 'text-xs' : 'text-[10px]'} {darkMode ? 'text-zinc-300' : 'text-slate-600'}">
+      <span class="font-medium text-sm {darkMode ? 'text-zinc-300' : 'text-slate-600'}">
         {formatDate(data.created_at)}
       </span>
       <UpvoteButton {onVote} votes={data.votes} size="sm" {darkMode} {soundEnabled} {blueColor} />

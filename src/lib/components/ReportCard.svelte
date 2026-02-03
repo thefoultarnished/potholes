@@ -17,7 +17,7 @@
   on:click={() => onSelect(data)} on:keypress={() => onSelect(data)} role="button" tabindex="0"
   class="rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1 group/tile
     {darkMode 
-      ? '' 
+      ? 'bg-white/[0.03] border border-white/10 hover:border-white/20 hover:bg-white/[0.06] shadow-sm hover:shadow-md' 
       : `bg-white/20 border border-white/40 shadow-xl ring-1 ring-white/40 hover:shadow-[0_12px_40px_rgba(${blueColor.includes('yellow') ? '250,204,21' : '6,182,212'},0.1)] backdrop-blur-xl`
     }"
   style={darkMode ? `
@@ -57,7 +57,7 @@
       {getDisplayLocation(data.location)}
     </h4>
     <div class="flex items-center justify-between gap-2">
-      <span class="text-xs font-medium {darkMode ? 'text-zinc-400' : 'text-slate-500'}">
+      <span class="text-sm font-medium {darkMode ? 'text-zinc-400' : 'text-slate-500'}">
         {formatDate(data.created_at)}
       </span>
       <UpvoteButton {onVote} votes={data.votes} size="sm" {darkMode} {soundEnabled} {blueColor} />

@@ -245,76 +245,10 @@
     return () => {
       // clearInterval(interval);
       if (realtimeChannel) realtimeChannel.unsubscribe();
-      clearInterval(auroraInterval);
-      if (typeof window !== 'undefined') window.removeEventListener('resize', handleResize);
     };
   });
 
-  // Aurora Background Logic
-  const AURORA_COLORS = ["#13FFAA", "#1E67C6", "#CE84CF", "#DD335C"];
-  let auroraColorIndex = 0;
-  const auroraColor = tweened(AURORA_COLORS[0], {
-    duration: 5000,
-    interpolate: interpolateRgb
-  });
-
-  let auroraInterval: any;
-  let canvas: HTMLCanvasElement;
-  let ctx: CanvasRenderingContext2D | null;
-  let stars: { x: number; y: number; size: number; opacity: number; speed: number }[] = [];
-
-  function initStars() {
-    if (!canvas) return;
-    stars = Array.from({ length: 200 }, () => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      size: Math.random() * 1.5,
-      opacity: Math.random(),
-      speed: Math.random() * 0.05
-    }));
-  }
-
-  function drawStars() {
-    if (!ctx || !canvas) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    stars.forEach(star => {
-      ctx!.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
-      ctx!.beginPath();
-      ctx!.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-      ctx!.fill();
-      
-      star.y -= star.speed;
-      if (star.y < 0) star.y = canvas.height;
-      star.opacity = 0.2 + Math.abs(Math.sin(Date.now() * 0.001 * (star.speed + 0.1) * 10)) * 0.8;
-    });
-    requestAnimationFrame(drawStars);
-  }
-
-  function handleResize() {
-    if (canvas) {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      initStars();
-    }
-  }
-
-  onMount(() => {
-    // Start Aurora Cycle
-    auroraInterval = setInterval(() => {
-      auroraColorIndex = (auroraColorIndex + 1) % AURORA_COLORS.length;
-      auroraColor.set(AURORA_COLORS[auroraColorIndex]);
-    }, 5000);
-
-    // Setup Canvas
-    if (canvas) {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      ctx = canvas.getContext('2d');
-      initStars();
-      drawStars();
-    }
-    window.addEventListener('resize', handleResize);
-  });
+  // No background canvas needed
   
   // Persist preferences
   $: if (browser) {
@@ -447,26 +381,20 @@
   
   <div class="fixed inset-0 overflow-hidden pointer-events-none" style="z-index: 0">
     {#if localDarkMode}
-      <!-- Primary Aurora Gradient -->
-      <div 
-        class="absolute inset-0 transition-all duration-[5000ms] ease-in-out"
-        style="background: radial-gradient(125% 125% at 50% 0%, #020617 50%, {$auroraColor});"
-      ></div>
-
-      <!-- Starfield Canvas -->
-      <canvas 
-        bind:this={canvas} 
-        class="absolute inset-0 opacity-40 mix-blend-screen"
-      ></canvas>
+      <!-- Deep Slate Background -->
+      <div class="absolute inset-0 bg-[#020617]"></div>
+      
+      <!-- Noise Texture -->
+      <div class="absolute inset-0 opacity-[0.05]" style="background-image: url('https://grainy-gradients.vercel.app/noise.svg'); filter: contrast(150%) brightness(100%);"></div>
+      
+      <!-- Vignette Effect -->
+      <div class="absolute inset-0" style="background: radial-gradient(circle at center, transparent 0%, rgba(2, 6, 23, 0.4) 60%, rgba(2, 6, 23, 0.8) 100%);"></div>
 
       <!-- Atmospheric Depth (Hues) -->
       <div class="absolute inset-0 overflow-hidden">
-        <div class="absolute top-[10%] right-[10%] w-[60vw] h-[60vw] rounded-full opacity-[0.05] blur-[150px]"
+        <div class="absolute top-[10%] right-[10%] w-[60vw] h-[60vw] rounded-full opacity-[0.04] blur-[120px]"
           style="background: radial-gradient(circle at center, rgb({themeColorRGB}) 0%, transparent 70%);"></div>
       </div>
-
-      <!-- Glass Texture Mesh -->
-      <div class="absolute inset-0 opacity-[0.03] mix-blend-overlay" style="background-image: url('https://grainy-gradients.vercel.app/noise.svg');"></div>
     {:else}
       <!-- Light Mode Static Background (Soft Pastels) -->
       <div class="absolute top-[-20%] left-[-10%] w-[60vw] h-[60vw] rounded-full bg-rose-200/60 blur-[120px]"></div>

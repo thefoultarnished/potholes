@@ -197,57 +197,65 @@
       localReports = cached;
       localLoading = false;
     }
-    
-    loadPotholes().then(async () => {
-      // Check for deep link ID in URL
-      if (browser) {
-        const params = new URLSearchParams(window.location.search);
-        const sharedId = params.get('pothole') || params.get('id');
-        
-        if (sharedId) {
-          // clean URL immediately
-          window.history.replaceState({}, '', window.location.pathname);
-          
-          let found = localReports.find(r => r.id == sharedId);
-          
-          if (!found) {
-             // Not in initial batch? Fetch specific ID
-             try {
-               const res = await fetch(`${SUPABASE_URL}/rest/v1/potholes?id=eq.${sharedId}&select=id,location,votes,image_url,created_at,severity`, {
-                  headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
-               });
-               if (res.ok) {
-                 const data = await res.json();
-                 if (data && data.length > 0) {
-                   let item = data[0];
-                   let loc = item.location;
-                   try {
-                     if (typeof loc === 'string' && loc.startsWith('{')) loc = JSON.parse(loc);
-                   } catch (e) {}
-                   found = { ...item, location: loc };
-                   if (found) {
-                     localReports = [found, ...localReports]; // Add to local list so we can show it
-                   }
-                 }
-               }
-             } catch (err) {
-               console.error("Failed to fetch shared pothole:", err);
-             }
-          }
 
-          if (found) {
-            localSelectedPothole = found;
-          } else {
-             showToast('Shared pothole not found', 'error');
-          }
-        }
+    // Check for deep link ID immediately
+    if (browser) {
+      const params = new URLSearchParams(window.location.search);
+      const sharedId = params.get('pothole') || params.get('id');
+      if (sharedId) {
+        handleDeepLink(sharedId);
       }
-    });
+    }
+    
+    loadPotholes();
     
     // Supabase Realtime subscription
     let realtimeChannel: any = null;
     if (SUPABASE_URL && SUPABASE_ANON_KEY) {
       setupRealtime();
+    }
+    
+    async function handleDeepLink(sharedId: string) {
+      console.log('[Deep Link] Looking for pothole ID:', sharedId);
+      
+      // Try to find in current reports (cached)
+      let found = localReports.find(r => String(r.id) === String(sharedId));
+      
+      if (!found) {
+        console.log('[Deep Link] Not found in cache, fetching from API...');
+        try {
+          const res = await fetch(`${SUPABASE_URL}/rest/v1/potholes?id=eq.${sharedId}&select=id,location,votes,image_url,created_at,severity`, {
+            headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.length > 0) {
+              let item = data[0];
+              let loc = item.location;
+              try {
+                if (typeof loc === 'string' && loc.startsWith('{')) loc = JSON.parse(loc);
+              } catch (e) {}
+              found = { ...item, location: loc };
+              if (found && !localReports.some(r => r.id === (found as Report).id)) {
+                localReports = [found, ...localReports];
+              }
+            }
+          }
+        } catch (err) {
+          console.error("[Deep Link] Fetch failed:", err);
+        }
+      }
+
+      if (found) {
+        console.log('[Deep Link] Success! Opening modal.');
+        localSelectedPothole = found;
+        showSplash = false; // Kill splash screen to show modal
+        window.history.replaceState({}, '', window.location.pathname);
+      } else {
+        console.log('[Deep Link] Pothole not found.');
+        showToast('Shared pothole not found', 'error');
+        window.history.replaceState({}, '', window.location.pathname);
+      }
     }
     
     async function setupRealtime() {

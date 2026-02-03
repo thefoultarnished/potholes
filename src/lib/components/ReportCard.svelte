@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { browser } from '$app/environment';
   import UpvoteButton from './UpvoteButton.svelte';
   import { getSizeFromSeverity, getDisplayLocation, formatDate, type Report } from '$lib/stores';
   
@@ -11,6 +12,11 @@
   export let blueColor = 'text-cyan-400';
   
   $: sizeInfo = getSizeFromSeverity(data.severity);
+  $: isMobile = browser && window.innerWidth < 640;
+  $: imgWidth = isMobile ? 300 : 500;
+  $: optimizedSrc = data.image_url.includes('cloudinary') 
+    ? data.image_url.replace('/upload/', `/upload/w_${imgWidth},h_${imgWidth},c_fill,f_auto,q_auto/`) 
+    : data.image_url;
 </script>
 
 <div
@@ -35,7 +41,7 @@
   <!-- Severity Bar -->
   <div class="aspect-square relative overflow-hidden rounded-t-3xl" on:click={() => onSelect(data)} on:keypress={() => onSelect(data)} role="button" tabindex="0">
     <img 
-      src={data.image_url.includes('cloudinary') ? data.image_url.replace('/upload/', '/upload/w_500,h_500,c_fill,f_auto,q_auto/') : data.image_url} 
+      src={optimizedSrc} 
       alt={getDisplayLocation(data.location)} 
       class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
       loading="lazy"

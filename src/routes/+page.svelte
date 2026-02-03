@@ -33,11 +33,13 @@
   let mouseY = 0;
   
   function handleMouseMove(e: MouseEvent) {
+    if (localMode !== 2) return;
     mouseX = e.clientX;
     mouseY = e.clientY;
   }
   
   function handleTouchMove(e: TouchEvent) {
+    if (localMode !== 2) return;
     if (e.touches.length > 0) {
       mouseX = e.touches[0].clientX;
       mouseY = e.touches[0].clientY;
@@ -437,7 +439,7 @@
       <div class="absolute inset-0 bg-[#020617]"></div>
       
       <!-- Noise Texture -->
-      <div class="absolute inset-0 opacity-[0.05]" style="background-image: url('https://grainy-gradients.vercel.app/noise.svg'); filter: contrast(150%) brightness(100%);"></div>
+      <div class="absolute inset-0 opacity-[0.05]" style="background-image: url('https://grainy-gradients.vercel.app/noise.svg');"></div>
       
       <!-- Vignette Effect -->
       <div class="absolute inset-0" style="background: radial-gradient(circle at center, transparent 0%, rgba(2, 6, 23, 0.4) 60%, rgba(2, 6, 23, 0.8) 100%);"></div>

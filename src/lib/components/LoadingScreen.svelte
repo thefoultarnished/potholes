@@ -24,11 +24,11 @@
   export let isLoading = true; // Controlled by parent
   
   $: if (!isLoading && visible) {
-    // Artificial small delay to smooth exit
+    // Reduced delays for a snappier feel
     setTimeout(() => {
       visible = false;
-      setTimeout(onComplete, 500);
-    }, 500);
+      setTimeout(onComplete, 200);
+    }, 100);
   }
 </script>
 
@@ -36,7 +36,7 @@
   <div 
     class="fixed inset-0 z-[100] flex flex-col items-center justify-center transition-colors duration-300
       {darkMode ? 'bg-[#02040a]' : 'bg-[#e4e4e7]'}"
-    out:fade={{ duration: 500 }}
+    out:fade={{ duration: 300 }}
   >
     <!-- Background gradients -->
     <div class="absolute inset-0 {darkMode ? 'bg-[#02040a]' : 'bg-gradient-to-br from-[#e4e4e7] via-[#f1f5f9] to-[#e2e8f0]'}">

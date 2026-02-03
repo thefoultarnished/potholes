@@ -2,8 +2,6 @@
   import { onMount, onDestroy } from 'svelte';
   import { browser } from '$app/environment';
   import { Camera, X, Menu, Award, Map as MapIcon, Sparkles, TrendingUp, Zap } from 'lucide-svelte';
-  import { tweened } from 'svelte/motion';
-  import { interpolateRgb } from 'd3-interpolate';
   import ModeToggle from '$lib/components/ModeToggle.svelte';
   import SoundToggle from '$lib/components/SoundToggle.svelte';
   import ReportCard from '$lib/components/ReportCard.svelte';

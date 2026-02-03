@@ -19,17 +19,13 @@
     }"
   style={mode !== 0 ? `
     background: 
-      linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
-      linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
-      linear-gradient(rgba(255, 242, 212, 0.06), rgba(255, 242, 212, 0.02));
+      linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.02) 100%),
+      rgba(255, 255, 255, 0.02);
     color: ${mode === 1 ? `rgb(${themeColorRGB})` : 'rgb(168, 85, 247)'};
     box-shadow: 
-      rgba(10, 8, 5, 0.08) 0px 48px 56px 0px, 
-      rgba(10, 8, 5, 0.12) 0px 24px 32px 0px, 
-      inset 0px 0px 0px 1px rgba(255, 243, 215, 0.06), 
-      inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
-      inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
-      inset 0px 4px 12px -6px rgba(255, 243, 215, 0.06);
+      0px 4px 16px -2px rgba(0, 0, 0, 0.5), 
+      inset 0px 1px 0px 0px rgba(255, 255, 255, 0.4), 
+      inset 0px 0px 0px 1px rgba(255, 255, 255, 0.08);
   ` : ""}
 >
   {#if mode === 0}

@@ -198,7 +198,51 @@
       localLoading = false;
     }
     
-    loadPotholes();
+    loadPotholes().then(async () => {
+      // Check for deep link ID in URL
+      if (browser) {
+        const params = new URLSearchParams(window.location.search);
+        const sharedId = params.get('pothole') || params.get('id');
+        
+        if (sharedId) {
+          // clean URL immediately
+          window.history.replaceState({}, '', window.location.pathname);
+          
+          let found = localReports.find(r => r.id == sharedId);
+          
+          if (!found) {
+             // Not in initial batch? Fetch specific ID
+             try {
+               const res = await fetch(`${SUPABASE_URL}/rest/v1/potholes?id=eq.${sharedId}&select=id,location,votes,image_url,created_at,severity`, {
+                  headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+               });
+               if (res.ok) {
+                 const data = await res.json();
+                 if (data && data.length > 0) {
+                   let item = data[0];
+                   let loc = item.location;
+                   try {
+                     if (typeof loc === 'string' && loc.startsWith('{')) loc = JSON.parse(loc);
+                   } catch (e) {}
+                   found = { ...item, location: loc };
+                   if (found) {
+                     localReports = [found, ...localReports]; // Add to local list so we can show it
+                   }
+                 }
+               }
+             } catch (err) {
+               console.error("Failed to fetch shared pothole:", err);
+             }
+          }
+
+          if (found) {
+            localSelectedPothole = found;
+          } else {
+             showToast('Shared pothole not found', 'error');
+          }
+        }
+      }
+    });
     
     // Supabase Realtime subscription
     let realtimeChannel: any = null;
@@ -224,7 +268,7 @@
                 trackEvent('realtime_insert', { id: newReport.id });
               }
             } else if (payload.eventType === 'UPDATE') {
-              localReports = localReports.map(r => 
+              localReports = localReports.map((r): Report => 
                 r.id === payload.new.id ? { ...r, votes: payload.new.votes } : r
               );
             } else if (payload.eventType === 'DELETE') {
@@ -404,7 +448,7 @@
   </div>
 
   {#if showSplash}
-    <LoadingScreen darkMode={localDarkMode} blueColor={blueColor} themeColorRGB={themeColorRGB} onComplete={() => showSplash = false} />
+    <LoadingScreen isLoading={localLoading} darkMode={localDarkMode} blueColor={blueColor} themeColorRGB={themeColorRGB} onComplete={() => showSplash = false} />
   {/if}
 
   <!-- Header -->
@@ -455,16 +499,12 @@
             }"
           style={localDarkMode ? `
             background: 
-              linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
-              linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
-              linear-gradient(rgba(255, 242, 212, 0.06), rgba(255, 242, 212, 0.02));
+              linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.02) 100%),
+              rgba(255, 255, 255, 0.02);
             box-shadow: 
-              rgba(10, 8, 5, 0.08) 0px 48px 56px 0px, 
-              rgba(10, 8, 5, 0.12) 0px 24px 32px 0px, 
-              inset 0px 0px 0px 1px rgba(255, 243, 215, 0.06), 
-              inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
-              inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
-              inset 0px 4px 12px -6px rgba(255, 243, 215, 0.06);
+              0px 4px 16px -2px rgba(0, 0, 0, 0.5), 
+              inset 0px 1px 0px 0px rgba(255, 255, 255, 0.4), 
+              inset 0px 0px 0px 1px rgba(255, 255, 255, 0.08);
             color: rgb(${themeColorRGB});
           ` : `color: rgb(${themeColorRGB});`}
         >
@@ -621,13 +661,12 @@
               transform: translateX({sortBy === 'recent' ? '0%' : sortBy === 'votes' ? '100%' : '200%'});
               {localDarkMode ? `
                 background: 
-                  linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
-                  linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
-                  linear-gradient(rgba(255, 242, 212, 0.1), rgba(255, 242, 212, 0.05));
+                  linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.02) 100%),
+                  rgba(255, 255, 255, 0.02);
                 box-shadow: 
-                  rgba(0, 0, 0, 0.3) 0px 4px 10px -2px, 
-                  inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.3), 
-                  inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.2);
+                  0px 4px 16px -2px rgba(0, 0, 0, 0.5), 
+                  inset 0px 1px 0px 0px rgba(255, 255, 255, 0.4), 
+                  inset 0px 0px 0px 1px rgba(255, 255, 255, 0.08);
               ` : ''}
             "
           ></div>
@@ -641,13 +680,12 @@
               left: calc({sortBy === 'recent' ? 0 : sortBy === 'votes' ? 1 : 2} * 33.333% + 2.666%);
               {localDarkMode ? `
                 background: 
-                  linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
-                  linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
-                  linear-gradient(rgba(255, 242, 212, 0.1), rgba(255, 242, 212, 0.05));
+                  linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.02) 100%),
+                  rgba(255, 255, 255, 0.02);
                 box-shadow: 
-                  rgba(0, 0, 0, 0.3) 0px 4px 10px -2px, 
-                  inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.3), 
-                  inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.2);
+                  0px 4px 16px -2px rgba(0, 0, 0, 0.5), 
+                  inset 0px 1px 0px 0px rgba(255, 255, 255, 0.4), 
+                  inset 0px 0px 0px 1px rgba(255, 255, 255, 0.08);
               ` : ''}
             "
           ></div>
@@ -709,12 +747,39 @@
           {/each}
         </div>
       {:else if localReports.length === 0}
-        <div class="text-center py-16 rounded-3xl {localDarkMode ? 'bg-white/5' : 'bg-white/10'}">
-          <div class="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center {localDarkMode ? 'bg-white/5' : 'bg-slate-100'}">
-            <Camera size={28} class={blueColor} />
+        <div class="text-center py-10 px-6 rounded-3xl border border-dashed {localDarkMode ? 'bg-white/[0.02] border-white/10' : 'bg-white/40 border-slate-300'}">
+          <div class="mb-6 flex justify-center">
+            <svg viewBox="0 0 24 24" class="w-16 h-16" xmlns="http://www.w3.org/2000/svg">
+              <line x1="11.95" y1="16.5" x2="12.05" y2="16.5" class="{blueColor} stroke-current" style="fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5;"></line>
+              <path d="M3,12a9,9,0,0,1,9-9h0a9,9,0,0,1,9,9h0a9,9,0,0,1-9,9h0a9,9,0,0,1-9-9Zm9,0V7" class="{blueColor} stroke-current" style="fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></path>
+            </svg>
           </div>
-          <p class="font-medium {blueColor}">No reports yet</p>
-          <p class="text-sm mt-1 {primaryTextColor}">Be the first to report a pothole!</p>
+          <h3 class="text-lg font-bold mb-2 {localDarkMode ? 'text-white' : 'text-slate-800'}">Roads are perfect? Kinda suspicious.</h3>
+          <p class="text-sm max-w-xs mx-auto leading-relaxed {primaryTextColor}">
+            Mark the first Pothole
+          </p>
+          <button 
+            on:click={() => localShowUpload = true}
+            class="group relative mt-6 px-6 py-2.5 rounded-full font-black text-sm flex items-center justify-center gap-2 transition-all duration-500 active:scale-95 text-white backdrop-blur-[40px] border border-white/40 shadow-2xl overflow-hidden mx-auto"
+            style="
+              background: 
+                linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 50%, rgba(0,0,0,0.1) 100%),
+                rgba({themeColorRGB}, 0.6);
+              box-shadow: 
+                inset 0 1px 1px 0 rgba(255, 255, 255, 0.4),
+                inset 0 12px 24px -10px rgba(255, 255, 255, 0.2),
+                inset 0 -1px 1px 0 rgba(0, 0, 0, 0.2);
+            "
+          >
+            <!-- Specular Light Reflection -->
+            <div class="absolute inset-0 opacity-20 pointer-events-none group-hover:translate-x-full transition-transform duration-1000 ease-in-out" 
+                 style="background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent); transform: skewX(-20deg) translateX(-150%);"></div>
+            
+            <span class="relative z-10 transition-transform duration-300 group-hover:translate-x-1">
+              <Camera size={18} />
+            </span>
+            <span class="relative z-10 transition-transform duration-300 group-hover:translate-x-1">Mark</span>
+          </button>
         </div>
       {:else}
         <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
@@ -819,15 +884,14 @@
               class="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all hover:pl-5 hover:pr-3 border
                 {localDarkMode ? 'text-zinc-300 bg-white/5 border-transparent' : 'bg-white/40 border-white/40 shadow-sm text-slate-500 hover:text-slate-800'} {tech.color}"
               style={localDarkMode ? `
-                background-image: 
-                  linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
-                  linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
-                  linear-gradient(rgba(255, 242, 212, 0.06), rgba(255, 242, 212, 0.02));
-                border-color: rgba(255, 243, 215, 0.06);
+                background: 
+                  linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.02) 100%),
+                  rgba(255, 255, 255, 0.02);
+                border-color: rgba(255, 255, 255, 0.1);
                 box-shadow: 
-                  rgba(10, 8, 5, 0.08) 0px 4px 6px 0px, 
-                  inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.12), 
-                  inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.12);
+                  0px 4px 16px -2px rgba(0, 0, 0, 0.5), 
+                  inset 0px 1px 0px 0px rgba(255, 255, 255, 0.4), 
+                  inset 0px 0px 0px 1px rgba(255, 255, 255, 0.08);
               ` : ""}>
               <img src={tech.logo} alt={tech.name} class="w-3.5 h-3.5 object-contain" />
               {tech.name}

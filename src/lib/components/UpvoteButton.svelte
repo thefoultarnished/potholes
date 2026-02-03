@@ -16,10 +16,16 @@
   
   $: s = sizes[size] || sizes.md;
   
+  let popped = false;
+
   function handleClick(e: MouseEvent) {
     e.stopPropagation();
     e.preventDefault();
     
+    // Trigger pop animation
+    popped = true;
+    setTimeout(() => popped = false, 150);
+
     playPopSound(soundEnabled);
     onVote();
   }
@@ -34,16 +40,14 @@
     }"
   style={darkMode ? `
     background: 
-      linear-gradient(rgba(0, 0, 0, 0) 80%, rgba(255, 243, 215, 0.04) 100%), 
-      linear-gradient(rgba(255, 243, 215, 0.04) 0%, rgba(0, 0, 0, 0) 20%), 
-      linear-gradient(rgba(255, 242, 212, 0.06), rgba(255, 242, 212, 0.02));
+      linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.02) 100%),
+      rgba(255, 255, 255, 0.02);
     color: currentColor;
-    border: 1px solid rgba(255, 243, 215, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 
-      rgba(10, 8, 5, 0.08) 0px 4px 6px 0px, 
-      inset 0px 0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
-      inset 0px -0.5px 0.5px 0px rgba(255, 243, 215, 0.24), 
-      inset 0px 2px 6px -3px rgba(255, 243, 215, 0.06);
+      0px 4px 16px -2px rgba(0, 0, 0, 0.5), 
+      inset 0px 1px 0px 0px rgba(255, 255, 255, 0.4), 
+      inset 0px 0px 0px 1px rgba(255, 255, 255, 0.08);
   ` : ""}
 >
   <svg 
@@ -51,7 +55,7 @@
     fill="currentColor" 
     width={s.icon} 
     height={s.icon}
-    class={darkMode ? blueColor : ''}
+    class="{darkMode ? blueColor : ''} transition-transform duration-100 ease-out {popped ? 'scale-150 -rotate-12' : ''}"
   >
     <path d="M4 14h4v7a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-7h4a1.001 1.001 0 0 0 .781-1.625l-8-10c-.381-.475-1.181-.475-1.562 0l-8 10A1.001 1.001 0 0 0 4 14z"/>
   </svg>

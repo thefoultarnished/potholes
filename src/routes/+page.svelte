@@ -166,9 +166,9 @@
     const cached = localStorage.getItem(CACHE_KEY);
     if (!cached) return null;
     try {
-      const { data, timestamp } = JSON.parse(cached);
-      // Cache valid for 1 hour
-      if (Date.now() - timestamp < 3600000) return data;
+      const { data } = JSON.parse(cached);
+      // Always return cached data for instant UI, fresh data loads in background
+      return data;
     } catch {}
     return null;
   }

@@ -15,6 +15,14 @@
   $: sizeInfo = getSizeFromSeverity(data.severity);
   $: themeColor = blueColor.includes('yellow') ? 'yellow' : 'cyan';
 
+  // Progressive image loading: start with 800px, load full-res on zoom
+  let loadFullRes = false;
+  $: mediumSrc = data.image_url.includes('cloudinary') 
+    ? data.image_url.replace('/upload/', '/upload/w_800,h_800,c_fill,f_auto,q_auto/') 
+    : data.image_url;
+  $: fullResSrc = data.image_url;
+  $: currentSrc = loadFullRes ? fullResSrc : mediumSrc;
+
   let fullScreen = false;
   let isDragging = false;
   let startMousePos = { x: 0, y: 0 };
@@ -30,6 +38,10 @@
     const nextZoom = Math.min(Math.max($zoom + delta, 1), 5);
     zoom.set(nextZoom);
     if (nextZoom === 1) pos.set({ x: 0, y: 0 });
+    // Load full-res image when user zooms in
+    if (nextZoom > 1 && !loadFullRes) {
+      loadFullRes = true;
+    }
     playPopSound(soundEnabled);
   }
 
@@ -202,7 +214,7 @@
         tabindex="0"
       >
         <img 
-          src={data.image_url} 
+          src={currentSrc} 
           class="w-full h-full {fullScreen ? 'object-contain' : 'object-cover'} select-none pointer-events-none" 
           alt="Pothole Inspection" 
         />

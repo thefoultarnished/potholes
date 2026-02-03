@@ -66,15 +66,29 @@
     e.preventDefault();
   }
 
+  let containerW = 0;
+  let containerH = 0;
+
+  function clamp(value: number, limit: number) {
+    return Math.max(-limit, Math.min(value, limit));
+  }
+
   function handleMouseMove(e: MouseEvent) {
     if (!isDragging) return;
     const dx = e.clientX - startMousePos.x;
     const dy = e.clientY - startMousePos.y;
     dragDistance = Math.abs(dx) + Math.abs(dy);
-    // Use hard: true for instant drag response without spring lag during drag
+    
+    // Calculate boundaries
+    const maxX = (containerW * $zoom - containerW) / 2;
+    const maxY = (containerH * $zoom - containerH) / 2;
+
+    const targetX = startImagePos.x + dx;
+    const targetY = startImagePos.y + dy;
+
     pos.set({
-      x: startImagePos.x + dx,
-      y: startImagePos.y + dy
+      x: clamp(targetX, maxX),
+      y: clamp(targetY, maxY)
     }, { hard: true });
   }
 
@@ -98,9 +112,16 @@
     const dx = e.touches[0].clientX - startMousePos.x;
     const dy = e.touches[0].clientY - startMousePos.y;
     dragDistance = Math.abs(dx) + Math.abs(dy);
+    
+    const maxX = (containerW * $zoom - containerW) / 2;
+    const maxY = (containerH * $zoom - containerH) / 2;
+    
+    const targetX = startImagePos.x + dx;
+    const targetY = startImagePos.y + dy;
+
     pos.set({
-      x: startImagePos.x + dx,
-      y: startImagePos.y + dy
+      x: clamp(targetX, maxX),
+      y: clamp(targetY, maxY)
     }, { hard: true });
   }
 
@@ -230,6 +251,8 @@
       on:touchstart={handleTouchStart}
       on:touchmove={handleTouchMove}
       on:touchend={handleTouchEnd}
+      bind:clientWidth={containerW}
+      bind:clientHeight={containerH}
       role="application"
       aria-label="Image viewer - drag to pan when zoomed"
     >
